@@ -1,9 +1,18 @@
 [build-system]
-# The root itself is not published as a package, but declaring a build system
-# keeps tools happy. Each package ships its own [build-system] + [project]
-# in its nested pyproject.
+# The root defines a lightweight meta-project for uv sync; it is not published.
+# Each package ships its own [build-system] + [project] in its nested pyproject.
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project]
+name = "arbolab-workspace"
+version = "0.0.0"
+description = "Workspace meta-package for local development."
+requires-python = ">=3.12"
+dependencies = [
+  "arbolab",
+  "arbolab-logger",
+]
 
 [tool.uv.workspace]
 members = [
@@ -19,6 +28,10 @@ dev-dependencies = [
   "ruff",
   "pandas-stubs",
 ]
+
+[tool.uv.sources]
+arbolab = { workspace = true }
+arbolab-logger = { workspace = true }
 
 [tool.ruff]
 line-length = 100

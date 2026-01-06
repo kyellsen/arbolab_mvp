@@ -6,15 +6,7 @@ requires-python = ">=3.12"
 members = [
     "arbolab",
     "arbolab-logger",
-]
-
-[manifest.dependency-groups]
-dev = [
-    { name = "mypy" },
-    { name = "pandas-stubs" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
+    "arbolab-workspace",
 ]
 
 [[package]]
@@ -62,6 +54,39 @@ dependencies = [
 requires-dist = [
     { name = "pydantic", specifier = ">=2.7" },
     { name = "rich", specifier = ">=13.7" },
+]
+
+[[package]]
+name = "arbolab-workspace"
+version = "0.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "arbolab" },
+    { name = "arbolab-logger" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pandas-stubs" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "arbolab", editable = "packages/arbolab" },
+    { name = "arbolab-logger", editable = "packages/arbolab-logger" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy" },
+    { name = "pandas-stubs" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
 ]
 
 [[package]]
