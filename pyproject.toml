@@ -34,9 +34,9 @@ explicit_package_bases = true
 
 # List every src root here:
 mypy_path = [
-  "packages/
+  "packages/"
 ]
 
 files = [
-  "packages/
+  "packages/"
 ]

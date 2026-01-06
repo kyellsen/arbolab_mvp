@@ -30,7 +30,7 @@ uv venv --python 3.12 .venv
 
 # 4) Sync core packages + dev tools only (no optional extras)
 echo "Installing core workspace dependencies ..."
-uv sync --package arbolab --package arbolab-logger --package arbolab-treeqinetic
+uv sync --package arbolab --package arbolab-logger
 
 # 5) Done
 echo "=== Setup complete ==="
