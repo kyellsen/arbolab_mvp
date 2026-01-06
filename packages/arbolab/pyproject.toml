@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arbolab"
+version = "0.1.0"
+description = "Core workspace package for the Arbolab platform."
+readme = "AGENTS.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "Kyell Jensen" }
+]
+dependencies = [
+  "duckdb>=0.10,<1.0",
+  "duckdb-engine>=0.10",
+  "polars>=0.20",
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "sqlalchemy>=2.0",
+  # "pluggy>=1.5",       # nur aktivieren, wenn du es wirklich nutzt
+  # keine types-* hier, die wandern in die Dev-Dependencies des Workspaces
+]
+
+[project.optional-dependencies]
+# treeqinetic = ["arbolab-treeqinetic>=0.1.0"]
+# linescale = ["arbolab-linescale>=0.1.0"]
+# plot = ["arbolab-plot-service>=0.1.0"]
+# latex = ["arbolab-latex-service>=0.1.0"]
+
+[tool.uv.sources]
+#arbolab-sta = { workspace = true }
+#arbolab-treeqinetic = { workspace = true }
+#arbolab-linescale = { workspace = true }
+#arbolab-plot-service = { workspace = true }
+#arbolab-latex-service = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arbolab"]
