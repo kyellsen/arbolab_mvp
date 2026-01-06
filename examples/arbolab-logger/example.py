@@ -10,7 +10,7 @@ from arbolab_logger import (  # type: ignore[import-untyped]
 )
 
 # Configure the Rich handler with debug-level filtering and custom formatting.
-# show_time defaults to False so only the handler’s built-in timestamp column stays hidden.
+# show_time defaults to False so only the handlers built-in timestamp column stays hidden.
 configure_logger(
     LoggerConfig(
         name="arbolab.examples.logger",
