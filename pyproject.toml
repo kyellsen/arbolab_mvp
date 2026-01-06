@@ -34,7 +34,7 @@ arbolab = { workspace = true }
 arbolab-logger = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
-files = ["pyproject.toml"]
+only-include = ["pyproject.toml"]
 
 [tool.ruff]
 line-length = 100

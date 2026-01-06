@@ -1,4 +1,4 @@
-# Python bytecode / artifacts
+# Byte-compiled / cache artifacts
 __pycache__/
 *.py[cod]
 *.pyo
@@ -6,7 +6,7 @@ __pycache__/
 *.so
 *.dylib
 
-# Packaging / build
+# Packaging / build artifacts
 *.egg
 *.egg-info/
 .eggs/
@@ -16,13 +16,13 @@ pip-wheel-metadata/
 *.whl
 .build/          # falls du das wirklich nutzt
 
-# Virtual envs
+# Virtual environments & env files
 .venv/
 venv/
 .env
 .env.*
 
-# Caches / logs
+# Tool caches & logs
 .cache/
 .mypy_cache/
 .pytest_cache/
@@ -30,7 +30,7 @@ venv/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Test / coverage
+# Coverage & temporary outputs
 .coverage*
 coverage.xml
 .tox/
@@ -38,25 +38,23 @@ coverage.xml
 .hypothesis/
 .benchmarks/
 
-# Editors / IDE
+# Editors / IDEs
 .idea/
+.vscode/
 *.iml
 .python-version
 
-# OS
+# Operating systems
 .DS_Store
 Thumbs.db
 
-# Docs (optional)
+# Documentation builds
 docs/_build/
 
-# Notebooks / plots (vorsicht, ggf. anpassen)
+# Notebook checkpoints
 *.ipynb_checkpoints/
-*.png
-*.svg
-*.pdf
 
-# Daten (optional – ggf. feiner regeln)
+# Data / intermediate artifacts
 data/
 #test_data/
 test_workspaces/
@@ -69,12 +67,13 @@ tcc/
 ptq/
 ls3/
 
-# Secrets (unbedingt)
+# Secrets / tokens
 pypi_token.txt
 PyPI-Recovery-Codes-*
 
-
-
+# Legacy or migration artifacts
 treemotion_lab_migration/
 
+# Swap files
+*.swp
 .pyproject.toml.kate-swap
