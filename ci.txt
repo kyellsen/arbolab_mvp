@@ -1,4 +1,4 @@
-uv sync --all-extras
+uv sync --all-extras --all-packages --group dev
 uv run ruff check --fix packages/
 uv run mypy packages/
 uv run pytest

@@ -28,9 +28,9 @@ fi
 echo "Creating new uv venv ..."
 uv venv --python 3.12 .venv
 
-# 4) Sync core packages + dev tools only (no optional extras)
-echo "Installing core workspace dependencies ..."
-uv sync --package arbolab --package arbolab-logger
+# 4) Sync workspace packages plus dev tools
+echo "Installing workspace dependencies ..."
+uv sync --all-packages --group dev
 
 # 5) Done
 echo "=== Setup complete ==="
