@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arbolab-treeqinetic"
+version = "0.1.0"
+description = "TreeQinetic device plugin for the ArboLab platform."
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "ArboLab Team" }
+]
+dependencies = [
+  "pydantic>=2.7",
+  "arbolab>=0.1.0",
+]
+
+[tool.uv.sources]
+arbolab = { workspace = true }
+
+[project.entry-points."arbolab.plugins"]
+treeqinetic = "arbolab_plugins.treeqinetic.plugin:register"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arbolab_plugins"]
