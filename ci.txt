@@ -1,0 +1,4 @@
+uv sync --all-extras
+uv run ruff check --fix packages/
+uv run mypy packages/
+uv run pytest
