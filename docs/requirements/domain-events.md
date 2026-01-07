@@ -1,57 +1,49 @@
 # Domain Events (Event Storming Lite)
 
 ## Purpose
-Use a list of domain events as a lightweight backbone for requirements and
-modeling. Events help clarify what happens, when it is considered "done", and
-what data is relevant.
+Events define the state transitions of the ArboLab ecosystem. They act as the "Definition of Done" for pipeline stages and specify the minimal required data (payload) to maintain reproducibility.
 
-## Event Template
-- Event name:
-- Trigger:
-- Source of truth:
-- Minimal payload:
-- "Done" condition (when is the event true?):
-- Follow-up actions (optional):
-- Notes / open questions:
+---
 
-## Event List (Draft)
+## Event List
 
-### LabWorkspaceOpened
-- Event name: LabWorkspaceOpened
-- Trigger: user opens/creates a Lab workspace
-- Source of truth: workspace config + workspace database
-- Minimal payload: workspace roots, config version, enabled plugins
-- "Done" condition (when is the event true?): the workspace configuration is persisted and the workspace database is reachable
-- Notes / open questions:
-  - Opening must be idempotent for an existing workspace.
+### 1. LabWorkspaceOpened
+* **Trigger:** User initializes or opens a Lab instance.
+* **Source of Truth:** `arbolab.yaml` + Workspace DuckDB.
+* **Payload:** `workspace_root`, `config_version`, `enabled_plugins`.
+* **"Done" Condition:** Configuration is validated, and the DuckDB session is active.
+* **Notes:** Must be idempotent. If the workspace doesn't exist, it is created.
 
-### DocumentationTemplateGenerated
-- Event name: DocumentationTemplateGenerated
-- Trigger: user requests an offline documentation template for an experiment
-- Source of truth: templates written under `results_root/templates`
-- Minimal payload: project ID, template version, generated file paths
-- "Done" condition (when is the event true?): the template package exists and is structurally valid (`datapackage.json` + empty CSV resources)
+### 2. DocumentationTemplateGenerated
+* **Trigger:** User requests an offline metadata template (Frictionless Data Package).
+* **Source of Truth:** Filesystem (`results_root/templates/`).
+* **Payload:** `project_id`, `experiment_id`, `schema_version`.
+* **"Done" Condition:** A valid `datapackage.json` and empty CSV headers exist.
+* **Notes:** Templates are for humans to fill in the field/lab.
 
-### MetadataPackageImported
-- Event name: MetadataPackageImported
-- Trigger: user imports a filled metadata package under `input_root/<experiment-input>/metadata`
-- Source of truth: workspace database records (domain + measurement metadata)
-- Minimal payload: import report (created/updated/unchanged), validation summary
-- "Done" condition (when is the event true?): all records are validated and persisted without broken references
-- Follow-up actions (optional):
-  - enable file linking and ingestion for enabled plugins
+### 3. MetadataPackageImported
+* **Trigger:** User imports a filled-in metadata package.
+* **Source of Truth:** Workspace DuckDB (Domain Tables).
+* **Payload:** Created/Updated counts for `Things`, `Sensors`, `Runs`, `Deployments`.
+* **"Done" Condition:** All relational records are persisted. No broken foreign keys (e.g., a Deployment without a Sensor).
+* **Follow-up:** Enables `RawFilesLinked`.
 
-### RawFilesLinked
-- Event name: RawFilesLinked
-- Trigger: user runs file linking for a sensor type/plugin
-- Source of truth: workspace database linkage records (or validated linkage report)
-- Minimal payload: run IDs, sensor IDs, raw file paths, linkage diagnostics
-- "Done" condition (when is the event true?): every required file reference is resolved unambiguously, or the action fails with diagnostics and no partial inconsistent state
+### 4. RawFilesLinked
+* **Trigger:** Plugin scans `input_root` for files matching the imported metadata.
+* **Source of Truth:** Workspace DuckDB (`FileLink` records).
+* **Payload:** `datastream_id` ↔ `file_path` mapping, `checksums` (optional).
+* **"Done" Condition:** Every `Datastream` defined in the metadata has at least one unambiguous file reference in `input_root`.
+* **Notes:** This step performs no I/O on the file content, only path resolution.
 
-### DataVariantIngested
-- Event name: DataVariantIngested
-- Trigger: user ingests linked raw files into workspace variants
-- Source of truth: Parquet datasets under `workspace_root/storage/variants/` + DataVariant metadata in the workspace database
-- Minimal payload: variant IDs, stream IDs, row/column counts, time range
-- "Done" condition (when is the event true?): Parquet files are written inside the workspace and the corresponding metadata record is persisted
+### 5. DataVariantIngested
+* **Trigger:** Execution of the ingestion pipeline (Parser + Ingestor).
+* **Source of Truth:** Parquet files (`workspace_root`) + `DataVariant` (DuckDB).
+* **Payload:** `variant_name` (e.g., 'raw'), `row_count`, `time_range` (min/max), `column_schema`.
+* **"Done" Condition:** Parquet files are successfully written, and the metadata record in DuckDB points to the valid relative paths.
+* **Notes:** **Crucial for Reproducibility.** Once ingested, the `raw` variant is the immutable source for all further analytics.
 
+### 6. DerivedVariantMaterialized
+* **Trigger:** Analytics/Processing step (e.g., filtering, resampling).
+* **Source of Truth:** Parquet files + `DataVariant` (DuckDB).
+* **Payload:** `parent_variant_id`, `transformation_log`, `new_variant_name`.
+* **"Done" Condition:** The derived dataset is stored alongside the raw data.
