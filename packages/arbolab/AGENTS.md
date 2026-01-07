@@ -3,10 +3,13 @@
 ## Purpose
 Defines responsibilities, boundaries, and constraints for the **core package** of the ArboLab platform. This package supplies the foundational domain model, configuration system, storage workflow, plugin runtime, and workspace management.
 
+For repository-wide policies and documentation boundaries, see `AGENTS.md` and `docs/AGENTS.md`.
+
+This file is the single source of truth for package-local scope and constraints within `packages/arbolab/`.
+
 ## Scope
 The core package owns:
 - The global **Lab** API and orchestration logic.
-- Integration points for the infrastructure packages `arbolab-logger`
 
 Not implemented yet:
 - All configuration models (e.g., `LabConfig`, `DataPaths`) plus their persistence helpers.
@@ -16,13 +19,17 @@ Not implemented yet:
 - Integration points for the infrastructure packages `arbolab-logger`, `arbolab-plot-service`, and `arbolab-latex-service`.
 
 Out of scope:
-- Device- or sensor-specific parsers, feature extraction, or metadata schemas beyond the shared abstractions.
+- Device- or sensor-specific parsers or metadata schemas beyond the shared abstractions.
 - Any functionality that writes outside the managed storage roots.
 
 ## Responsibilities
 
 ### 1. Configuration & Storage Roots
-Implements the three-root storage contract defined in the root `AGENTS.md`. The core exposes immutable pydantic models (`LabConfig`, `DataPaths`) and YAML I/O helpers; `PathManager` consumes these models and remains the authority for deriving and validating all workspace paths.
+Implements the storage-root and workspace lifecycle contracts defined in:
+- `docs/specs/api.md`
+- `docs/architecture/storage-format.md`
+
+The core exposes immutable pydantic models (`LabConfig`, `DataPaths`) and YAML I/O helpers; `PathManager` consumes these models and remains the authority for deriving and validating all workspace paths.
 
 ### 2. Domain Model
 Maintains the SQLAlchemy declarative base, naming conventions, and every planned entity plus matching pydantic schemas.

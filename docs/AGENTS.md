@@ -37,8 +37,8 @@ Defines concrete, testable contracts and constraints:
 ArboLab is analytics-first and domain-first:
 - Observations are Parquet-first and are analysed in DuckDB at full resolution.
 - Metadata and domain entities are relational (DuckDB by default).
-- Standards such as SensorThings API (STA) / OData are treated as optional
-  export/facade layers derived from the core, not as internal schema drivers.
+- Interoperability is provided through explicit file-based exports and does not
+  constrain the core schema.
 
 ## Conventions
 - Each directory should expose an entry point named `AGENTS.md`.

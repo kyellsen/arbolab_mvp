@@ -77,13 +77,17 @@ These entities represent persistent real-world objects and assets.
 
 Things are identity-stable and reusable across experiments.
 
+### TreeSpecies
+- `tree_species`
+
+TreeSpecies classify Trees.
+They are reusable and may be shared across projects.
+
 ### Locations
 - `locations`
-- `thing_locations`
-- `historical_locations`
 
-Locations describe spatial information associated with Things.
-Historical locations track changes over time.
+Locations describe current spatial information associated with Things.
+Location history is out of scope in the canonical model.
 
 ### Sensors
 - `sensor_models`
@@ -128,17 +132,6 @@ Normative rules:
 - Sensor clocks may drift or start asynchronously.
 - Synchronization quality is descriptive metadata, not a guarantee.
 
-### Treatments
-- `treatments`
-
-Treatments are **abstract, project-scoped definitions** of experimental
-conditions or interventions.
-
-Treatments:
-- are reusable,
-- are not time-bounded,
-- do not represent concrete events.
-
 ### TreatmentApplications
 - `treatment_applications`
 
@@ -147,6 +140,7 @@ of a Treatment to a Thing within an experimental context.
 
 Normative rules:
 - Treatments are instantiated **only** via TreatmentApplications.
+- TreatmentApplications may overlap Runs and may span Run boundaries.
 - Within-subject and mixed designs are represented by multiple
   TreatmentApplications over time.
 
@@ -168,6 +162,17 @@ Normative rules:
 ## Analytical / Statistical Entities
 
 These entities define units of comparison and inference.
+
+### Treatments
+- `treatments`
+
+Treatments are **abstract, project-scoped definitions** of experimental
+conditions or interventions.
+
+Normative rules:
+- Treatments are reusable and are not time-bounded.
+- Treatments do not represent concrete events.
+- Treatments are instantiated **only** via TreatmentApplications.
 
 ### ExperimentalUnits
 - `experimental_units`

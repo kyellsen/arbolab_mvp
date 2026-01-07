@@ -44,8 +44,8 @@ ergonomic:
   auditable workspace,
 - analyses operate on observations,
 - workflows remain modular and extensible through plugins,
-- interoperability is supported through optional export facades (for example
-  SensorThings API) without constraining the core.
+- interoperability is supported through explicit file-based exports (for example
+  CSV/Parquet) without constraining the core.
 
 ## Problem Statement
 Researchers and practitioners routinely collect high-frequency sensor data in
@@ -60,8 +60,7 @@ field and lab experiments. The pain points are:
 ## Target Users / Roles
 - Primary: researcher/student using notebooks and custom pipelines.
 - Secondary: practitioner using standardized workflows built on the same core.
-- Plugin developer: implements device parsers, ingestion, and domain-specific
-  feature sets.
+- Plugin developer: implements device parsers and ingestion logic.
 
 ## Top Use Cases (List)
 - Create/open a Lab workspace and configure storage roots.
@@ -72,22 +71,19 @@ field and lab experiments. The pain points are:
 - Run analytics queries across many runs/streams at full resolution and
   materialize derived datasets for downstream modelling.
 - Produce publication-ready results (plots, tables, exports) under `results_root`.
-- Optionally export a standards-oriented facade (for example STA/OData) for
-  metadata navigation and preview/downsampled observation access.
 
 ## Goals
 - Analytics-first: support high-volume, join-heavy analysis workloads.
 - Domain-first: model experiments in domain language (things, sensors, projects, experiments, runs, treatments,
-  assignments, deployments) rather than external standards.
-- Reproducibility: persist intermediate datasets (variants/artifacts) with
+  treatment applications, deployments) rather than external standards.
+- Reproducibility: persist intermediate datasets (variants) with
   sufficient metadata to re-run and compare analyses.
 - Modularity: isolate device-specific logic in plugins with explicit extension
   points.
-- Interoperability: keep optional export formats feasible without forcing the
-  core into a lowest-common-denominator schema.
+- Interoperability: keep file-based exports feasible without forcing the core
+  into a lowest-common-denominator schema.
 
 ## Non-Goals
-- Operating as a full SensorThings API server for full-resolution observations.
 - Real-time streaming ingestion and online serving for IoT dashboards.
 - Multi-tenant SaaS runtime in the MVP phase.
 - Replacing general-purpose statistics tooling; ArboLab focuses on preparing and
@@ -99,17 +95,16 @@ field and lab experiments. The pain points are:
   - ingestion into Parquet-first workspace variants
   - DuckDB-backed analytics queries and derived dataset materialization
   - results outputs under `results_root`
-  - optional export facades for interoperability (metadata + previews)
 - Out of scope:
   - storing canonical observations as row-based relational tables
-  - exposing full-resolution observation access through standards APIs
+  - exposing full-resolution observation access through web APIs
   - production-grade web UI in the MVP phase
 
 ## Success Signals (Informal)
 - A user can go from raw device exports + a filled metadata package to:
   - validated, queryable experiment structure,
   - full-resolution Parquet datasets with documented columns/units,
-  - repeatable analysis tables (per-run summaries and cross-run features),
+  - repeatable analysis tables (per-run summaries and cross-run derived tables),
   - publication-ready outputs written to `results_root`,
   without modifying the original raw input directory.
 
@@ -118,8 +113,6 @@ field and lab experiments. The pain points are:
   storage formats, limits, and query patterns.
 - Schema evolution: metadata and query specs must remain versionable without
   breaking reproducibility.
-- Interop expectations: export facades must be explicit about limitations
-  (preview/downsample only for observations).
 
 ## Notes
 Concrete, testable contracts and nonfunctional/process constraints live in `docs/specs/`.
