@@ -7,7 +7,7 @@
 
 ## Story
 As a researcher/student planning a field or lab experiment
-I want ArboLab to generate an offline documentation template (manifest + CSV tables) that I can fill with any tool, and import it back into my Lab
+I want ArboLab to generate an offline documentation template as a Frictionless Tabular Data Package (`metadata/datapackage.json` + CSV resources) that I can fill with any tool, and import it back into my Lab
 So that my experiment metadata becomes consistent, reproducible, and can be mapped into the ArboLab domain model without manual rework
 
 ## Notes / open questions
@@ -21,7 +21,7 @@ So that my experiment metadata becomes consistent, reproducible, and can be mapp
 Scenario: Create a new template package
   Given a Lab and a project identifier
   When I generate a documentation template under the templates root (`results_root/templates`)
-  Then ArboLab creates an experiment input directory under `results_root/templates` with a versioned manifest and empty CSV tables under `metadata/`
+  Then ArboLab creates an experiment input directory under `results_root/templates` with a versioned `datapackage.json` and empty CSV resources under `metadata/`
 
 Scenario: Import a filled package
   Given a filled documentation package
@@ -33,3 +33,6 @@ Scenario: Import fails with validation errors
   When I import it into ArboLab
   Then ArboLab produces a human-readable validation report and does not create partial inconsistent state
 ```
+
+## References
+- `docs/specs/metadata-package.md`
