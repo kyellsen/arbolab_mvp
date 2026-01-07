@@ -1,26 +1,20 @@
-READ AGENTS.md!
-
 # ArboLab
 
-ArboLab is a Python-based ecosystem for processing, structuring, and analyzing
-sensor data from experimental and field-based measurements.
+ArboLab is an analytics-first, domain-first Python ecosystem for experimental
+and field sensor data.
 
-The repository is organized as a modular monorepo.
+Source of truth is the `AGENTS.md`
+## Documentation
 
----
-
-## Source of Truth
-
-Operational rules for contributors and agents are defined in `AGENTS.md`.
-
----
+- Start here: `docs/AGENTS.md`
+- Requirements (problem space): `docs/requirements/AGENTS.md`
+- Architecture (solution structure): `docs/architecture/AGENTS.md`
+- Specs (concrete contracts): `docs/specs/AGENTS.md`
 
 ## Status
 
-This project is under active development.
-APIs and internal structures may evolve.
-
----
+This project is under active development. Documentation describes the target
+architecture; implementations may lag behind it.
 
 ## License
 
