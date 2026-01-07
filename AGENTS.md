@@ -24,9 +24,7 @@ Normative docs must not be duplicated or restated outside their canonical locati
 ## What We Do NOT Maintain
 This repository does NOT maintain:
 - ADRs / decision records (no rationale / alternatives / consequence write-ups)
-- formal Definition-of-Done (DoD) documents
-
-Only requirements, architecture, and specifications are normative.
+- formal Definition-of-Done (DoD) document.
 
 Lightweight requirement artifacts such as user stories and example-style acceptance scenarios
 (for example Given/When/Then) are allowed when they clarify expected behavior.
@@ -36,31 +34,13 @@ Lightweight requirement artifacts such as user stories and example-style accepta
 ## Rules for Agents and Automation
 
 ### Non-Negotiable: Follow the Specs
-Before implementing or refactoring anything that touches domain models, observations, analytics, ingestion, or exports, read and comply with:
+Before implementing or refactoring anything that touches domain models, observations, analytics, ingestion, or exports, read:
 - `docs/specs/data-model.md`
 - `docs/specs/api.md`
 - `docs/specs/nonfunctional.md`
 
-### Allowed Scope
-Agents MAY:
-- implement code consistent with `docs/requirements/`, `docs/architecture/`, and `docs/specs/`
-- refactor without changing requirements/architecture/spec intent
-- add tests, documentation, examples
-
-Agents MUST NOT:
-- introduce or modify requirements/architecture/specs implicitly
-- deviate from defined core/plugin boundaries
-
-### Changes to Requirements, Architecture, or Specs
-If normative docs are missing/outdated/conflicting, the agent MUST:
-1. stop implementation,
-2. propose updates to `docs/requirements/`, `docs/architecture/`, and/or `docs/specs/`,
-3. wait for approval.
-
-No normative change without updating docs.
-
 ### Entity Discipline (Keep Complexity Low)
-Follow the entity discipline described in `docs/specs/data-model.md`.
+Follow the entity discipline described in `docs/specs/data-model.md` and `docs/requirements/glossary.md`.
 
 ### Language Policy
 - Repository content language policy is defined in `docs/specs/nonfunctional.md`.
