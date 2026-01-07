@@ -32,7 +32,7 @@ Lightweight requirement artifacts such as user stories and example-style accepta
 
 ## Rules for Agents and Automation
 
-### 0 Non-Negotiable Guardrails (Analytics-First, Domain-First)
+### Non-Negotiable Guardrails (Analytics-First, Domain-First)
 Agents MUST:
 - treat the domain model as canonical and use domain language first
 - treat observations as Parquet-first, queried via DuckDB
