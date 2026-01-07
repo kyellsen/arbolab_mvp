@@ -1,5 +1,7 @@
 # Plugin Requirements
 
+**Binding Rules**: See `../../AGENTS.md`.
+
 ## Packaging and Namespacing
 - Device plugins are separate packages that depend on the core.
 - Plugin code lives under the `arbolab_plugins.<device>` namespace package (PEP 420).

@@ -1,20 +1,28 @@
 # ArboLab
 
-ArboLab is an analytics-first, domain-first Python ecosystem for experimental
-and field sensor data.
+**ArboLab is an analytics‑first, domain‑first Python ecosystem for reproducible analysis of experimental and field sensor data.**
 
-Source of truth is the `AGENTS.md`
-## Documentation
+It leverages Parquet and DuckDB to act as a bridge between raw sensor observations and high-level domain analytics.
 
-- Start here: `docs/AGENTS.md`
-- Requirements (problem space): `docs/requirements/AGENTS.md`
-- Architecture (solution structure): `docs/architecture/AGENTS.md`
-- Specs (concrete contracts): `docs/specs/AGENTS.md`
+## 🤖 For Agents & AI
 
-## Status
+**STOP.** Read the operational constitution first:
 
-This project is under active development. Documentation describes the target
-architecture; implementations may lag behind it.
+👉 **[AGENTS.md](./AGENTS.md)**
+
+This file contains all binding rules, context boundaries, and filesystem constraints.
+
+## 📚 For Humans (Documentation)
+
+The documentation is strict and normative. It is organized as follows:
+
+- **Requirements & Domain Language:** `docs/requirements/`
+- **Architecture & Design:** `docs/architecture/`
+- **Technical Specifications:** `docs/specs/`
+
+## Development Status
+
+ArboLab is currently in an **architecture‑first phase**. The documentation describes the target system, and implementation follows an iterative MVP approach.
 
 ## License
 

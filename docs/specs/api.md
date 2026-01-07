@@ -1,5 +1,7 @@
 # ArboLab API (Lab)
 
+**Binding Rules**: See `../../AGENTS.md`.
+
 ## Purpose and Scope
 This document defines ArboLab's single public API surface: the `Lab`.
 Notebooks, scripts, and CLI tools interact with ArboLab by opening/creating a
@@ -64,11 +66,11 @@ The `Lab` exposes a single cohesive surface that includes:
 - Schema migrations are applied on load before returning any models.
 - Runtime config changes require updating the persisted YAML and restarting services.
 - The configuration file must live directly inside `workspace_root` as `arbolab.yaml`.
-- The configuration must include an allow list of enabled plugin entry point names (for example `enabled_plugins`); an empty list disables plugin discovery.
+- The configuration must include an allow list of enabled plugin entry point names (e.g., `enabled_plugins`); an empty list disables plugin discovery.
 
 ## Database and Sessions
 - The workspace database must be located under `workspace_root` and must be managed through the Lab-provided database runtime.
-- Callers must obtain SQLAlchemy sessions through the Lab API (for example `lab.database.session()`) rather than constructing engines or connections ad-hoc.
+- Callers must obtain SQLAlchemy sessions through the Lab API (e.g., `lab.database.session()`) rather than constructing engines or connections ad-hoc.
 - Schema creation must be driven by registered SQLAlchemy `MetaData` collections and must include plugin metadata contributions.
 
 ## Path and Storage Access
@@ -79,7 +81,7 @@ The `Lab` exposes a single cohesive surface that includes:
 
 ## Domain and Metadata Operations
 The Lab-owned domain and metadata operations are responsible for:
-- importing metadata packages into the workspace database (see `docs/specs/metadata-import.md`)
+- importing metadata packages into the workspace database (see `docs/specs/metadata-package.md`)
 - validating references and producing human-readable validation reports
 - exposing queryable views of Projects, Experiments, Runs, and their execution context (TreatmentApplications and SensorDeployments)
 - managing assets and measurement metadata required to link raw files, streams, and observation datasets
@@ -88,22 +90,25 @@ The Lab-owned domain and metadata operations are responsible for:
 Domain/metadata operations should return small, JSON-friendly objects:
 - entity records (IDs, names, properties, lifecycle timestamps)
 - lists of IDs and lightweight summaries
-- explicit links between domain entities (for example Run → Experiment, Run → overlapping TreatmentApplications, Run → active SensorDeployments)
+- explicit links between domain entities (e.g., Run → Experiment, Run → overlapping TreatmentApplications, Run → active SensorDeployments)
 
 Large datasets (time-series and derived tables) must be returned as Arrow
 or Parquet.
 
 ### Stability Rules
 - IDs are stable within a workspace and are the primary join keys across domain metadata and analytics outputs.
-- Optional human IDs may exist (for example in `domain_ids`) but must not be used as join keys in persisted analytics outputs.
+- Optional human IDs may exist (e.g. in `domain_ids`) but must not be used as join keys in persisted analytics outputs.
 - API contracts must be versioned and remain backwards compatible within a major version line.
 
 ## Data Access and Results
 - Raw input data is read only from `input_root`.
 - Internal files and metadata are produced under `workspace_root`.
 - Publication artifacts are written under `results_root` and are never treated as pipeline inputs.
-- Variant persistence and ingestion rules are specified in `docs/specs/data-variants.md`.
-- Results/output rules are specified in `docs/specs/results-outputs.md`.
+- Variant persistence and ingestion rules are specified in `docs/specs/data-model.md`.
+- **Results Output Rules**:
+    - All publication artifacts (plots, tables, reports) must be written to `results_root`.
+    - Directory structures for results are managed by `ResultsLayout`.
+    - Optional services (plotting, latex) must return `None` or raise clear diagnostics if not installed.
 
 ## Plugin Runtime
 - Plugins are discovered and registered through the Lab-managed plugin runtime.
@@ -114,8 +119,7 @@ or Parquet.
 ## References
 - `docs/requirements/glossary.md`
 - `docs/specs/data-model.md`
-- `docs/specs/metadata-import.md`
-- `docs/specs/data-variants.md`
-- `docs/specs/results-outputs.md`
+- `docs/specs/metadata-package.md`
 - `docs/specs/plugin-requirements.md`
-- `docs/specs/nonfunctional.md`
+- `docs/specs/development_stack.md`
+

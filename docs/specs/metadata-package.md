@@ -1,4 +1,6 @@
-# Experiment Metadata Package (Frictionless Data Package)
+# Metadata Package & Import Specification
+
+**Binding Rules**: See `../../AGENTS.md`.
 
 ## Purpose and Scope
 This document defines ArboLab's **interchange format** for experiment metadata:
@@ -6,18 +8,29 @@ an **offline-first metadata package** that can be created and edited with
 general-purpose tools (spreadsheet editors, CSV tools, text editors) and then
 validated and imported into a Lab workspace.
 
+It also defines the **supported pathways** for bringing this metadata into the Lab.
+
 ArboLab uses the **Frictionless Data Package** standard as the normative
 container format:
 - descriptor: `datapackage.json`
 - resources: tabular CSV files referenced by the descriptor
 
-This spec defines the **ArboLab constraints** on top of the Frictionless
-standard (file locations, naming, required fields, and validation rules). It
-does not restate the Frictionless specification.
-
 ## References (External)
 - Frictionless Data Package: https://specs.frictionlessdata.io/data-package/
 - Frictionless Tabular Data Package: https://specs.frictionlessdata.io/tabular-data-package/
+
+## Import Pathways
+
+### Supported Pathways
+- **Documentation Package Import**: A fully valid Frictionless Data Package descriptor
+  (`metadata/datapackage.json`) and its resources under
+  `input_root/<experiment-input>/metadata`.
+
+### Non-Goals
+- Direct mapping from ad-hoc/legacy sources (spreadsheets, raw CSVs) into the Lab
+  database without first producing a valid metadata package.
+- The standard prevents "magic" import logic; legacy data *must* be converted to
+  a canonical package first.
 
 ## Location and Directory Layout
 ArboLab operates on an input-only, read-only **experiment input directory**
@@ -25,7 +38,7 @@ provided by the user under `input_root`.
 
 The directory contains:
 - `metadata/`: the Frictionless Data Package (descriptor + tabular resources)
-- one subdirectory per sensor/source type (for example `ls3/`, `tms/`) containing
+- one subdirectory per sensor/source type (e.g., `ls3/`, `tms/`) containing
   raw sensor exports in their native formats
 
 Example layout:
@@ -41,11 +54,10 @@ Example layout:
     ...
 ```
 
-Template generation:
+**Template Generation**:
 - The documentation template generator MUST scaffold this structure under
   `results_root/templates`.
-- Template generation and metadata package exports MUST NOT write to
-  `input_root`. Users copy the generated template into `input_root` when ready.
+- Generation and exports MUST NOT write to `input_root`.
 
 ## Descriptor File: `datapackage.json`
 The metadata package descriptor MUST be:
@@ -88,11 +100,11 @@ All CSV resources MUST:
 
 ### Time and Units Conventions
 To avoid locale and ambiguity issues:
-- timestamps MUST be ISO 8601 strings with timezone offset (for example
+- timestamps MUST be ISO 8601 strings with timezone offset (e.g.,
   `2026-01-07T12:34:56Z`)
 - decimals MUST use `.` as the decimal separator
 - physical units MUST be represented explicitly as values in the appropriate
-  metadata tables (see `docs/specs/units-and-data-dictionary.md`)
+  metadata tables (see `docs/specs/data-model.md`)
 
 ## Extensibility (Plugins)
 Plugins MAY extend the metadata package by adding additional resources.

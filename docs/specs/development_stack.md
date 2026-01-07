@@ -1,5 +1,7 @@
 # Development Stack and Quality Gates
 
+**Binding Rules**: See `../../AGENTS.md`.
+
 This document defines the **binding technical development contract** for the ArboLab repository.
 
 It specifies the toolchain, environment expectations, and quality gates that all contributors and agents must follow.
@@ -73,4 +75,4 @@ The root `pyproject.toml` configures the workspace so that `ruff`, `mypy`, and `
 
 ---
 
-This file, together with `AGENTS.md`, defines the complete operational and technical contract for working in the ArboLab repository.
+This file, together with `../../AGENTS.md`, defines the complete operational and technical contract for working in the ArboLab repository.
