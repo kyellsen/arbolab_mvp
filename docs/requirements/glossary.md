@@ -74,7 +74,7 @@ Entities that describe data production, semantics, and storage.
 
 ### Lab
 - **Perspective:** Runtime / System Context
-- **Definition:** The configured ArboLab environment that binds storage roots, configuration, managers, and plugins, and provides the execution context for projects and experiments.
+- **Definition:** The configured ArboLab environment that binds storage roots, configuration, layouts, stores, and plugins, and provides the execution context for projects and experiments.
 - **Synonyms / aliases (avoid in code):** environment, workspace
 - **Example sentences:**
   - "Open the Lab before importing metadata."
