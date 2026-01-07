@@ -87,6 +87,9 @@ field and lab experiments. The pain points are:
 - Multi-tenant SaaS runtime in the MVP phase.
 - Replacing general-purpose statistics tooling; ArboLab focuses on preparing and
   executing reproducible data pipelines and producing model-ready tables.
+- Strict OGC SensorThings API (STA) compliance in the core schema or API
+  surface (see `docs/requirements/SensorThings_v1.1.pdf` as reference
+  material); interoperability can be provided through explicit exporters.
 - Event sourcing, domain events, or an audit log of metadata edits (edits may overwrite prior values in the MVP).
 
 ## Scope
