@@ -4,6 +4,8 @@
 Capture the problem-space requirements from a domain/user perspective without implementation details.
 This is the entry point for requirements.
 
+This file is the single source of truth for the requirements overview (vision, scope, and prioritisation) within `docs/requirements/`.
+
 ## Reading Map
 - `docs/requirements/glossary.md` (terms, definitions, example sentences)
 - `docs/requirements/user-stories/` (user stories with example scenarios)
@@ -122,26 +124,10 @@ field and lab experiments. The pain points are:
 ## Notes
 Concrete, testable contracts and nonfunctional/process constraints live in `docs/specs/`.
 
-## Conventions (Input Data Package)
-ArboLab operates on an input-only, read-only experiment input directory provided by the user (raw import directory) under `input_root`.
-It should contain:
-- `metadata/`: the experiment documentation package (manifest + CSV/JSON tables)
-- one subdirectory per sensor/source type (for example `ls3/`, `tms/`) containing raw sensor exports in their native formats
+Storage root and workspace/path conventions live in:
+- `docs/specs/api.md`
+- `docs/architecture/storage-format.md`
 
-The raw import directory is typically placed under the Lab input root (`input_root`).
-
-Example layout:
-
-```text
-<experiment-input>/
-  metadata/
-    manifest.json (or .yaml)
-    *.csv / *.json
-  ls3/
-    ...
-  tms/
-    ...
-```
-
-The documentation template generator should scaffold this structure under the templates root (`results_root/templates`) so users can fill `metadata/` in the field and later place sensor exports alongside it on their PC.
-Template generation and metadata package exports must never write to `input_root`; they can be copied into `input_root` by the user when ready.
+Examples for offline documentation packages and metadata import live in:
+- `docs/requirements/user-stories/US-002-offline-experiment-documentation-package.md`
+- `docs/specs/metadata-import.md`
