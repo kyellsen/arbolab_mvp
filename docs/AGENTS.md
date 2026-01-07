@@ -17,7 +17,6 @@ Minimal artifact set:
 - `docs/requirements/AGENTS.md` (vision & scope)
 - `docs/requirements/glossary.md` (glossary)
 - `docs/requirements/user-stories/AGENTS.md` (stories with example scenarios)
-- `docs/requirements/domain-events.md` (event list)
 
 ### `docs/architecture/` (Solution Space: Structure)
 Defines how the system is structured at a high level:

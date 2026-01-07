@@ -9,7 +9,6 @@ This file is the single source of truth for the requirements overview (vision, s
 ## Reading Map
 - `docs/requirements/glossary.md` (terms, definitions, example sentences)
 - `docs/requirements/user-stories/` (user stories with example scenarios)
-- `docs/requirements/domain-events.md` (event list used as a modeling backbone)
 
 ## Personas and Usage Modes
 ArboLab is designed for three primary usage modes. The product will be built in phases; the modes below are used to guide scope and prioritization.
@@ -88,6 +87,7 @@ field and lab experiments. The pain points are:
 - Multi-tenant SaaS runtime in the MVP phase.
 - Replacing general-purpose statistics tooling; ArboLab focuses on preparing and
   executing reproducible data pipelines and producing model-ready tables.
+- Event sourcing, domain events, or an audit log of metadata edits (edits may overwrite prior values in the MVP).
 
 ## Scope
 - In scope:

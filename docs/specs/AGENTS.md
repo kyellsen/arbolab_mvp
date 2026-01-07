@@ -17,7 +17,7 @@ Cross-cutting development and contribution rules are defined in:
 ## Specification Map
 - `docs/specs/data-model.md` for the domain and persistence data model.
 - `docs/specs/data-model-diagram.md` for the Mermaid ER diagram of the model.
-- `docs/specs/api.md` for the `Lab` API (single entry point), workspace lifecycle, config access, managers, and domain/metadata + analytics entry points.
+- `docs/specs/api.md` for the `Lab` API (single entry point), workspace lifecycle, config access, layouts, stores, and domain/metadata + analytics entry points.
 - `docs/specs/metadata-import.md` for supported metadata import pathways.
 - `docs/specs/plugin-requirements.md` for plugin packaging, discovery, and isolation.
 - `docs/specs/data-variants.md` for ingesting raw inputs into workspace datasets.

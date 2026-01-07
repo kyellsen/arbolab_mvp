@@ -7,7 +7,6 @@ This is the entry point for requirements.
 ## Reading Map
 - `docs/requirements/glossary.md` (terms, definitions, example sentences)
 - `docs/requirements/user-stories/` (user stories with example scenarios)
-- `docs/requirements/domain-events.md` (event list used as a modeling backbone)
 
 ## Personas and Usage Modes
 ArboLab is designed for three primary usage modes. The product will be built in phases; the modes below are used to guide scope and prioritization.
@@ -51,6 +50,7 @@ ArboLab is designed for three primary usage modes. The product will be built in 
 - TBD
 
 ## Non-Goals
+- Event sourcing, domain events, or an audit log of metadata edits (edits may overwrite prior values in the MVP).
 - TBD
 
 ## Scope

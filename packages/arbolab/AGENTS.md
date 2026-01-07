@@ -15,7 +15,7 @@ Not implemented yet:
 - All configuration models (e.g., `LabConfig`, `DataPaths`) plus their persistence helpers.
 - The domain model (Projects, Experiments, Treatments, etc.)
 - The plugin registry and lifecycle under `arbolab.plugins`.
-- Infrastructure managers (`PathManager`, `StorageManager`, `ResultsManager`, `DBManager`).
+- Runtime components (`WorkspaceLayout`, `ResultsLayout`, `VariantStore`, `ResultsWriter`, `WorkspaceDatabase`).
 - Integration points for the infrastructure packages `arbolab-logger`, `arbolab-plot-service`, and `arbolab-latex-service`.
 
 Out of scope:
@@ -29,28 +29,29 @@ Implements the storage-root and workspace lifecycle contracts defined in:
 - `docs/specs/api.md`
 - `docs/architecture/storage-format.md`
 
-The core exposes immutable pydantic models (`LabConfig`, `DataPaths`) and YAML I/O helpers; `PathManager` consumes these models and remains the authority for deriving and validating all workspace paths.
+The core exposes immutable pydantic models (`LabConfig`, `DataPaths`) and YAML I/O helpers; `WorkspaceLayout` consumes these models and remains the authority for deriving and validating all workspace paths.
 
 ### 2. Domain Model
 Maintains the SQLAlchemy declarative base, naming conventions, and every planned entity plus matching pydantic schemas.
 
-### 3. Infrastructure Managers
-The following managers stay inside the core and are consumed by both services and plugins:
+### 3. Runtime Components (Layouts, Stores, Database)
+The following components stay inside the core and are consumed by both services and plugins:
 
 Not implemented yet:
-- `PathManager`
-- `StorageManager`
-- `ResultsManager`
-- `DBManager`
+- `WorkspaceLayout`
+- `ResultsLayout`
+- `VariantStore`
+- `ResultsWriter`
+- `WorkspaceDatabase`
 
 ### 4. External Infrastructure Packages
 Actual implementations of logging and result services live outside the core:
 - `arbolab-logger` → logger configuration and formatters used by `Lab` during bootstrap.
 
 Not implemented yet:
-- `arbolab-plot-service` → plotting backends that always resolve output targets through the `ResultsManager`.
+- `arbolab-plot-service` → plotting backends that always resolve output targets through `ResultsLayout` (and may use `ResultsWriter`).
 - `arbolab-latex-service` → LaTeX/export helpers that follow the same path guarantees.
-The core only exposes the integration hooks and keeps the managers those packages rely on.
+The core only exposes the integration hooks and keeps the runtime components those packages rely on.
 
 ### 5. Plugin Runtime
 Not implemented yet:
@@ -58,7 +59,7 @@ Not implemented yet:
 
 ### 6. Persistence & Path Rules
 - Internal writes must remain under `workspace_root`.
-- Plugins obtain write locations exclusively via `StorageManager`.
+- Plugins obtain write locations exclusively via `VariantStore` (workspace data) and `ResultsWriter` (publication artifacts).
 - `results_root` is write-only for results-facing services (PlotService, LatexService, export helpers).
 - `input_root` stays read-only across the stack.
 
@@ -69,14 +70,18 @@ Not implemented yet:
 
 ## Limitations / Forbidden Areas
 - No device-specific logic in the core.
-- No direct filesystem access outside the managers.
+- No direct filesystem access outside stores and writers.
 - No persistence of absolute paths or unmanaged directories.
 
 ## API Surface (planned)
 - `Lab`
-- Managers listed above
+- `WorkspaceLayout`
+- `ResultsLayout`
+- `VariantStore`
+- `ResultsWriter`
+- `WorkspaceDatabase`
 - Domain models and schemas
-- Plugin registry 
+- Plugin registry
 
 ## Versioning & Migration
 - Brand-new package: no migrations yet, but schema versioning is enforced through the configuration models.
