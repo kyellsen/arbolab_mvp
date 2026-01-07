@@ -50,7 +50,8 @@ explicit_package_bases = true
 
 # List every src root here:
 mypy_path = [
-  "packages/"
+  "packages/arbolab/src",
+  "packages/arbolab-logger/src",
 ]
 
 files = [
