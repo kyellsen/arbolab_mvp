@@ -25,9 +25,9 @@ from arbolab.models.core import (
 __all__ = [
     "Base",
     "Cable",
+    "DataVariant",
     "Datastream",
     "DatastreamChannel",
-    "DataVariant",
     "Experiment",
     "ExperimentalUnit",
     "Location",

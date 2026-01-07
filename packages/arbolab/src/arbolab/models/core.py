@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from arbolab.models.base import Base, DescribedMixin, IdMixin, PropertiesMixin, TimestampMixin
@@ -84,8 +84,8 @@ class TreatmentApplication(Base, IdMixin, TimestampMixin, DescribedMixin, Proper
     experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), nullable=False, index=True)
     treatment_id: Mapped[int] = mapped_column(ForeignKey("treatments.id"), nullable=False, index=True)
     thing_id: Mapped[int] = mapped_column(ForeignKey("things.id"), nullable=False, index=True)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     experiment: Mapped[Experiment] = relationship(back_populates="treatment_applications")
     treatment: Mapped[Treatment] = relationship(back_populates="applications")
@@ -98,8 +98,8 @@ class Run(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
     __tablename__ = "runs"
 
     experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), nullable=False, index=True)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     experiment: Mapped[Experiment] = relationship(back_populates="runs")
 
@@ -114,8 +114,8 @@ class SensorDeployment(Base, IdMixin, TimestampMixin, DescribedMixin, Properties
         ForeignKey("experimental_units.id"), nullable=False, index=True
     )
     sensor_id: Mapped[int] = mapped_column(ForeignKey("sensors.id"), nullable=False, index=True)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     experiment: Mapped[Experiment] = relationship(back_populates="sensor_deployments")
     experimental_unit: Mapped[ExperimentalUnit] = relationship(back_populates="sensor_deployments")
@@ -274,8 +274,7 @@ class DataVariant(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin
     row_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     column_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    first_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    first_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
+    last_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     datastream: Mapped[Datastream] = relationship(back_populates="variants")
-
