@@ -9,7 +9,7 @@ Events define the state transitions of the ArboLab ecosystem. They act as the "D
 
 ### 1. LabWorkspaceOpened
 * **Trigger:** User initializes or opens a Lab instance.
-* **Source of Truth:** `arbolab.yaml` + Workspace DuckDB.
+* **Source of Truth:** `config.yaml` + Workspace DuckDB.
 * **Payload:** `workspace_root`, `config_version`, `enabled_plugins`.
 * **"Done" Condition:** Configuration is validated, and the DuckDB session is active.
 * **Notes:** Must be idempotent. If the workspace doesn't exist, it is created.

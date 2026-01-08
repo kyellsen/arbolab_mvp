@@ -7,7 +7,7 @@
 * **Core (`packages/arbolab`):** Shared domain models, runtime, `Lab` API.
 * **Plugins (`packages/arbolab-<device>`):** Hardware-specific IO and mapping logic.
 * **Infra:** Independent services (e.g., `arbolab-plot-service`).
-* **Web App (`app/`):** FastAPI app with SSR UI that orchestrates the `Lab` for SaaS use.
+* **Web App (`apps/`):** FastAPI app with SSR UI that orchestrates the `Lab` for SaaS use.
 
 ## Examples Layout
 

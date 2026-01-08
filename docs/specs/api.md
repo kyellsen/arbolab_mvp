@@ -13,8 +13,8 @@ The `Lab` class is the single public entry point.
 ### Workspace Lifecycle Contract
 `Lab.open(...)` MUST:
 1. Support explicit roots (`input_root`, `workspace_root`, `results_root`) OR `base_root` derivation.
-2. Load `workspace_root/arbolab.yaml` if exists.
-3. Create `workspace_root/arbolab.yaml` if missing (bootstrap).
+2. Load `workspace_root/config.yaml` if exists.
+3. Create `workspace_root/config.yaml` if missing (bootstrap).
 4. **Idempotency**: Opening an existing workspace returns the configured instance without side effects.
 
 ## 2. Directory & Path Contracts
@@ -23,7 +23,7 @@ The `Lab` class is the single public entry point.
 | Root | Permission | Content |
 |:---|:---|:---|
 | `input_root` | **READ-ONLY** | User data, raw CSVs, `metadata/datapackage.json`. |
-| `workspace_root` | **READ/WRITE** | `arbolab.duckdb`, `arbolab.yaml`, internal Parquet, logs. |
+| `workspace_root` | **READ/WRITE** | `arbolab.duckdb`, `config.yaml`, internal Parquet, logs. |
 | `results_root` | **WRITE-ONLY** | Publication artifacts (Plots, Reports). **Never** pipeline input. |
 
 ### 2.2 Path Safety
@@ -36,11 +36,11 @@ The `Lab` class is the single public entry point.
 Configuration resolution order (Highest to Lowest priority):
 1. **Runtime Arguments**: Passed to `Lab.open()`.
 2. **Environment Variables**: e.g., `ARBOLAB_DB_PATH`.
-3. **Workspace Config**: `workspace_root/arbolab.yaml` (TOML/YAML).
+3. **Workspace Config**: `workspace_root/config.yaml` (TOML/YAML).
 4. **Defaults**: Hardcoded library defaults.
 
 ### Plugin Component Configuration
-- `arbolab.yaml` MUST contain an allow-list of enabled plugins.
+- `config.yaml` MUST contain an allow-list of enabled plugins.
 - Empty list = No plugins loaded.
 - Plugins receive a namespaced config section.
 

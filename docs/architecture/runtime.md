@@ -2,7 +2,7 @@
 
 ## Configuration (`LabConfig`)
 * **Immutability:** Models are frozen (`pydantic.ConfigDict(frozen=True)`). No runtime mutation.
-* **Source:** Single `arbolab.yaml` in `workspace_root`.
+* **Source:** Single `config.yaml` in `workspace_root`.
 * **Migration:** Versioned schemas handled by `arbolab/services/config/io.py`.
 * **Scope:** Defines plugins, default numeric dtypes, and plugin settings.
 
