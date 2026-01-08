@@ -1,117 +1,47 @@
-# Metadata Package & Import Specification
+# Metadata Package Specification
 
 **Binding Rules**: See `../../AGENTS.md`.
 
-## Purpose and Scope
-This document defines ArboLab's **interchange format** for experiment metadata:
-an **offline-first metadata package** that can be created and edited with
-general-purpose tools (spreadsheet editors, CSV tools, text editors) and then
-validated and imported into a Lab workspace.
+## 1. Structure
+ArboLab uses the **Frictionless Tabular Data Package** standard.
 
-It also defines the **supported pathways** for bringing this metadata into the Lab.
-
-ArboLab uses the **Frictionless Data Package** standard as the normative
-container format:
-- descriptor: `datapackage.json`
-- resources: tabular CSV files referenced by the descriptor
-
-## References (External)
-- Frictionless Data Package: https://specs.frictionlessdata.io/data-package/
-- Frictionless Tabular Data Package: https://specs.frictionlessdata.io/tabular-data-package/
-
-## Import Pathways
-
-### Supported Pathways
-- **Documentation Package Import**: A fully valid Frictionless Data Package descriptor
-  (`metadata/datapackage.json`) and its resources under
-  `input_root/<experiment-input>/metadata`.
-
-### Non-Goals
-- Direct mapping from ad-hoc/legacy sources (spreadsheets, raw CSVs) into the Lab
-  database without first producing a valid metadata package.
-- The standard prevents "magic" import logic; legacy data *must* be converted to
-  a canonical package first.
-
-## Location and Directory Layout
-ArboLab operates on an input-only, read-only **experiment input directory**
-provided by the user under `input_root`.
-
-The directory contains:
-- `metadata/`: the Frictionless Data Package (descriptor + tabular resources)
-- one subdirectory per sensor/source type (e.g., `ls3/`, `tms/`) containing
-  raw sensor exports in their native formats
-
-Example layout:
+### Directory Layout
+Located at `input_root/<experiment-input>/`:
 
 ```text
-<experiment-input>/
-  metadata/
-    datapackage.json
-    *.csv
-  ls3/
-    ...
-  tms/
-    ...
+metadata/
+  datapackage.json  (Descriptor)
+  *.csv             (Resources)
+ls3/                (Raw sensor data)
+...
 ```
 
-**Template Generation**:
-- The documentation template generator MUST scaffold this structure under
-  `results_root/templates`.
-- Generation and exports MUST NOT write to `input_root`.
+## 2. Descriptor (`datapackage.json`)
 
-## Descriptor File: `datapackage.json`
-The metadata package descriptor MUST be:
-- named exactly `datapackage.json`
-- located at `<experiment-input>/metadata/datapackage.json`
-- valid UTF-8 JSON
+**MUST** act as the manifest for all tabular resources to be imported.
 
-The descriptor MUST declare a **Tabular Data Package**:
-- `profile` MUST be `tabular-data-package`
+### Required Fields
+- `profile`: `"tabular-data-package"`
+- `name`: slug-case string.
+- `resources`: List of resource objects.
 
-The descriptor MUST include:
-- `name` (Frictionless package name, lowercase slug)
-- `version` (ArboLab metadata package schema version, semantic version string)
-- `resources` (list of tabular resources)
+### Resource Object Contract
+Each resource in `resources[]` MUST define:
+- `path`: Relative path to CSV (no `..` traversal).
+- `schema`:
+    - `fields`: List of columns (`name`, `type`).
+    - `primaryKey`: Unique identifier column(s).
+    - `foreignKeys`: **Required** for referential integrity (e.g., linking `run_id` to `runs.id`).
 
-The descriptor SHOULD include:
-- `title` (human-readable experiment title)
-- `created` (ISO 8601 timestamp)
-- `licenses` (package license(s) for sharing/open data contexts)
+## 3. CSV Conventions
+- **Encoding**: UTF-8.
+- **Delimiter**: Comma (`,`).
+- **Line Endings**: `\n` preferred.
+- **Timestamps**: ISO 8601 with Offset (UTC recommended).
+- **Decimals**: Point (`.`).
 
-## Resources
-### Resource Shape
-Every ArboLab metadata resource MUST:
-- be declared in `resources[]` in `datapackage.json`
-- be a CSV file located under `<experiment-input>/metadata/`
-- use a relative `path` without path traversal segments (no `..`)
-- include a `schema` with:
-  - `fields[]` (names + types)
-  - `primaryKey` for the table identifier column(s)
-
-Resources SHOULD include `foreignKeys` in their schemas to enable referential
-integrity validation before import.
-
-### CSV Conventions
-All CSV resources MUST:
-- be encoded as UTF-8
-- include a header row
-- use comma (`,`) as delimiter
-- use `\n` line endings (tools MAY tolerate `\r\n`, but generated templates use `\n`)
-
-### Time and Units Conventions
-To avoid locale and ambiguity issues:
-- timestamps MUST be ISO 8601 strings with timezone offset (e.g.,
-  `2026-01-07T12:34:56Z`)
-- decimals MUST use `.` as the decimal separator
-- physical units MUST be represented explicitly as values in the appropriate
-  metadata tables (see `docs/specs/data-model.md`)
-
-## Extensibility (Plugins)
-Plugins MAY extend the metadata package by adding additional resources.
-
-Rules:
-- Plugin-added resources MUST use a namespaced resource name to avoid collisions
-  (recommended: `<plugin_entry_point>__<resource>`).
-- The core importer MUST ignore unknown resources unless a responsible plugin is
-  enabled and declares support for them.
-
+## 4. Validation Rules
+The Lab Importer MUST enforce:
+1. **Schema Check**: CSV content matches JSON `schema`.
+2. **Integrity Check**: Foreign Keys resolve to existing IDs in referenced resources.
+3. **No Magic**: Unreferenced CSVs are ignored.

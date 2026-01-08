@@ -1,16 +1,13 @@
-# Technical Specifications
+# specifications
 
-**Binding Rules**: See `../../AGENTS.md`.
+Canonical technical contracts for ArboLab.
 
-These documents define the strict technical contracts for implementation.
-Code must adhere to these schemas and interfaces explicitly.
-
-## Specification Inventory
-
-| File | Scope |
+| Specification | Scope |
 |:---|:---|
-| **[`data-model.md`](./data-model.md)** | **Persistence & Schema:** DuckDB tables, SQL relations, types, and strict column definitions. |
-| **[`api.md`](./api.md)** | **Runtime Interface:** `Lab` class API, workspace lifecycle, layouts, stores. |
-| **[`metadata-package.md`](./metadata-package.md)** | **Exchange Format:** Frictionless Data Package structure (JSON/CSV) used for offline metadata and import. |
-| **[`plugin-requirements.md`](./plugin-requirements.md)** | **Extension Protocol:** Rules for device plugins, entry points, and isolation boundaries. |
-| **[`development_stack.md`](./development_stack.md)** | **Tooling:** Quality gates, linting (ruff), typing (mypy), and dependency management (uv). |
+| [`data-model.md`](./data-model.md) | Database Schema, Column/Unit Metadata, Parquet Layout. |
+| [`api.md`](./api.md) | Lab Interface, Path/Directory Rules, Configuration. |
+| [`metadata-package.md`](./metadata-package.md) | User Input Format (`datapackage.json`), CSV Rules. |
+| [`plugin-requirements.md`](./plugin-requirements.md) | Ingestion Protocol, Plugin Entry Points. |
+| [`development_stack.md`](./development_stack.md) | Toolchain (uv, ruff, mypy) and Code Standards. |
+
+**Note**: For domain definitions, see `../requirements/glossary.md`.
