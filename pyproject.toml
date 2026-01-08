@@ -12,6 +12,13 @@ requires-python = ">=3.12"
 dependencies = [
   "arbolab",
   "arbolab-logger",
+  "fastapi",
+  "uvicorn",
+  "jinja2",
+  "python-multipart",
+  "sqlmodel",
+  "passlib[bcrypt]",
+  "itsdangerous",
 ]
 
 [dependency-groups]
@@ -27,6 +34,7 @@ dev = [
 members = [
   "packages/arbolab",
   "packages/arbolab-logger",
+  "apps/web",
 ]
 
 [tool.uv.sources]

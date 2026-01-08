@@ -91,3 +91,7 @@ The Web App is an optional SaaS layer that orchestrates the `Lab` through HTTP.
 ### 6.4 Components (Optional)
 - `GET /components/plot/{id}` returns a server-rendered Plotly HTML fragment.
 - `GET /components/log-viewer` returns log output suitable for polling.
+
+### 6.5 Web App Data Handling
+- Upload handlers MAY write to `input_root` before calling `Lab.open(...)`; the `Lab` itself treats `input_root` as read-only.
+- The API layer MUST convert Arrow/Parquet outputs into small JSON/HTML payloads for the frontend; sending full datasets is FORBIDDEN.

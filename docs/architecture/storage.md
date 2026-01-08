@@ -25,6 +25,7 @@ Measurements are stored as **Variants** (e.g., `raw`, `processed`).
     * `RAW_DATA_VARIANT_NAME` is the canonical entry point.
     * Plugin ingestion writes Parquet here, then registers metadata in DuckDB.
     * Internal paths are strictly relative to `workspace_root`.
+    * Variant writes are idempotent; if a target path already exists with the same content hash, do not overwrite it.
 
 ## Recipes
 Recipes are stored under `workspace_root/recipes/` and are required for Web App execution.

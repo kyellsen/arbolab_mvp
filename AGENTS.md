@@ -66,7 +66,7 @@ The following principles are invariant:
 * Metadata and domain entities are **relational** (DuckDB by default).
 * File‑based exports are **interoperability layers**, never core constraints.
 
-No row‑wise canonical observation tables. No premature SaaS assumptions.
+No row‑wise canonical observation tables. SaaS concerns must be isolated in the Web App layer.
 
 ---
 

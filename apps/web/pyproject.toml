@@ -1,0 +1,20 @@
+[project]
+name = "arbolab-saas"
+version = "0.1.0"
+description = "SaaS Frontend and Auth for Arbolab"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "arbolab",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "python-multipart",
+    "sqlmodel",
+    "passlib[bcrypt]",
+    "itsdangerous",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

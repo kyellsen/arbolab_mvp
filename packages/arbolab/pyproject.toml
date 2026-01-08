@@ -19,6 +19,7 @@ dependencies = [
   "pydantic>=2.7",
   "pyyaml>=6.0",
   "sqlalchemy>=2.0",
+  "arbolab-logger>=0.1.0",
   # "pluggy>=1.5",       # nur aktivieren, wenn du es wirklich nutzt
   # keine types-* hier, die wandern in die Dev-Dependencies des Workspaces
 ]
