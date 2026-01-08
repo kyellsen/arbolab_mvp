@@ -20,8 +20,13 @@ async def get_current_user_id(request: Request) -> UUID:
     if not user_data:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
-        return UUID(user_data["id"])
-    except (ValueError, TypeError):
+        # Cast to string safely to handle legacy integer IDs or other types
+        # This prevents AttributeError in UUID constructor and allows ValueError to catch invalid formats
+        return UUID(str(user_data["id"]))
+    except (ValueError, TypeError, KeyError):
+        # KeyError if "id" is missing
+        # ValueError/TypeError if UUID conversion fails
+        request.session.clear() # Clear the invalid session
         raise HTTPException(status_code=401, detail="Invalid user session")
 
 async def get_current_workspace(

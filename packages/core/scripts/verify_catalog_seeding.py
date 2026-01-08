@@ -44,8 +44,15 @@ def verify_seeding():
     print("✅ Catalog Seeding Verified Successfully.")
 
 if __name__ == "__main__":
-    cleanup()
+    print("Starting verification script...", flush=True)
     try:
+        cleanup()
         verify_seeding()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"FAILED: {e}", file=sys.stderr, flush=True)
+        sys.exit(1)
     finally:
         cleanup()
+        print("Done.", flush=True)
