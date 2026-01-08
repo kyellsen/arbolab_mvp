@@ -85,7 +85,7 @@
                             {{ step.step_type.replace('_', ' ')|title }}
                         </p>
                         <p class="text-xs text-slate-500">
-                             {{ step.timestamp.split('T')[0] }} {{ step.timestamp.split('T')[1][:5] }}
+                             {{ step.timestamp.strftime('%Y-%m-%d %H:%M') }}
                         </p>
                         {% if step.params %}
                             <div class="mt-1 text-[10px] text-slate-500 font-mono bg-slate-800/50 p-1.5 rounded border border-slate-800/50 hidden group-hover:block transition-all max-w-[200px] overflow-hidden truncate">
