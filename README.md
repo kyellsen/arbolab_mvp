@@ -13,6 +13,19 @@ It acts as a bridge between raw physical observations (from sensors on trees, ca
     - **Web/SaaS:** PostgreSQL-based for multi-tenancy, identity, and application state.
 - **Reproducibility:** Every ingestion and analysis step is trackable within a managed Lab workspace.
 
+## 🚀 Getting Started (Zero-Config)
+
+1. **Install Docker** (or Podman).
+2. **Start the environment**:
+   ```bash
+   docker compose up
+   ```
+3. **Access the App**: [http://localhost:8000](http://localhost:8000)
+
+See the **[Deployment Guide](./docs/deployment.md)** for more details on directory structure and persistence.
+
+---
+
 ## 🤖 For Agents & AI
 
 **STOP.** Read the operational constitution first:
@@ -20,6 +33,7 @@ It acts as a bridge between raw physical observations (from sensors on trees, ca
 👉 **[AGENTS.md](./AGENTS.md)**
 
 This file contains all binding rules, context boundaries, and filesystem constraints.
+
 
 ## 📚 For Humans (Documentation)
 

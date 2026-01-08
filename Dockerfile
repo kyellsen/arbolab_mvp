@@ -21,7 +21,7 @@ COPY apps/web ./apps/web
 # Because we are in a container, we can install into system or a specific venv.
 # Using /app/.venv is fine.
 ENV UV_COMPILE_BYTECODE=1
-RUN uv sync --locked --no-dev --frozen
+RUN uv sync --frozen --no-dev
 
 # Install curl for healthcheck
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*

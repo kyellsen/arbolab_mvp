@@ -30,8 +30,11 @@ class LabConfig(BaseSettings):
     data_root: Path = Field(default=Path("./data"), description="Root directory for all data")
     
     # Database (SaaS)
-    # Default to sqlite for local dev if not set, but production should set ARBO_DATABASE_URL
-    database_url: str | None = Field(default=None, description="Connection string for the SaaS database")
+    # Default to postgres for local dev with docker compose
+    database_url: str | None = Field(
+        default="postgresql://postgres:postgres@db:5432/arbolab",
+        description="Connection string for the SaaS database"
+    )
 
     # Explicit Overrides (Legacy/Flexible)
     input_path: str | None = Field(default=None, description="Explicit path to input root")
