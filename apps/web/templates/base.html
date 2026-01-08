@@ -29,6 +29,7 @@
             
             <!-- Context Switcher (Desktop) -->
             <div class="hidden md:flex items-center gap-2 ml-4">
+                {% if current_workspace %}
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-700 transition-colors">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -62,6 +63,7 @@
                         {% endfor %}
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
 
@@ -86,7 +88,8 @@
         <div x-show="mobileMenuOpen" class="fixed inset-0 bg-black/50 z-30 lg:hidden" @click="mobileMenuOpen = false" x-transition.opacity></div>
         
         <!-- Sidebar Content -->
-        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 hover:lg:w-64 bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 flex flex-col group shrink-0">
+        <!-- Ensure lg:translate-x-0 !important kind of logic via order or just explicit structure -->
+        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 hover:lg:w-64 bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:transform-none flex flex-col group shrink-0">
              {% include 'components/_sidebar_left.html' %}
         </aside>
 

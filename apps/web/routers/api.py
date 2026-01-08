@@ -5,7 +5,8 @@ from typing import Any
 from uuid import UUID
 
 from apps.web.core.domain import list_entities, get_entity, create_entity, update_entity, delete_entity
-from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
+from apps.web.models.auth import Workspace, UserWorkspaceAssociation
+from apps.web.models.user import User
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from apps.web.core.database import get_session as get_saas_session
 from arbolab.lab import Lab
@@ -30,19 +31,31 @@ async def get_current_user_id(request: Request) -> UUID:
         request.session.clear() # Clear the invalid session
         raise HTTPException(status_code=401, detail="Invalid user session")
 
-from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
+# User import handled at top of file
+
+async def get_current_user(
+    user_id: UUID = Depends(get_current_user_id),
+    session: SaasSession = Depends(get_saas_session)
+) -> User:
+    """Verifies user existence in DB to prevent ghost sessions (session exists, user deleted)."""
+    user = session.get(User, user_id)
+    if not user:
+        # Clear invalid session and force login
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 # ...
 
 async def get_current_workspace(
     request: Request,
-    user_id: UUID = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
     session: SaasSession = Depends(get_saas_session)
 ) -> Workspace:
     """
     Determines the current active workspace for the user.
     Checks session['active_workspace_id'] first, then falls back to default/first.
     """
+    user_id = user.id
     # 1. Try Session
     active_ws_id = request.session.get("active_workspace_id")
     if active_ws_id:
@@ -153,7 +166,7 @@ async def api_create_entity(entity_type: str, data: dict[str, Any], lab: Lab = D
     ensure_admin(lab)
     with lab.database.session() as session:
         try:
-            return await create_entity(session, entity_type, data)
+            return await create_entity(session, entity_type, data, lab=lab)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
@@ -162,7 +175,7 @@ async def api_update_entity(entity_type: str, entity_id: int, data: dict[str, An
     ensure_admin(lab)
     with lab.database.session() as session:
         try:
-            entity = await update_entity(session, entity_type, entity_id, data)
+            entity = await update_entity(session, entity_type, entity_id, data, lab=lab)
             if not entity:
                 raise HTTPException(status_code=404, detail="Entity not found")
             return entity
@@ -174,7 +187,7 @@ async def api_delete_entity(entity_type: str, entity_id: int, lab: Lab = Depends
     ensure_admin(lab)
     with lab.database.session() as session:
         try:
-            success = await delete_entity(session, entity_type, entity_id)
+            success = await delete_entity(session, entity_type, entity_id, lab=lab)
             if not success:
                 raise HTTPException(status_code=404, detail="Entity not found")
             return {"status": "deleted"}

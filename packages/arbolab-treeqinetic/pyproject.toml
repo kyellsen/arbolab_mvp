@@ -20,7 +20,7 @@ dependencies = [
 arbolab = { workspace = true }
 
 [project.entry-points."arbolab.plugins"]
-treeqinetic = "arbolab_plugins.treeqinetic.plugin:register"
+treeqinetic = "arbolab_plugins.treeqinetic.plugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/arbolab_plugins"]

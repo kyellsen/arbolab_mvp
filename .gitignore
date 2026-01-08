@@ -66,8 +66,6 @@ test_results/
 *.feather
 tms/
 tcc/
-ptq/
-ls3/
 
 # Secrets / tokens
 pypi_token.txt

@@ -1,8 +1,10 @@
-<div class="flex flex-col md:flex-row gap-6 h-full">
-    <!-- Entity Type Selector (Sidebar) -->
-    <aside class="w-full md:w-64 bg-slate-900 border border-slate-800 rounded-lg p-4 shrink-0 overflow-y-auto max-h-[calc(100vh-12rem)]">
-        <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 px-2">Domain Entities</h2>
-        <nav class="space-y-1">
+<div class="flex h-full overflow-hidden" x-data="{ activeEntity: 'project' }">
+    <!-- Left Pane: Navigation (Fixed Width) -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col">
+        <div class="p-4 border-b border-slate-800">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Explorer</h2>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-2 space-y-0.5">
             {% set entities = [
                 ('project', 'Projects'),
                 ('experiment', 'Experiments'),
@@ -21,75 +23,75 @@
             ] %}
             {% for type_id, label in entities %}
             <button hx-get="/explorer-ui/list/{{ type_id }}"
-                    hx-target="#explorer-content"
+                    hx-target="#entity-list-container"
                     hx-trigger="click"
-                    @click="activeEntity = '{{ type_id }}'"
-                    :class="activeEntity === '{{ type_id }}' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
-                    class="w-full text-left px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-between group">
+                    @click="activeEntity = '{{ type_id }}'; document.getElementById('inspector-panel').innerHTML = '<div class=\'p-12 text-center text-slate-500\'><p>Select an item to view details</p></div>'"
+                    :class="activeEntity === '{{ type_id }}' ? 'bg-slate-800 text-emerald-400 font-medium' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'"
+                    class="w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between group">
                 {{ label }}
-                <span class="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity" :class="activeEntity === '{{ type_id }}' ? 'opacity-100' : ''">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </span>
             </button>
             {% endfor %}
         </nav>
     </aside>
 
-    <!-- Main Explorer Area -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <!-- Middle Pane: Data Grid (Flexible) -->
+    <div class="flex-1 flex flex-col min-w-0 bg-slate-900/50">
         <!-- Explorer Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <h1 class="text-2xl font-bold text-white" x-text="activeEntity.replace('_', ' ').charAt(0).toUpperCase() + activeEntity.replace('_', ' ').slice(1) + 's'">Explorer</h1>
+        <div class="h-16 px-6 border-b border-slate-800 flex items-center justify-between gap-4 bg-slate-900 shrink-0">
+            <div class="flex items-center gap-3">
+                <h1 class="text-lg font-bold text-white tracking-tight" x-text="activeEntity.replace('_', ' ').charAt(0).toUpperCase() + activeEntity.replace('_', ' ').slice(1) + 's'">Projects</h1>
+                <span class="px-2 py-0.5 rounded-full bg-slate-800 text-xs font-medium text-slate-500 border border-slate-700">List View</span>
+            </div>
             
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-3">
                 <!-- Search -->
-                <div class="relative">
+                <div class="relative group">
                     <input type="text" 
                            name="search"
                            placeholder="Search..." 
-                           class="bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm w-48 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200 pl-8"
+                           class="bg-slate-800 border-none rounded-md px-3 py-1.5 text-sm w-48 focus:w-64 transition-all focus:ring-1 focus:ring-emerald-500 text-slate-200 pl-9 placeholder-slate-500"
                            hx-get="/explorer-ui/list/"
                            :hx-get="'/explorer-ui/list/' + activeEntity"
-                           hx-trigger="keyup changed delay:500ms"
-                           hx-target="#explorer-content"
+                           hx-trigger="keyup changed delay:300ms"
+                           hx-target="#entity-list-container"
                            hx-include="[name='tag']">
-                    <svg class="w-4 h-4 text-slate-500 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg class="w-4 h-4 text-slate-500 absolute left-2.5 top-2 group-focus-within:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
 
-                <!-- Tag Filter -->
-                <div class="relative">
-                    <input type="text" 
-                           name="tag"
-                           placeholder="Filter by tag" 
-                           class="bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-sm w-32 focus:ring-emerald-500 focus:border-emerald-500 text-slate-200"
-                           hx-get="/explorer-ui/list/"
-                           :hx-get="'/explorer-ui/list/' + activeEntity"
-                           hx-trigger="keyup changed delay:500ms"
-                           hx-target="#explorer-content"
-                           hx-include="[name='search']">
-                </div>
+                <div class="h-6 w-px bg-slate-800 mx-1"></div>
 
+                <!-- New Button -->
                 <button hx-get="/explorer-ui/form/project"
                         :hx-get="'/explorer-ui/form/' + activeEntity"
-                        hx-target="#explorer-content"
-                        class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                        @click="htmx.process($el)">
+                        hx-target="#modal-container"
+                        class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-sm shadow-emerald-900/20">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     New
                 </button>
             </div>
         </div>
 
-        <!-- Dynamic Content Area -->
-        <div id="explorer-content" 
+        <!-- Entity List Container -->
+        <div id="entity-list-container" 
              hx-get="/explorer-ui/list/project"
              :hx-get="'/explorer-ui/list/' + activeEntity"
-             hx-trigger="load"
-             class="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex-1 shadow-inner">
-            <div class="p-12 text-center text-slate-500">
-                <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                <p>Select an entity type from the sidebar to explore data.</p>
-            </div>
+             hx-trigger="load, refreshList from:body"
+             class="flex-1 overflow-auto bg-slate-900">
+             <!-- Content loaded via HTMX -->
         </div>
     </div>
+
+    <!-- Right Pane: Inspector (Fixed Width) -->
+    <aside class="w-96 bg-slate-900 border-l border-slate-800 flex-shrink-0 flex flex-col" id="inspector-panel">
+        <div class="flex-1 flex flex-col justify-center items-center text-slate-500 p-8 text-center">
+            <svg class="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p class="text-sm">Select an item to view details</p>
+        </div>
+    </aside>
 </div>
+
+<!-- Modal Container -->
+<div id="modal-container"></div>

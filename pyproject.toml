@@ -19,7 +19,9 @@ dependencies = [
   "sqlmodel",
   "passlib[bcrypt]",
   "itsdangerous",
-  "psycopg2-binary"
+  "psycopg2-binary",
+  "arbolab-linescale3",
+  "arbolab-treeqinetic"
 ]
 
 [dependency-groups]
@@ -36,11 +38,15 @@ members = [
   "packages/core",
   "packages/arbolab-logger",
   "apps/web",
+  "packages/arbolab-linescale3",
+  "packages/arbolab-treeqinetic",
 ]
 
 [tool.uv.sources]
 arbolab = { workspace = true }
 arbolab-logger = { workspace = true }
+arbolab-linescale3 = { workspace = true }
+arbolab-treeqinetic = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 only-include = ["pyproject.toml"]

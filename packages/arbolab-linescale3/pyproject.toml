@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "arbolab-linescale3"
+version = "0.1.0"
+description = "Linescale3 device plugin for ArboLab."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "arbolab>=0.1.0",
+  "sqlalchemy>=2.0",
+]
+
+[project.entry-points."arbolab.plugins"]
+ls3 = "arbolab_plugins.ls3"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/arbolab_plugins"]

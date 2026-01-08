@@ -11,13 +11,15 @@ from apps.web.core.security import get_password_hash, verify_password
 
 # Importiere Modelle und Security
 from uuid import UUID
-from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
+from apps.web.models.auth import Workspace, UserWorkspaceAssociation
+from apps.web.models.user import User
 from arbolab.lab import Lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from pathlib import Path
 from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router
+from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router
 from apps.web.core.domain import get_entity_counts
+from apps.web.core.receipts import ReceiptManager
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -48,13 +50,13 @@ async def health():
 app.include_router(api.router)
 app.include_router(workspaces_router.router)
 app.include_router(explorer_router.router)
+app.include_router(settings_router.router)
 
 # ----------------- ROUTEN -----------------
 
 @app.get("/", response_class=HTMLResponse)
 async def home(
     request: Request, 
-    current_workspace: Workspace = Depends(api.get_current_workspace),
     saas_session: Session = Depends(get_session)
 ):
     """Dashboard oder Redirect zu Login"""
@@ -65,6 +67,53 @@ async def home(
     # Authenticated: Setup Lab Session manually to avoid 401 in dependencies
     try:
         user_id = UUID(str(user_data["id"]))
+
+        # Manual workspace resolution to avoid dependency chain issues
+        from apps.web.routers.api import get_current_workspace
+        # Note: We can't easily reuse the dependency function here because it requires Depends injection.
+        # Instead, we replicate the logic or rely on the fact that if we are here, we have a user.
+        
+        # 1. Try Session for Workspace ID
+        active_ws_id = request.session.get("active_workspace_id")
+        current_workspace = None
+        
+        if active_ws_id:
+            try:
+                stmt = (
+                    select(Workspace)
+                    .join(UserWorkspaceAssociation)
+                    .where(Workspace.id == UUID(active_ws_id))
+                    .where(UserWorkspaceAssociation.user_id == user_id)
+                )
+                current_workspace = saas_session.exec(stmt).first()
+            except Exception:
+                pass
+        
+        if not current_workspace:
+             # Fallback: First available
+            stmt = (
+                select(Workspace)
+                .join(UserWorkspaceAssociation)
+                .where(UserWorkspaceAssociation.user_id == user_id)
+                .order_by(Workspace.created_at)
+            )
+            current_workspace = saas_session.exec(stmt).first()
+            
+        if not current_workspace:
+             # Show Onboarding Overlay instead of redirect
+             context = {
+                "request": request, 
+                "user": user_data,
+                "counts": {},
+                "project_name": "Neues Lab",
+                "current_workspace": None,
+                "all_workspaces": [],
+                "role": None,
+                "is_viewer": False,
+                "is_admin": False,
+                "show_onboarding": True
+            }
+             return templates.TemplateResponse("dashboard.html", context)
         
         # 1. Fetch all workspaces for context switcher
         stmt = (
@@ -104,14 +153,19 @@ async def home(
             except Exception:
                 counts = {} # Fallback if DB is empty/initing
             
+            # Fetch Recent Activity from receipts
+            recent_activity = ReceiptManager.get_recent_activity(lab)
+            
             # Get current project name (simple logic for MVP: first project)
-            project_name = "No Project Found"
             try:
                 first_project = session.execute(select(Project)).scalars().first()
                 if first_project:
                     project_name = first_project.name or f"Project #{first_project.id}"
+                else: 
+                     # Fallback to Workspace name if empty lab
+                     project_name = current_workspace.name
             except Exception:
-                pass
+                 project_name = current_workspace.name
             
             # Template Data
             context = {
@@ -123,7 +177,9 @@ async def home(
                 "all_workspaces": all_workspaces,
                 "role": role,
                 "is_viewer": role == LabRole.VIEWER,
-                "is_admin": role == LabRole.ADMIN
+                "is_admin": role == LabRole.ADMIN,
+                "show_onboarding": False,
+                "recent_activity": recent_activity
             }
             
             # Check HTMX request to swap only content
@@ -161,15 +217,69 @@ async def lab(request: Request):
     return templates.TemplateResponse("lab.html", {"request": request, "user": user})
 
 @app.get("/tree", response_class=HTMLResponse)
-async def tree(request: Request):
-    user = request.session.get("user")
-    if not user:
+async def tree(
+    request: Request,
+    current_workspace: Workspace = Depends(api.get_current_workspace),
+    saas_session: Session = Depends(get_session)
+):
+    user_data = request.session.get("user")
+    if not user_data:
          return RedirectResponse(url="/auth/login")
     
-    if request.headers.get("HX-Request"):
-         return templates.TemplateResponse("partials/tree_content.html", {"request": request, "user": user})
-    
-    return templates.TemplateResponse("tree.html", {"request": request, "user": user})
+    # Authenticated: Setup Lab Session manually
+    try:
+        user_id = UUID(str(user_data["id"]))
+        
+        # 1. Get Role for current workspace
+        assoc = saas_session.exec(
+            select(UserWorkspaceAssociation)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+            .where(UserWorkspaceAssociation.workspace_id == current_workspace.id)
+        ).first()
+        
+        from arbolab.core.security import LabRole
+        role = assoc.role if assoc else LabRole.VIEWER
+
+        # 2. Get Lab
+        paths = resolve_workspace_paths(current_workspace.id)
+        ensure_workspace_paths(paths)
+        
+        lab = Lab.open(
+            workspace_root=paths.workspace_root,
+            input_root=paths.input_root,
+            results_root=paths.results_root,
+            role=role
+        )
+        
+        # 3. Use Lab Session to get counts
+        with lab.database.session() as session:
+            try:
+                counts = await get_entity_counts(session)
+            except Exception:
+                counts = {} 
+            
+            context = {
+                "request": request, 
+                "user": user_data,
+                "counts": counts
+            }
+
+            if request.headers.get("HX-Request"):
+                 return templates.TemplateResponse("partials/tree_content.html", context)
+            
+            return templates.TemplateResponse("tree.html", context)
+
+    except Exception as e:
+        print(f"Error in tree view: {e}")
+        # Build context with empty counts on error to avoid crash
+        context = {
+            "request": request, 
+            "user": user_data,
+            "counts": {}
+        }
+        if request.headers.get("HX-Request"):
+             return templates.TemplateResponse("partials/tree_content.html", context)
+        return templates.TemplateResponse("tree.html", context)
 
 @app.get("/inspector/tree/{tree_id}", response_class=HTMLResponse)
 async def inspector_tree(request: Request, tree_id: str):

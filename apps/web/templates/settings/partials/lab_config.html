@@ -1,0 +1,63 @@
+<div class="p-6">
+    <div class="mb-8">
+        <h3 class="text-xl font-bold text-white mb-1">Lab Configuration</h3>
+        <p class="text-slate-400 text-sm">Adjust settings for the active workspace: <span class="text-emerald-400 font-medium">{{ workspace.name }}</span></p>
+    </div>
+
+    {% if success %}
+    <div class="mb-6 p-4 bg-emerald-900/40 border border-emerald-800 rounded-lg text-emerald-400 text-sm">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    <form hx-put="/settings/lab/config" hx-target="#settings-content" hx-swap="innerHTML" class="space-y-8">
+        <!-- Path Settings -->
+        <div class="space-y-4">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Storage Roots</h4>
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label for="input_path" class="block text-sm font-medium text-slate-300 mb-1">Input Data Path</label>
+                    <input type="text" id="input_path" name="input_path" value="{{ config.input_path or '' }}" placeholder="/mnt/data/input" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                    <p class="mt-1 text-xs text-slate-500">Absolute path where raw sensor data is stored.</p>
+                </div>
+                
+                <div>
+                    <label for="results_path" class="block text-sm font-medium text-slate-300 mb-1">Results Path (Output)</label>
+                    <input type="text" id="results_path" name="results_path" value="{{ config.results_path or '' }}" placeholder="/mnt/data/results" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                    <p class="mt-1 text-xs text-slate-500">Absolute path where processed results and recipes are stored.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plugin Settings -->
+        <div class="space-y-4 pt-4 border-t border-slate-800">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Enabled Plugins</h4>
+            <div class="space-y-3">
+                {% for plugin in ["ls3", "ptq", "mock_plugin"] %}
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        id="plugin_{{ plugin }}" 
+                        name="enabled_plugins" 
+                        value="{{ plugin }}" 
+                        {% if plugin in config.enabled_plugins %}checked{% endif %}
+                        class="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-800 rounded focus:ring-emerald-500 focus:ring-offset-slate-900"
+                    >
+                    <label for="plugin_{{ plugin }}" class="ml-3 text-sm font-medium text-slate-300">
+                        {{ plugin|upper }}
+                        {% if plugin == 'ls3' %}<span class="ml-2 text-xs text-slate-500">(LineScale v3)</span>{% endif %}
+                        {% if plugin == 'ptq' %}<span class="ml-2 text-xs text-slate-500">(TreeQinetic)</span>{% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-slate-500">Changes to plugins may require a restart of the lab environment.</p>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex justify-end">
+            <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-emerald-900/20">
+                Save Lab Config
+            </button>
+        </div>
+    </form>
+</div>

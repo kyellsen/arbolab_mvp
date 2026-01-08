@@ -5,8 +5,10 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "arbolab",
+    "arbolab-linescale3",
     "arbolab-logger",
     "arbolab-saas",
+    "arbolab-treeqinetic",
     "arbolab-workspace",
 ]
 
@@ -83,6 +85,21 @@ requires-dist = [
 ]
 
 [[package]]
+name = "arbolab-linescale3"
+version = "0.1.0"
+source = { editable = "packages/arbolab-linescale3" }
+dependencies = [
+    { name = "arbolab" },
+    { name = "sqlalchemy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "arbolab", editable = "packages/core" },
+    { name = "sqlalchemy", specifier = ">=2.0" },
+]
+
+[[package]]
 name = "arbolab-logger"
 version = "0.1.0"
 source = { editable = "packages/arbolab-logger" }
@@ -129,12 +146,29 @@ requires-dist = [
 ]
 
 [[package]]
+name = "arbolab-treeqinetic"
+version = "0.1.0"
+source = { editable = "packages/arbolab-treeqinetic" }
+dependencies = [
+    { name = "arbolab" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "arbolab", editable = "packages/core" },
+    { name = "pydantic", specifier = ">=2.7" },
+]
+
+[[package]]
 name = "arbolab-workspace"
 version = "0.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "arbolab" },
+    { name = "arbolab-linescale3" },
     { name = "arbolab-logger" },
+    { name = "arbolab-treeqinetic" },
     { name = "fastapi" },
     { name = "itsdangerous" },
     { name = "jinja2" },
@@ -157,7 +191,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "arbolab", editable = "packages/core" },
+    { name = "arbolab-linescale3", editable = "packages/arbolab-linescale3" },
     { name = "arbolab-logger", editable = "packages/arbolab-logger" },
+    { name = "arbolab-treeqinetic", editable = "packages/arbolab-treeqinetic" },
     { name = "fastapi" },
     { name = "itsdangerous" },
     { name = "jinja2" },

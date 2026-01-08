@@ -1,0 +1,5 @@
+Verifying plugins...
+Found entry points: []
+Checking for known plugins: []
+WARN: ls3 not loaded by registry (might need uv sync)
+WARN: treeqinetic not loaded by registry (might need uv sync)

@@ -1,0 +1,22 @@
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* Connected to localhost (::1) port 8000
+* using HTTP/1.x
+> GET / HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.15.0
+> Accept: */*
+> 
+* Request completely sent off
+< HTTP/1.1 307 Temporary Redirect
+< date: Thu, 08 Jan 2026 17:10:05 GMT
+< server: uvicorn
+< content-length: 0
+< location: /auth/login
+< 
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+* Connection #0 to host localhost left intact

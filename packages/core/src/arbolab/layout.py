@@ -36,6 +36,9 @@ class WorkspaceLayout:
     def recipe_path(self, name: str = "recipe.json") -> Path:
         return self.recipes_dir / name
 
+    def receipt_path(self, name: str = "receipt.json") -> Path:
+        return self.recipes_dir / name
+
     def ensure_structure(self):
         """Creates the directory skeleton if missing."""
         logger.debug(f"Ensuring workspace structure at {self._root}")

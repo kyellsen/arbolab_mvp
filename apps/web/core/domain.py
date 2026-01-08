@@ -15,6 +15,8 @@ from arbolab.schemas.core import (
     DatastreamChannelSchema, DataVariantSchema
 )
 from pydantic import BaseModel
+from apps.web.core.receipts import ReceiptManager
+from arbolab.lab import Lab
 
 ENTITY_MAP = {
     "project": {"model": Project, "schema": ProjectSchema},
@@ -73,7 +75,7 @@ async def get_entity(session: Session, entity_type: str, entity_id: int):
     result = session.get(model, entity_id)
     return result
 
-async def create_entity(session: Session, entity_type: str, data: dict[str, Any]):
+async def create_entity(session: Session, entity_type: str, data: dict[str, Any], lab: Lab = None):
     info = get_entity_info(entity_type)
     model = info["model"]
     
@@ -81,9 +83,13 @@ async def create_entity(session: Session, entity_type: str, data: dict[str, Any]
     obj = model(**data)
     session.add(obj)
     session.flush()
+    
+    if lab:
+        ReceiptManager.log_event(lab, entity_type, "Create", data, entity_id=getattr(obj, "id", None))
+        
     return obj
 
-async def update_entity(session: Session, entity_type: str, entity_id: int, data: dict[str, Any]):
+async def update_entity(session: Session, entity_type: str, entity_id: int, data: dict[str, Any], lab: Lab = None):
     obj = await get_entity(session, entity_type, entity_id)
     if not obj:
         return None
@@ -93,15 +99,23 @@ async def update_entity(session: Session, entity_type: str, entity_id: int, data
             setattr(obj, key, value)
     
     session.flush()
+    
+    if lab:
+        ReceiptManager.log_event(lab, entity_type, "Update", data, entity_id=entity_id)
+        
     return obj
 
-async def delete_entity(session: Session, entity_type: str, entity_id: int):
+async def delete_entity(session: Session, entity_type: str, entity_id: int, lab: Lab = None):
     obj = await get_entity(session, entity_type, entity_id)
     if not obj:
         return False
     
     session.delete(obj)
     session.flush()
+    
+    if lab:
+        ReceiptManager.log_event(lab, entity_type, "Delete", {}, entity_id=entity_id)
+        
     return True
 
 async def get_entity_counts(session: Session):

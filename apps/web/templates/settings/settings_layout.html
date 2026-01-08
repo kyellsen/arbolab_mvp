@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 space-y-1">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider px-3 mb-4">Settings</h2>
+            
+            <nav class="space-y-1">
+                <button 
+                    hx-get="/settings/" 
+                    hx-target="#settings-content" 
+                    hx-push-url="true"
+                    class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 group {% if active_tab == 'profile' %}bg-slate-800 text-emerald-400{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}"
+                >
+                    <svg class="mr-3 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Profile
+                </button>
+
+                <button 
+                    hx-get="/settings/security" 
+                    hx-target="#settings-content" 
+                    hx-push-url="true"
+                    class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 group {% if active_tab == 'security' %}bg-slate-800 text-emerald-400{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}"
+                >
+                    <svg class="mr-3 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Security
+                </button>
+
+                <button 
+                    hx-get="/settings/lab/config" 
+                    hx-target="#settings-content" 
+                    hx-push-url="true"
+                    class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-150 group {% if active_tab == 'lab' %}bg-slate-800 text-emerald-400{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}"
+                >
+                    <svg class="mr-3 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Lab Config
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg" id="settings-content">
+            {% if active_tab == 'profile' %}
+                {% include "settings/partials/profile_form.html" %}
+            {% elif active_tab == 'security' %}
+                {% include "settings/partials/security_form.html" %}
+            {% elif active_tab == 'lab' %}
+                {% include "settings/partials/lab_config.html" %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Alpine.js or manual script for toast notifications if not already handled
+    document.body.addEventListener('show-toast', function(evt) {
+        const message = evt.detail.value;
+        // Simplified toast for MVP
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-10 right-10 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-2xl z-50 transform translate-y-20 transition-transform duration-300';
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.style.transform = 'translateY(0)', 10);
+        setTimeout(() => {
+            toast.style.transform = 'translateY(20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    });
+</script>
+{% endblock %}

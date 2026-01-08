@@ -1,0 +1,56 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" 
+         @click="document.getElementById('modal-container').innerHTML = ''"></div>
+
+    <!-- Modal Panel -->
+    <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-y-auto max-h-[90vh] transform transition-all">
+        <!-- Close Button -->
+        <button class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                @click="document.getElementById('modal-container').innerHTML = ''">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <div class="p-6">
+            <h2 class="text-xl font-bold text-white mb-6">
+                {% if entity %}Edit{% else %}Create{% endif %} {{ entity_type|title }}
+            </h2>
+
+            <form hx-{% if entity %}put{% else %}post{% endif %}="/api/entities/{{ entity_type }}{% if entity %}/{{ entity.id }}{% endif %}"
+                  hx-ext="json-enc"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="if(event.detail.successful) { {% if redirect_url %} window.location.href = '{{ redirect_url }}'; {% else %} document.getElementById('modal-container').innerHTML = ''; htmx.trigger('#entity-list-container', 'refreshList'); {% endif %} }"
+                  class="space-y-4">
+                
+                {% for field_name, field in fields.items() %}
+                    {% if field_name not in ['id', 'created_at', 'updated_at', 'project', 'experiment', 'experiments', 'runs', 'things', 'sensors', 'treatments', 'experimental_units', 'sensor_deployments', 'treatment_applications', 'datastreams', 'channels', 'variants', 'species', 'tree', 'cable', 'sensor_model', 'observed_property', 'unit_of_measurement', 'location'] %}
+                    <div>
+                        <label class="block text-sm font-medium text-slate-400 mb-1">{{ field_name|title|replace('_', ' ') }}</label>
+                        {% if field_name == 'description' %}
+                        <textarea name="{{ field_name }}" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-600">{{ entity[field_name] if entity else '' }}</textarea>
+                        {% elif 'id' in field_name %}
+                        <input type="number" name="{{ field_name }}" value="{{ entity[field_name] if entity else '' }}" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-600">
+                        {% else %}
+                        <input type="text" name="{{ field_name }}" value="{{ entity[field_name] if entity else '' }}" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-600">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-800">
+                    <button type="button" 
+                            @click="document.getElementById('modal-container').innerHTML = ''"
+                            class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-transparent hover:bg-slate-800 rounded transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded shadow-lg shadow-emerald-500/20 transition-all hover:shadow-emerald-500/30">
+                        {% if entity %}Save Changes{% else %}Create Entity{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Ensure htmx json-enc is available -->
+<script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>

@@ -22,19 +22,31 @@ async def explorer_list(entity_type: str, request: Request, search: str = None, 
         "entities": entities
     })
 
+@router.get("/inspector/{entity_type}/{entity_id}", response_class=HTMLResponse)
+async def explorer_inspector(entity_type: str, entity_id: int, request: Request, session: Session = Depends(get_db_session)):
+    entity = await get_entity(session, entity_type, entity_id)
+    return templates.TemplateResponse("partials/inspector.html", {
+        "request": request,
+        "entity_type": entity_type,
+        "entity": entity,
+        # Pass schema if needed for labels, or use entity keys
+        "schema": ENTITY_MAP[entity_type]["schema"]
+    })
+
 @router.get("/form/{entity_type}", response_class=HTMLResponse)
-async def explorer_form(entity_type: str, request: Request, entity_id: Optional[int] = None, session: Session = Depends(get_db_session)):
+async def explorer_form(entity_type: str, request: Request, entity_id: Optional[int] = None, redirect_url: Optional[str] = None, session: Session = Depends(get_db_session)):
     entity = None
     if entity_id:
         entity = await get_entity(session, entity_type, entity_id)
     
-    # We can inspect the schema to build the form dynamically or just use the entity object
     schema = ENTITY_MAP[entity_type]["schema"]
-    fields = schema.__fields__ if hasattr(schema, "__fields__") else schema.model_fields
+    # Pydantic v2 vs v1 compat check
+    fields = schema.model_fields if hasattr(schema, "model_fields") else schema.__fields__
     
-    return templates.TemplateResponse("partials/entity_form.html", {
+    return templates.TemplateResponse("partials/modal_form.html", {
         "request": request,
         "entity_type": entity_type,
         "entity": entity,
-        "fields": fields
+        "fields": fields,
+        "redirect_url": redirect_url
     })

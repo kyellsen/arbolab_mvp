@@ -4,88 +4,159 @@
         <p class="text-sm text-slate-500">Visualization of how domain entities are structured and how deletions propagate.</p>
     </div>
 
-    <!-- Tree Visualization (Standard HTML/CSS for MVP) -->
-    <div class="bg-slate-900 border border-slate-800 rounded-lg p-8 overflow-x-auto min-h-[500px]">
-        <div class="flex justify-center">
+    <!-- Tree Visualization -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-8 overflow-x-auto min-h-[600px]">
+        <div class="flex justify-center min-w-max">
             <div class="space-y-12">
                 <!-- Root: Project -->
                 <div class="flex flex-col items-center">
                     <div @click="activeEntity = 'project'" hx-get="/explorer" hx-target="#main-stage" 
-                         class="group cursor-pointer bg-emerald-900/30 border-2 border-emerald-500 p-4 rounded-lg w-48 text-center hover:bg-emerald-500 hover:text-white transition-all shadow-lg">
+                         title="Klicken, um alle {{ counts.get('project', 0) }} Instanzen im Explorer anzuzeigen"
+                         class="group cursor-pointer bg-emerald-900/30 border-2 border-emerald-500 p-4 rounded-lg w-48 text-center hover:bg-emerald-500 hover:text-white transition-all shadow-lg relative z-10">
                         <span class="font-bold block">Project</span>
-                        <span class="text-xs text-emerald-400 group-hover:text-emerald-100 italic">Central Root</span>
+                        <span class="text-xs text-emerald-400 group-hover:text-emerald-100 flex justify-center items-center gap-1">
+                            <span class="font-mono bg-emerald-950/50 px-1.5 rounded">{{ counts.get('project', 0) }}</span> 
+                            Active
+                        </span>
                     </div>
 
-                    <!-- Branches -->
+                    <!-- Main Branch Split -->
                     <div class="h-12 w-0.5 bg-slate-700"></div>
                     
-                    <div class="flex gap-20">
-                        <!-- Left: Physical Assets -->
+                    <div class="flex gap-24">
+                        <!-- LEFT BRANCH: ASSETS (Physical) -->
                         <div class="flex flex-col items-center">
-                            <div class="h-0.5 w-full bg-slate-700 -mb-0.5"></div>
-                            <div class="flex gap-12 pt-12">
-                                <!-- Things -->
+                            <!-- Horizontal connector to left -->
+                            <div class="h-0.5 w-full bg-slate-700 -mb-0.5 relative">
+                                <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-slate-600 bg-slate-900 px-1">Assets</span>
+                            </div>
+                            
+                            <div class="flex gap-8 pt-12">
+                                <!-- Things Sub-branch -->
                                 <div class="flex flex-col items-center">
                                     <div @click="activeEntity = 'thing'" hx-get="/explorer" hx-target="#main-stage"
-                                         class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
+                                         title="Klicken, um alle {{ counts.get('thing', 0) }} Instanzen im Explorer anzuzeigen"
+                                         class="group cursor-pointer bg-slate-800 border-2 border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
                                         <span class="font-semibold block">Thing</span>
-                                        <span class="text-[10px] text-slate-500 uppercase tracking-tighter">Physical Object</span>
+                                        <span class="text-[10px] text-slate-400 uppercase tracking-tighter">{{ counts.get('thing', 0) }} Objects</span>
                                     </div>
                                     <div class="h-8 w-0.5 bg-slate-700"></div>
-                                    <div class="flex gap-4">
+                                    <div class="flex gap-3">
                                         <div @click="activeEntity = 'tree'" hx-get="/explorer" hx-target="#main-stage"
-                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-24 text-center text-sm hover:border-emerald-500 transition-colors">Tree</div>
+                                             title="{{ counts.get('tree', 0) }} Trees"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-20 text-center text-xs hover:border-emerald-500 hover:text-emerald-400 transition-colors">
+                                            <span class="block font-bold">{{ counts.get('tree', 0) }}</span> Trees
+                                        </div>
                                         <div @click="activeEntity = 'cable'" hx-get="/explorer" hx-target="#main-stage"
-                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-24 text-center text-sm hover:border-emerald-500 transition-colors">Cable</div>
+                                             title="{{ counts.get('cable', 0) }} Cables"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-20 text-center text-xs hover:border-emerald-500 hover:text-emerald-400 transition-colors">
+                                            <span class="block font-bold">{{ counts.get('cable', 0) }}</span> Cables
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Sensors -->
+                                <!-- Sensors Sub-branch -->
                                 <div class="flex flex-col items-center">
                                     <div @click="activeEntity = 'sensor'" hx-get="/explorer" hx-target="#main-stage"
-                                         class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
+                                         title="Klicken, um alle {{ counts.get('sensor', 0) }} Instanzen im Explorer anzuzeigen"
+                                         class="group cursor-pointer bg-slate-800 border-2 border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
                                         <span class="font-semibold block">Sensor</span>
+                                        <span class="text-[10px] text-slate-400 uppercase tracking-tighter">{{ counts.get('sensor', 0) }} Devices</span>
                                     </div>
-                                    <div class="h-8 w-0.5 bg-slate-700"></div>
+                                    <!-- Referential Link (Dotted) -->
+                                    <div class="h-8 w-0.5 border-l-2 border-dotted border-slate-700"></div>
                                     <div @click="activeEntity = 'sensor_model'" hx-get="/explorer" hx-target="#main-stage"
-                                         class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-32 text-center text-sm hover:border-emerald-500 transition-colors">Sensor Model</div>
+                                         title="{{ counts.get('sensor_model', 0) }} Models"
+                                         class="cursor-pointer bg-slate-900 border border-slate-700 border-dashed p-2 rounded w-32 text-center text-xs hover:border-emerald-500 hover:text-emerald-400 transition-colors opacity-80">
+                                        <span class="block font-bold">{{ counts.get('sensor_model', 0) }}</span> Models
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Right: Experiments -->
+                        <!-- MIDDLE: Experimental Units (Bridge) -->
+                        <div class="flex flex-col items-center pt-8">
+                            <div class="h-10 w-0.5 bg-slate-700"></div>
+                            <div @click="activeEntity = 'experimental_unit'" hx-get="/explorer" hx-target="#main-stage"
+                                 title="Klicken, um alle {{ counts.get('experimental_unit', 0) }} Instanzen im Explorer anzuzeigen"
+                                 class="group cursor-pointer bg-slate-800 border-2 border-slate-600 p-3 rounded-md w-40 text-center hover:border-orange-500 transition-colors shadow-sm z-10">
+                                <span class="font-semibold block text-sm">Experimental Unit</span>
+                                <span class="text-[10px] text-slate-400">{{ counts.get('experimental_unit', 0) }} Units (Spatial)</span>
+                            </div>
+                            <!-- Implicit connection to Deployments below -->
+                            <div class="h-24 w-0.5 border-l-2 border-dotted border-slate-800"></div>
+                        </div>
+
+                        <!-- RIGHT BRANCH: CAMPAIGNS (Context) -->
                         <div class="flex flex-col items-center">
-                             <div class="h-0.5 w-full bg-slate-700 -mb-0.5"></div>
-                             <div class="flex flex-col items-center pt-12">
+                            <!-- Horizontal connector to right -->
+                            <div class="h-0.5 w-full bg-slate-700 -mb-0.5 relative">
+                                <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] text-slate-600 bg-slate-900 px-1">Campaigns</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center pt-12">
                                 <div @click="activeEntity = 'experiment'" hx-get="/explorer" hx-target="#main-stage"
-                                     class="group cursor-pointer bg-purple-900/20 border-2 border-purple-500 p-4 rounded-lg w-48 text-center hover:bg-purple-500 hover:text-white transition-all shadow-lg">
+                                     title="Klicken, um alle {{ counts.get('experiment', 0) }} Instanzen im Explorer anzuzeigen"
+                                     class="group cursor-pointer bg-purple-900/20 border-2 border-purple-500 p-4 rounded-lg w-48 text-center hover:bg-purple-500 hover:text-white transition-all shadow-lg z-10">
                                     <span class="font-bold block">Experiment</span>
-                                    <span class="text-xs text-purple-400 group-hover:text-purple-100 italic">Campaign Root</span>
+                                    <span class="text-xs text-purple-400 group-hover:text-purple-100 flex justify-center items-center gap-1">
+                                        <span class="font-mono bg-purple-950/50 px-1.5 rounded">{{ counts.get('experiment', 0) }}</span> 
+                                        Campaigns
+                                    </span>
                                 </div>
                                 
                                 <div class="h-10 w-0.5 bg-slate-700"></div>
                                 
-                                <div class="flex gap-12">
-                                    <!-- Deployments -->
-                                    <div class="flex flex-col items-center">
-                                        <div @click="activeEntity = 'sensor_deployment'" hx-get="/explorer" hx-target="#main-stage"
-                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-40 text-center hover:border-emerald-500 transition-colors">
-                                            <span class="font-semibold block text-sm">Sensor Deployment</span>
-                                        </div>
-                                        <div class="h-8 w-0.5 bg-slate-700"></div>
-                                        <div @click="activeEntity = 'datastream'" hx-get="/explorer" hx-target="#main-stage"
-                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-32 text-center text-sm hover:border-emerald-500 transition-colors">Datastream</div>
-                                    </div>
-
+                                <div class="flex gap-8">
                                     <!-- Runs -->
                                     <div class="flex flex-col items-center">
                                         <div @click="activeEntity = 'run'" hx-get="/explorer" hx-target="#main-stage"
-                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-32 text-center hover:border-emerald-500 transition-colors">
+                                             title="{{ counts.get('run', 0) }} Runs"
+                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-2 rounded-md w-24 text-center hover:border-purple-500 transition-colors">
                                             <span class="font-semibold block text-sm">Run</span>
+                                            <span class="text-[10px] text-slate-500">{{ counts.get('run', 0) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Deployments Branch -->
+                                    <div class="flex flex-col items-center">
+                                        <div @click="activeEntity = 'sensor_deployment'" hx-get="/explorer" hx-target="#main-stage"
+                                             title="{{ counts.get('sensor_deployment', 0) }} Deployments"
+                                             class="group cursor-pointer bg-slate-800 border-2 border-slate-700 p-3 rounded-md w-40 text-center hover:border-purple-500 transition-colors">
+                                            <span class="font-semibold block text-sm">Sensor Deployment</span>
+                                            <span class="text-[10px] text-slate-400">{{ counts.get('sensor_deployment', 0) }} Deployments</span>
+                                        </div>
+                                        <div class="h-8 w-0.5 bg-slate-700"></div>
+                                        <div @click="activeEntity = 'datastream'" hx-get="/explorer" hx-target="#main-stage"
+                                             title="{{ counts.get('datastream', 0) }} Datastreams"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-36 text-center text-xs hover:border-purple-500 hover:text-purple-400 transition-colors mb-2">
+                                            <span class="font-bold block">{{ counts.get('datastream', 0) }}</span> Datastreams
+                                        </div>
+                                        <div class="h-4 w-0.5 bg-slate-700"></div>
+                                        <div @click="activeEntity = 'data_variant'" hx-get="/explorer" hx-target="#main-stage"
+                                             title="{{ counts.get('data_variant', 0) }} Variants"
+                                             class="cursor-pointer bg-slate-950 border border-slate-800 p-1.5 rounded w-32 text-center text-[10px] text-slate-500 hover:border-purple-500 hover:text-purple-400 transition-colors">
+                                            {{ counts.get('data_variant', 0) }} Data Variants
+                                        </div>
+                                    </div>
+
+                                    <!-- Treatments Branch -->
+                                    <div class="flex flex-col items-center">
+                                        <div @click="activeEntity = 'treatment'" hx-get="/explorer" hx-target="#main-stage"
+                                             title="{{ counts.get('treatment', 0) }} Treatments"
+                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-32 text-center hover:border-purple-500 transition-colors">
+                                            <span class="font-semibold block text-sm">Treatment</span>
+                                            <span class="text-[10px] text-slate-400">{{ counts.get('treatment', 0) }} Defs</span>
+                                        </div>
+                                        <div class="h-8 w-0.5 bg-slate-700"></div>
+                                        <div @click="activeEntity = 'treatment_application'" hx-get="/explorer" hx-target="#main-stage"
+                                             title="{{ counts.get('treatment_application', 0) }} Applications"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-32 text-center text-xs hover:border-purple-500 hover:text-purple-400 transition-colors">
+                                            <span class="font-bold block">{{ counts.get('treatment_application', 0) }}</span> Applied
                                         </div>
                                     </div>
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -93,18 +164,22 @@
         </div>
         
         <!-- Legend / Info -->
-        <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 border-t border-slate-800">
+        <div class="mt-20 grid grid-cols-1 md:grid-cols-4 gap-6 pt-12 border-t border-slate-800">
             <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-                <h4 class="text-emerald-500 font-bold text-sm mb-2">Cascading Deletes</h4>
-                <p class="text-xs text-slate-500 leading-relaxed">Deletions flow top-down. Deleting a Project removes all child experiments, things, and sensors associated with it.</p>
+                <h4 class="text-emerald-500 font-bold text-sm mb-2">Physical Assets</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Tangible objects managed in the system. Deleting these removes them from all experiments.</p>
             </div>
             <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
-                <h4 class="text-purple-500 font-bold text-sm mb-2">Experiment Boundaries</h4>
-                <p class="text-xs text-slate-500 leading-relaxed">Experiments group time-bounded campaigns. Sensor deployments bridge physical assets (Sensors/Things) into the experimental context.</p>
+                <h4 class="text-purple-500 font-bold text-sm mb-2">Campaigns</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Time-bounded experimental contexts. Deleting an experiment removes all runs, deployments, and data.</p>
+            </div>
+            <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                <h4 class="text-orange-400 font-bold text-sm mb-2">Spatial Units</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Experimental Units define the spatial structure (plots, blocks) independent of time.</p>
             </div>
              <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
                 <h4 class="text-slate-400 font-bold text-sm mb-2">Navigation</h4>
-                <p class="text-xs text-slate-500 leading-relaxed">Click any node in the tree to open the Explorer for that specific entity type.</p>
+                <p class="text-xs text-slate-500 leading-relaxed">Click any node to open the Explorer filtered for that entity type. Numbers indicate total count in current workspace.</p>
             </div>
         </div>
     </div>

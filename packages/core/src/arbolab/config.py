@@ -143,3 +143,31 @@ def create_default_config(
     except Exception as e:
         logger.warning(f"Failed to create default config: {e}")
     return config_path
+
+def update_config(workspace_root: Path, updates: dict[str, Any]) -> None:
+    """
+    Updates specific keys in config.yaml and saves it back.
+    ONLY for keys that are safe to edit.
+    """
+    config_path = workspace_root / DEFAULT_CONFIG_FILENAME
+    
+    # Load existing
+    if config_path.exists():
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                file_data = yaml.safe_load(f) or {}
+        except Exception as exc:
+            logger.warning(f"Failed to read {config_path} for update: {exc}")
+            file_data = {}
+    else:
+        file_data = {}
+
+    # Update only specific fields (Filter updates if needed, though router should handle it)
+    file_data.update(updates)
+
+    try:
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(file_data, f, sort_keys=False)
+        logger.info(f"Updated config at {config_path}")
+    except Exception as e:
+        logger.warning(f"Failed to write updated config: {e}")

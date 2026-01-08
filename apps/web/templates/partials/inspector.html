@@ -1,0 +1,64 @@
+<div class="h-full flex flex-col bg-slate-900 border-l border-slate-800">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-800 flex justify-between items-start">
+        <div>
+            <span class="text-xs font-mono text-emerald-500 mb-1 block">#{{ entity.id }}</span>
+            <h3 class="text-lg font-bold text-white leading-tight mb-1">{{ entity.name or entity.label or entity.kind or "Unnamed Entity" }}</h3>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                {{ entity_type }}
+            </span>
+        </div>
+        <div class="flex gap-2">
+            <button class="p-1.5 text-slate-400 hover:text-emerald-400 rounded hover:bg-slate-800 transition-colors"
+                    hx-get="/explorer-ui/form/{{ entity_type }}?entity_id={{ entity.id }}"
+                    hx-target="#modal-container"
+                    title="Edit">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            </button>
+            <button class="p-1.5 text-slate-400 hover:text-red-400 rounded hover:bg-slate-800 transition-colors"
+                    hx-delete="/api/entities/{{ entity_type }}/{{ entity.id }}"
+                    hx-confirm="Are you sure you want to delete this {{ entity_type }}?"
+                    hx-target="#inspector-panel"
+                    hx-swap="innerHTML"
+                    hx-on::after-request="if(event.detail.successful) htmx.trigger('#entity-list-container', 'refreshList')"
+                    title="Delete">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Details Scroll Area -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        {% if entity.description %}
+        <div>
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</h4>
+            <p class="text-sm text-slate-300 leading-relaxed">{{ entity.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Generic Field Dump (Excluding common fields) -->
+        <div class="space-y-4">
+            {% for key, value in entity.__dict__.items() %}
+                {% if key not in ['id', 'name', 'label', 'description', '_sa_instance_state', 'created_at', 'updated_at'] and value is not none %}
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ key|replace('_', ' ') }}</h4>
+                    <p class="text-sm text-slate-200 font-mono break-all">{{ value }}</p>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Meta Stats / Relations can be added here -->
+        
+        <div class="pt-6 border-t border-slate-800">
+             <div class="flex justify-between items-center text-xs text-slate-500">
+                <span>Created</span>
+                <span class="font-mono">{{ entity.created_at.strftime('%Y-%m-%d') if entity.created_at else 'Unknown' }}</span>
+            </div>
+             <div class="flex justify-between items-center text-xs text-slate-500 mt-1">
+                <span>Updated</span>
+                <span class="font-mono">{{ entity.updated_at.strftime('%Y-%m-%d') if entity.updated_at else 'Unknown' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
