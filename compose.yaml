@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: arbolab
+      POSTGRES_PASSWORD: arbolab_password_secret
+      POSTGRES_DB: arbolab
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - ARBO_DATABASE_URL=postgresql://arbolab:arbolab_password_secret@db:5432/arbolab
+      - ARBO_DATA_ROOT=/data
+      # Add other config here
+    volumes:
+      - arbolab_data:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+  arbolab_data:

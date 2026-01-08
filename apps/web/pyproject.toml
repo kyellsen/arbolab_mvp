@@ -13,6 +13,8 @@ dependencies = [
     "sqlmodel",
     "bcrypt",
     "itsdangerous",
+    "psycopg2-binary",
+    "alembic",
 ]
 
 [build-system]
