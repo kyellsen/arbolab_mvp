@@ -3,12 +3,12 @@ Integration test for MetadataImporter.
 """
 
 import json
-from pathlib import Path
 
 import polars as pl
 import pytest
 from arbolab.lab import Lab
 from arbolab.models.core import Experiment, Project
+
 
 @pytest.fixture
 def temp_lab(tmp_path):

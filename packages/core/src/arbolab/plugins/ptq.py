@@ -1,6 +1,8 @@
+from sqlalchemy import Float, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, Float
+
 from arbolab.models.base import IdMixin, TimestampMixin
+
 
 class PtqBase(DeclarativeBase):
     """Base for PTQ plugin models."""

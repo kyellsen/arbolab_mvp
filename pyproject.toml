@@ -19,6 +19,7 @@ dependencies = [
   "sqlmodel",
   "passlib[bcrypt]",
   "itsdangerous",
+  "psycopg2-binary"
 ]
 
 [dependency-groups]

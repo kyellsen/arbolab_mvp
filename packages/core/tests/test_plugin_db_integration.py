@@ -1,12 +1,13 @@
+# We must mock the entry points because we just added them to pyproject.toml 
+# but haven't reinstalled the package in the environment, so importlib won't find them yet.
+import importlib.metadata
+from unittest.mock import MagicMock
+
 import pytest
 from arbolab.lab import Lab
 from arbolab.plugins.ptq import PtqResult
 from sqlalchemy import text
 
-# We must mock the entry points because we just added them to pyproject.toml 
-# but haven't reinstalled the package in the environment, so importlib won't find them yet.
-import importlib.metadata
-from unittest.mock import MagicMock
 
 @pytest.fixture
 def mock_entry_points(monkeypatch):

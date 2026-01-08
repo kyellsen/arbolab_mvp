@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== arbolab: Initializing development environment ==="
+echo "=== arbolab: Initializing/Updating development environment ==="
 
 # 1) Verify that uv is installed
 if ! command -v uv >/dev/null 2>&1; then
@@ -11,40 +11,31 @@ if ! command -v uv >/dev/null 2>&1; then
     exit 1
 fi
 
-# 2) Optionally delete the old venv
+# 2) Handle .venv recreation
 if [ -d ".venv" ]; then
     echo "Existing .venv found."
-    read -p "Delete the old .venv and recreate it? [y/N]: " answer
+    read -p "Delete the old .venv and recreate it? (Recommended if dependencies changed significantly) [y/N]: " answer
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         rm -rf .venv
         echo "Old .venv deleted."
-    else
-        echo "Aborted."
-        exit 0
+        uv venv --python 3.12 .venv
     fi
+else
+    echo "Creating new uv venv ..."
+    uv venv --python 3.12 .venv
 fi
 
-# 3) Create a new venv
-echo "Creating new uv venv ..."
-uv venv --python 3.12 .venv
+# 3) Sync workspace packages plus dev tools
+echo "Syncing workspace dependencies and dev tools ..."
+uv sync --all-packages --all-extras --group dev
 
-# 4) Sync workspace packages plus dev tools
-echo "Installing workspace dependencies ..."
-uv sync --all-packages --group dev
-
-# 5) Done
-echo "=== Setup complete ==="
+# 4) Done
+echo "=== Setup/Sync complete ==="
 echo
 echo "Activate the environment:"
 echo "    source .venv/bin/activate"
 echo
-echo "Run tests:"
-echo "    uv run pytest --cov"
-echo
-echo "Ruff / linting:"
-echo "    uv run ruff check --fix packages/"
-echo
-echo "Mypy type checking:"
-echo "    uv run mypy packages/"
+echo "To run all quality checks (Linter, Type Checker, Tests):"
+echo "    cat ci.txt | bash"
 echo
 echo "Good luck with your arbolab workspace!"

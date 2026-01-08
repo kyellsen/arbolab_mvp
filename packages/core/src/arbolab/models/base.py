@@ -9,7 +9,6 @@ from sqlalchemy import JSON, DateTime, Integer, Sequence, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 
-
 class Base(DeclarativeBase):
     """Declarative base for ArboLab SQLAlchemy models."""
 

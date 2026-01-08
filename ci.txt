@@ -1,4 +1,7 @@
-uv sync --all-extras --all-packages --group dev
-uv run ruff check --fix packages/
-uv run mypy packages/
-uv run pytest
+# Arbolab CI/Quality Gate Block
+# Copy and paste this into your terminal to run all checks:
+
+uv sync --all-extras --all-packages --group dev && \
+uv run ruff check --fix packages/ && \
+uv run mypy packages/ && \
+uv run pytest --cov
