@@ -11,7 +11,7 @@ from apps.web.core.security import get_password_hash, verify_password
 
 # Importiere Modelle und Security
 from uuid import UUID
-from apps.web.models.auth import User, Workspace
+from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
 from arbolab.lab import Lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from pathlib import Path
@@ -67,17 +67,34 @@ async def home(
         user_id = UUID(str(user_data["id"]))
         
         # 1. Fetch all workspaces for context switcher
-        stmt = select(Workspace).where(Workspace.owner_id == user_id).order_by(Workspace.created_at)
+        stmt = (
+            select(Workspace)
+            .join(UserWorkspaceAssociation)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+            .order_by(Workspace.created_at)
+        )
         all_workspaces = saas_session.exec(stmt).all()
         
-        # 2. Get Lab (using current_workspace determined by Depends)
-        paths = resolve_workspace_paths(user_id, current_workspace.id)
+        # 2. Get Role for current workspace
+        assoc = saas_session.exec(
+            select(UserWorkspaceAssociation)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+            .where(UserWorkspaceAssociation.workspace_id == current_workspace.id)
+        ).first()
+        
+        # Should exist because Depends(get_current_workspace) found it via association
+        from arbolab.core.security import LabRole
+        role = assoc.role if assoc else LabRole.VIEWER
+
+        # 3. Get Lab
+        paths = resolve_workspace_paths(current_workspace.id)
         ensure_workspace_paths(paths)
         
         lab = Lab.open(
             workspace_root=paths.workspace_root,
             input_root=paths.input_root,
-            results_root=paths.results_root
+            results_root=paths.results_root,
+            role=role
         )
         
         # 3. Use Lab Session
@@ -103,7 +120,10 @@ async def home(
                 "counts": counts,
                 "project_name": project_name,
                 "current_workspace": current_workspace,
-                "all_workspaces": all_workspaces
+                "all_workspaces": all_workspaces,
+                "role": role,
+                "is_viewer": role == LabRole.VIEWER,
+                "is_admin": role == LabRole.ADMIN
             }
             
             # Check HTMX request to swap only content

@@ -32,7 +32,7 @@ class WorkspaceDatabase:
         assert self._engine is not None
         return self._engine
         
-    def connect(self):
+    def connect(self, read_only: bool = False):
         """Initializes the engine and session factory."""
         if self._engine is not None:
             return
@@ -42,8 +42,13 @@ class WorkspaceDatabase:
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         
         conn_str = f"duckdb:///{self._db_path}"
-        logger.debug(f"Connecting to database at {self._db_path}")
-        self._engine = create_engine(conn_str)
+        logger.debug(f"Connecting to database at {self._db_path} (Read-Only: {read_only})")
+        
+        connect_args = {}
+        if read_only:
+             connect_args["read_only"] = True
+
+        self._engine = create_engine(conn_str, connect_args=connect_args)
         
         # Initialize Schema (MVP: Create all tables if missing)
         # Core tables go to default schema (or 'main' if configured, but default is easier for now)

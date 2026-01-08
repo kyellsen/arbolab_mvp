@@ -101,6 +101,7 @@ Model evolution must preserve reproducibility.
 * All internal writes go through managed layouts under `workspace_root`.
 * Results are written **only** via result writers under `results_root`.
 * Absolute paths or unmanaged directories must never be persisted.
+* **Transient Scripts**: Any temporary, investigative, or verification scripts (e.g. `*_seed.py`, `verify_*.py`) created by agents or humans must be placed in `scripts/temp/`. They must **never** be placed in the project root.
 
 ---
 

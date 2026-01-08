@@ -8,10 +8,10 @@ class LabPaths:
         self.input_root = input_root
         self.results_root = results_root
 
-def resolve_workspace_paths(user_id: UUID, workspace_id: UUID) -> LabPaths:
+def resolve_workspace_paths(workspace_id: UUID) -> LabPaths:
     """
-    Generates isolated paths for a specific User and Workspace.
-    Structure: {DATA_ROOT}/{user_id}/{workspace_id}/...
+    Generates isolated paths for a specific Workspace.
+    Structure: {DATA_ROOT}/workspaces/{workspace_id}/...
     """
     config = load_config()
     
@@ -19,7 +19,8 @@ def resolve_workspace_paths(user_id: UUID, workspace_id: UUID) -> LabPaths:
     safe_root = config.data_root.resolve()
     
     # Construct base path for this specific workspace
-    base = safe_root / str(user_id) / str(workspace_id)
+    # Flattened: /data/workspaces/{uuid}
+    base = safe_root / "workspaces" / str(workspace_id)
     final_base = base.resolve()
     
     # Security: Ensure we haven't traversed out of safe_root

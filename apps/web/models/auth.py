@@ -1,13 +1,11 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from enum import Enum
 
 from sqlmodel import Field, Relationship, SQLModel
+from arbolab.core.security import LabRole
 
-# Role Enum
-class LabRole(str, Enum):
-    ADMIN = "ADMIN"
-    VIEWER = "VIEWER"
+# Role Enum (Imported from core)
+# class LabRole(str, Enum): ...
 
 # Association Table
 class UserWorkspaceAssociation(SQLModel, table=True):

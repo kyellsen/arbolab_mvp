@@ -5,10 +5,11 @@ from typing import Any
 from uuid import UUID
 
 from apps.web.core.domain import list_entities, get_entity, create_entity, update_entity, delete_entity
-from apps.web.models.auth import User, Workspace
+from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from apps.web.core.database import get_session as get_saas_session
 from arbolab.lab import Lab
+from arbolab.core.security import LabRole
 from pathlib import Path
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
@@ -29,6 +30,10 @@ async def get_current_user_id(request: Request) -> UUID:
         request.session.clear() # Clear the invalid session
         raise HTTPException(status_code=401, detail="Invalid user session")
 
+from apps.web.models.auth import User, Workspace, UserWorkspaceAssociation
+
+# ...
+
 async def get_current_workspace(
     request: Request,
     user_id: UUID = Depends(get_current_user_id),
@@ -42,42 +47,76 @@ async def get_current_workspace(
     active_ws_id = request.session.get("active_workspace_id")
     if active_ws_id:
         try:
-            stmt = select(Workspace).where(Workspace.id == UUID(active_ws_id), Workspace.owner_id == user_id)
+            # Query via Association
+            stmt = (
+                select(Workspace)
+                .join(UserWorkspaceAssociation)
+                .where(Workspace.id == UUID(active_ws_id))
+                .where(UserWorkspaceAssociation.user_id == user_id)
+            )
             workspace = session.exec(stmt).first()
             if workspace:
                 return workspace
         except (ValueError, TypeError):
             pass # Invalid ID in session, fall back
 
-    # 2. Fallback: First available or create default
-    stmt = select(Workspace).where(Workspace.owner_id == user_id).order_by(Workspace.created_at)
+    # 2. Fallback: First available
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+        .order_by(Workspace.created_at)
+    )
     workspace = session.exec(stmt).first()
     
     if not workspace:
         # Migration/Onboarding: Create default workspace
-        workspace = Workspace(name="Default Workspace", owner_id=user_id)
+        # Create Workspace AND Association (ADMIN)
+        from arbolab.core.security import LabRole
+        workspace = Workspace(name="Default Workspace")
         session.add(workspace)
         session.commit()
         session.refresh(workspace)
+        
+        # Link as Admin
+        assoc = UserWorkspaceAssociation(
+            user_id=user_id, 
+            workspace_id=workspace.id, 
+            role=LabRole.ADMIN
+        )
+        session.add(assoc)
+        session.commit()
         
     return workspace
 
 def get_lab(
     user_id: UUID = Depends(get_current_user_id),
-    workspace: Workspace = Depends(get_current_workspace)
+    workspace: Workspace = Depends(get_current_workspace),
+    session: SaasSession = Depends(get_saas_session) 
 ) -> Lab:
     """
     Instantiates the Lab for the specific isolated workspace.
     Enforces path isolation.
     """
+    # 1. Get Role
+    stmt = select(UserWorkspaceAssociation).where(
+        UserWorkspaceAssociation.user_id == user_id,
+        UserWorkspaceAssociation.workspace_id == workspace.id
+    )
+    assoc = session.exec(stmt).first()
+    if not assoc:
+         # Should ideally be caught by get_current_workspace, but strict check here
+         raise HTTPException(status_code=403, detail="Access denied to workspace")
+
     try:
-        paths = resolve_workspace_paths(user_id, workspace.id)
+        paths = resolve_workspace_paths(workspace.id)
         ensure_workspace_paths(paths)
         
         return Lab.open(
             workspace_root=paths.workspace_root,
             input_root=paths.input_root,
-            results_root=paths.results_root
+            results_root=paths.results_root,
+            role=assoc.role
         )
     except ValueError as e:
         # Security violation (Path traversal)
@@ -88,43 +127,56 @@ def get_db_session(lab: Lab = Depends(get_lab)):
     with lab.database.session() as session:
         yield session
 
+# Helper for explicit check
+def ensure_admin(lab: Lab):
+    if lab.role != LabRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Read-only access: Only ADMINs can modify data.")
+
 @router.get("/{entity_type}")
-async def api_list_entities(entity_type: str, search: str = None, tag: str = None, session: Session = Depends(get_db_session)):
-    try:
-        return await list_entities(session, entity_type, search=search, tag=tag)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+async def api_list_entities(entity_type: str, search: str = None, tag: str = None, lab: Lab = Depends(get_lab)):
+    with lab.database.session() as session:
+        try:
+            return await list_entities(session, entity_type, search=search, tag=tag)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/{entity_type}/{entity_id}")
-async def api_get_entity(entity_type: str, entity_id: int, session: Session = Depends(get_db_session)):
-    entity = await get_entity(session, entity_type, entity_id)
-    if not entity:
-        raise HTTPException(status_code=404, detail="Entity not found")
-    return entity
-
-@router.post("/{entity_type}")
-async def api_create_entity(entity_type: str, data: dict[str, Any], session: Session = Depends(get_db_session)):
-    try:
-        return await create_entity(session, entity_type, data)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.put("/{entity_type}/{entity_id}")
-async def api_update_entity(entity_type: str, entity_id: int, data: dict[str, Any], session: Session = Depends(get_db_session)):
-    try:
-        entity = await update_entity(session, entity_type, entity_id, data)
+async def api_get_entity(entity_type: str, entity_id: int, lab: Lab = Depends(get_lab)):
+    with lab.database.session() as session:
+        entity = await get_entity(session, entity_type, entity_id)
         if not entity:
             raise HTTPException(status_code=404, detail="Entity not found")
         return entity
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{entity_type}")
+async def api_create_entity(entity_type: str, data: dict[str, Any], lab: Lab = Depends(get_lab)):
+    ensure_admin(lab)
+    with lab.database.session() as session:
+        try:
+            return await create_entity(session, entity_type, data)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/{entity_type}/{entity_id}")
+async def api_update_entity(entity_type: str, entity_id: int, data: dict[str, Any], lab: Lab = Depends(get_lab)):
+    ensure_admin(lab)
+    with lab.database.session() as session:
+        try:
+            entity = await update_entity(session, entity_type, entity_id, data)
+            if not entity:
+                raise HTTPException(status_code=404, detail="Entity not found")
+            return entity
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{entity_type}/{entity_id}")
-async def api_delete_entity(entity_type: str, entity_id: int, session: Session = Depends(get_db_session)):
-    try:
-        success = await delete_entity(session, entity_type, entity_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Entity not found")
-        return {"status": "deleted"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+async def api_delete_entity(entity_type: str, entity_id: int, lab: Lab = Depends(get_lab)):
+    ensure_admin(lab)
+    with lab.database.session() as session:
+        try:
+            success = await delete_entity(session, entity_type, entity_id)
+            if not success:
+                raise HTTPException(status_code=404, detail="Entity not found")
+            return {"status": "deleted"}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))

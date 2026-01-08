@@ -8,8 +8,13 @@ from .database import WorkspaceDatabase
 from .layout import ResultsLayout, WorkspaceLayout
 from .plugins import PluginRegistry, PluginRuntime
 from .store import VariantStore
+from arbolab.core.security import LabRole
 
 logger = get_logger(__name__)
+
+class PermissionError(Exception):
+    """Raised when an operation is forbidden for the current role."""
+    pass
 
 class Lab:
     """
@@ -23,7 +28,8 @@ class Lab:
                  results_layout: ResultsLayout,
                  database: WorkspaceDatabase,
                  variant_store: VariantStore,
-                 input_root: Path | None = None):
+                 input_root: Path | None = None,
+                 role: LabRole = LabRole.ADMIN):
         
         self.config = config
         self.layout = workspace_layout
@@ -31,6 +37,7 @@ class Lab:
         self.database = database
         self.store = variant_store
         self.input_root = input_root
+        self.role = role
         
         # Plugins
         self.plugin_registry = PluginRegistry()
@@ -42,29 +49,35 @@ class Lab:
 
     def _initialize(self):
         """Ensures the workspace is ready for use."""
+        # Viewers should not trigger structure creation if it's missing?
+        # But MVP assumes structure exists or is consistent.
         self.layout.ensure_structure()
-        self.database.connect()
+        self.database.connect(read_only=(self.role == LabRole.VIEWER))
         
         # Initialize plugins (after DB is connected)
         self.plugin_runtime.initialize_plugins(self)
         
-        # Smart-Eager Catalog Seeding
-        from arbolab.core.catalog_manager import CatalogManager
-        cm = CatalogManager()
-        pkg_version = cm.get_package_version()
+        # Smart-Eager Catalog Seeding (Only for Admins)
+        if self.role == LabRole.ADMIN:
+            from arbolab.core.catalog_manager import CatalogManager
+            cm = CatalogManager()
+            try:
+                pkg_version = cm.get_package_version()
+                with self.database.session() as db:
+                    if cm.should_sync(db, pkg_version):
+                        cm.sync_all(db)
+            except Exception as e:
+                logger.warning(f"Catalog sync failed: {e}")
         
-        with self.database.session() as db:
-             if cm.should_sync(db, pkg_version):
-                 cm.sync_all(db)
-        
-        logger.info(f"Lab initialized at {self.layout.root}")
+        logger.info(f"Lab initialized at {self.layout.root} (Role: {self.role})")
 
     @classmethod
     def open(cls, 
              workspace_root: Path | None, # can be str, but Path preferred in typing
              input_root: Path | None = None,
              results_root: Path | None = None,
-             base_root: Path | None = None) -> 'Lab':
+             base_root: Path | None = None,
+             role: LabRole = LabRole.ADMIN) -> 'Lab':
         """
         Opens a Lab Workspace.
         Supports explicit roots or base_root derivation.
@@ -96,8 +109,12 @@ class Lab:
         # Create directory if strictly entirely missing? 
         # Usually we assume the parent exists or we make it.
         if not ws_path.exists():
+            if role == LabRole.VIEWER:
+                 # Viewers cannot create new workspaces implicitly
+                 # (Though usually paths are pre-validated by SaaS)
+                 pass 
             logger.info(f"Creating new workspace directory at {ws_path}")
-            ws_path.mkdir(parents=True)
+            ws_path.mkdir(parents=True, exist_ok=True)
 
         # 2. Bootstrap Config
         # If config doesn't exist, create default with current roots if provided
@@ -146,7 +163,8 @@ class Lab:
             results_layout=res_layout,
             database=db,
             variant_store=store,
-            input_root=input_path
+            input_root=input_path,
+            role=role
         )
         
     @property
@@ -159,13 +177,19 @@ class Lab:
         """
         Import an experiment metadata package.
         Wrapper around MetadataImporter.
+        Enforces ADMIN role.
         """
+        if self.role != LabRole.ADMIN:
+             raise PermissionError("Only ADMINs can import metadata.")
         return self.importer.import_package(package_path)
 
     def run_recipe(self, recipe_path: Path | None = None):
         """
         Execute a recipe. MVP Stub.
         """
+        if self.role != LabRole.ADMIN:
+            raise PermissionError("Only ADMINs can run recipes.")
+            
         if recipe_path is None:
             recipe_path = self.layout.recipe_path()
             

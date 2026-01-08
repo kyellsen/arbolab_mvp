@@ -14,7 +14,7 @@ This guide describes how to get ArboLab up and running locally with zero configu
 To completely reset the environment (e.g., to clear a corrupted database or start fresh), follow these steps.
 
 **Option A: Operational Reset (Keeps Input Data)**
-*Note: Since data is nested by User/Workspace, manual granular cleanup is difficult. This command clears known nested workspace/result folders but leaves input/ alone.*
+*Note: This command clears workspace scratch space and results folders but leaves input/ alone. Now easier to manage thanks to the flattened structure.*
 ```bash
 # 1. Stop containers
 podman-compose down -v
@@ -47,10 +47,10 @@ The system uses local bind mounts to ensure your data is accessible on the host 
 
 | Host Path | Container Path | Purpose |
 | :--- | :--- | :--- |
-| `./data` | `/data` | **Root Data Volume**. Persists all user workspaces and inputs. |
-| `↳ ./data/<uid>/<wid>/input` | `.../input` | Isolated input per workspace. |
-| `↳ ./data/<uid>/<wid>/workspace` | `.../workspace` | Isolated scratch space. |
-| `↳ ./data/<uid>/<wid>/results` | `.../results` | Isolated results. |
+| `./data` | `/data` | **Root Data Volume**. Persists all workspaces and global SaaS state. |
+| `↳ ./data/workspaces/<wid>/input` | `.../input` | Isolated input per workspace. |
+| `↳ ./data/workspaces/<wid>/workspace` | `.../workspace` | Isolated scratch space. |
+| `↳ ./data/workspaces/<wid>/results` | `.../results` | Isolated results. |
 | *Managed Volume* | `/var/lib/postgresql/data` | Database files (Postgres). |
 
 ## Advanced / Production Notes
