@@ -1,0 +1,18 @@
+[
+  {
+    "name": "TMS-4",
+    "description": "TOMST TMS-4 Soil Moisture, Temperature and Inclination Logger.",
+    "properties": {
+      "manufacturer": "TOMST",
+      "measurements": ["Soil Moisture", "Soil Temperature", "Surface Temperature", "Air Temperature"]
+    }
+  },
+  {
+    "name": "LI-190R",
+    "description": "LI-COR Quantum Sensor for measuring PPFD.",
+    "properties": {
+      "manufacturer": "LI-COR",
+      "measurements": ["PPFD"]
+    }
+  }
+]

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 # Import core models to ensure they are registered in Base.metadata
 import arbolab.models.core  # noqa: F401
+import arbolab.models.sys  # noqa: F401
 from arbolab.models.base import Base
 
 logger = get_logger(__name__)

@@ -21,6 +21,7 @@ from arbolab.models.core import (
     TreeSpecies,
     UnitOfMeasurement,
 )
+from arbolab.models.sys import SysMetadata
 
 __all__ = [
     "Base",
@@ -42,5 +43,6 @@ __all__ = [
     "Tree",
     "TreeSpecies",
     "UnitOfMeasurement",
+    "SysMetadata",
 ]
 

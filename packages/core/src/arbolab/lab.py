@@ -48,6 +48,15 @@ class Lab:
         # Initialize plugins (after DB is connected)
         self.plugin_runtime.initialize_plugins(self)
         
+        # Smart-Eager Catalog Seeding
+        from arbolab.core.catalog_manager import CatalogManager
+        cm = CatalogManager()
+        pkg_version = cm.get_package_version()
+        
+        with self.database.session() as db:
+             if cm.should_sync(db, pkg_version):
+                 cm.sync_all(db)
+        
         logger.info(f"Lab initialized at {self.layout.root}")
 
     @classmethod

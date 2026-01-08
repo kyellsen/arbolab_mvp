@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Fagus sylvatica",
+    "description": "European Beech",
+    "properties": {
+       "common_name": "Beech",
+       "family": "Fagaceae"
+    }
+  },
+  {
+    "name": "Picea abies",
+    "description": "Norway Spruce",
+    "properties": {
+       "common_name": "Spruce",
+       "family": "Pinaceae"
+    }
+  },
+   {
+    "name": "Quercus robur",
+    "description": "Pedunculate Oak",
+    "properties": {
+       "common_name": "English Oak",
+       "family": "Fagaceae"
+    }
+  }
+]

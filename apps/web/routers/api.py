@@ -1,23 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from sqlmodel import select, Session as SaasSession
 from typing import Any
+from uuid import UUID
+
 from apps.web.core.domain import list_entities, get_entity, create_entity, update_entity, delete_entity
+from apps.web.models.auth import User, Workspace
+from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from apps.web.core.database import get_session as get_saas_session
 from arbolab.lab import Lab
 from pathlib import Path
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
-# Helper to get the Lab instance. 
-# In a real SaaS, this would resolve the lab based on the current user's selected project.
-# For now, we use a default workspace.
-def get_lab() -> Lab:
-    # Use the data_root from config to find the workspace
-    from arbolab.config import load_config
-    config = load_config()
-    workspace_root = config.data_root / "workspace"
-    return Lab.open(workspace_root)
+# --- Dependency Injection for Multi-Tenancy ---
+
+async def get_current_user_id(request: Request) -> UUID:
+    user_data = request.session.get("user")
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        return UUID(user_data["id"])
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=401, detail="Invalid user session")
+
+async def get_current_workspace(
+    user_id: UUID = Depends(get_current_user_id),
+    session: SaasSession = Depends(get_saas_session)
+) -> Workspace:
+    """
+    Determines the current active workspace for the user.
+    MVP: Auto-selects the first workspace or creates a default one.
+    """
+    stmt = select(Workspace).where(Workspace.owner_id == user_id)
+    workspace = session.exec(stmt).first()
+    
+    if not workspace:
+        # Migration/Onboarding: Create default workspace
+        workspace = Workspace(name="Default Workspace", owner_id=user_id)
+        session.add(workspace)
+        session.commit()
+        session.refresh(workspace)
+        
+    return workspace
+
+def get_lab(
+    user_id: UUID = Depends(get_current_user_id),
+    workspace: Workspace = Depends(get_current_workspace)
+) -> Lab:
+    """
+    Instantiates the Lab for the specific isolated workspace.
+    Enforces path isolation.
+    """
+    try:
+        paths = resolve_workspace_paths(user_id, workspace.id)
+        ensure_workspace_paths(paths)
+        
+        return Lab.open(
+            workspace_root=paths.workspace_root,
+            input_root=paths.input_root,
+            results_root=paths.results_root
+        )
+    except ValueError as e:
+        # Security violation (Path traversal)
+        raise HTTPException(status_code=403, detail=str(e))
 
 def get_db_session(lab: Lab = Depends(get_lab)):
+    """Yields a session for the specific Lab (DuckDB)."""
     with lab.database.session() as session:
         yield session
 

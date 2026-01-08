@@ -20,28 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent
 
 
 # 1. Datenbank Setup
-from arbolab.config import load_config
+from apps.web.core.database import engine, get_session, SessionDep
 
-config = load_config()
-config.ensure_directories()
-
-# Use configured DB URL or fallback to local sqlite (though Postgres is desired)
-database_url = config.database_url
-if not database_url:
-    # Fallback to sqlite in data_root for local dev without containers
-    sqlite_file_name = config.data_root / "saas.db"
-    database_url = f"sqlite:///{sqlite_file_name}"
-
-engine = create_engine(database_url)
-
+# DB-Erstellung erfolgt, nachdem Modelle importiert wurden
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-SessionDep = Annotated[Session, Depends(get_session)]
 
 # 2. App Setup
 app = FastAPI()
@@ -208,7 +191,7 @@ async def login_submit(
         })
     
     # Session setzen (Cookie)
-    request.session["user"] = {"id": user.id, "email": user.email}
+    request.session["user"] = {"id": str(user.id), "email": user.email}
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/auth/register", response_class=HTMLResponse)

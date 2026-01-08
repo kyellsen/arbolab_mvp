@@ -1,0 +1,23 @@
+[
+  {
+    "unit": "degree Celsius",
+    "unit_symbol": "°C",
+    "properties": {
+      "definition": "The Celsius scale is an absolute scale of temperature, where 0 °C is the freezing point of water and 100 °C is the boiling point of water at 1 atm pressure."
+    }
+  },
+  {
+    "unit": "micromoles per square meter per second",
+    "unit_symbol": "µmol m-2 s-1",
+    "properties": {
+      "definition": "A unit of measure for photosynthetic photon flux density (PPFD), representing the number of photons in the photosynthetically active range falling on a square meter every second."
+    }
+  },
+  {
+    "unit": "volumetric water content",
+    "unit_symbol": "m3/m3",
+    "properties": {
+      "definition": "The ratio of the volume of water to the total volume of the soil."
+    }
+  }
+]

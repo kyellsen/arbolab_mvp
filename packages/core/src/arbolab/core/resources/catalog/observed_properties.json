@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Air Temperature",
+    "description": "Temperature of the air surrounding the sensor.",
+    "properties": {
+      "keywords": ["meteorology", "atmosphere"]
+    }
+  },
+  {
+    "name": "Photosynthetic Photon Flux Density",
+    "description": "The number of photons in the 400-700 nm waveband incident per unit time on a unit surface.",
+    "properties": {
+      "keywords": ["light", "photosynthesis", "PAR"]
+    }
+  },
+  {
+    "name": "Soil Moisture",
+    "description": "The amount of water contained in the soil.",
+    "properties": {
+      "keywords": ["hydrology", "soil"]
+    }
+  }
+]
