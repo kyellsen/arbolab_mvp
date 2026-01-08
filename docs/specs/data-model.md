@@ -47,7 +47,7 @@ erDiagram
 
 ## 2. Relational Schema (DuckDB)
 
-Location: `workspace_root/arbolab.duckdb` (Main DB)
+Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 
 ### 2.1 Physical Perspective (Assets)
 | Table | Column | Type | Constraints | Description |

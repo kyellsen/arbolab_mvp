@@ -10,7 +10,7 @@ ArboLab operates on three explicit roots. No default silently places inputs or r
 ## Workspace Structure
 Managed internal structure within `workspace_root`:
 
-* `db/`: DuckDB persistence (SQLAlchemy models).
+* `db/`: DuckDB persistence (SQLAlchemy models), primary file `arbolab.duckdb`.
 * `storage/variants/`: Parquet data, grouped by project/datastream.
 * `recipes/`: Recipe JSON files and execution logs.
 * `logs/`, `tmp/`: Runtime ephemerals.

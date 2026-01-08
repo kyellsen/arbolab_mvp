@@ -23,7 +23,7 @@ The `Lab` class is the single public entry point.
 | Root | Permission | Content |
 |:---|:---|:---|
 | `input_root` | **READ-ONLY** | User data, raw CSVs, `metadata/datapackage.json`. |
-| `workspace_root` | **READ/WRITE** | `arbolab.duckdb`, `config.yaml`, internal Parquet, logs. |
+| `workspace_root` | **READ/WRITE** | `db/arbolab.duckdb`, `config.yaml`, internal Parquet, logs. |
 | `results_root` | **WRITE-ONLY** | Publication artifacts (Plots, Reports). **Never** pipeline input. |
 
 ### 2.2 Path Safety
