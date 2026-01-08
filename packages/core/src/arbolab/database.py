@@ -5,6 +5,7 @@ from pathlib import Path
 import duckdb
 from arbolab_logger import get_logger
 from sqlalchemy import create_engine, event, text
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Import core models to ensure they are registered in Base.metadata
@@ -19,8 +20,16 @@ class WorkspaceDatabase:
     """
     def __init__(self, db_path: Path):
         self._db_path = db_path
-        self._engine = None
+        self._engine: Engine | None = None
         self._session_factory = None
+
+    @property
+    def engine(self) -> Engine:
+        """Return the SQLAlchemy engine, creating it on demand."""
+        if self._engine is None:
+            self.connect()
+        assert self._engine is not None
+        return self._engine
         
     def connect(self):
         """Initializes the engine and session factory."""

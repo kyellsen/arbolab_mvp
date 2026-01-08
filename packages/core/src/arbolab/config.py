@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,9 @@ def load_config(workspace_root: Path | None = None) -> LabConfig:
     
     If workspace_root is provided, we try to look for config.yaml there.
     Otherwise we rely on defaults/env vars.
+
+    Raises:
+        RuntimeError: If the config file exists but cannot be parsed.
     """
     # 1. Start with defaults + env vars
     config = LabConfig()
@@ -82,30 +86,43 @@ def load_config(workspace_root: Path | None = None) -> LabConfig:
         try:
             with open(config_path, encoding="utf-8") as f:
                 file_data = yaml.safe_load(f) or {}
-                # Update config with file data, but Env vars should effectively override 
-                # (pydantic BaseSettings usually prioritizes Env over init args if configured, 
-                # but here we are manual. Let's start simple: Env > Defaults. Config file is secondary/deprecated for paths?)
-                
-                # Actually, standard behavior: Env > Secrets > Config File > Defaults.
-                # If we want to support config.yaml, we should integrate it into settings sources.
-                # For this MVP step, let's just log it.
-                logger.debug(f"Found config at {config_path}, but using Env/Defaults for critical paths.")
-        except Exception as e:
-            logger.warning(f"Failed to read {config_path}: {e}")
+        except Exception as exc:
+            raise RuntimeError(f"Failed to read {config_path}: {exc}") from exc
+
+        if not isinstance(file_data, dict):
+            raise RuntimeError(f"Config file {config_path} must contain a mapping.")
+
+        env_prefix = str(LabConfig.model_config.get("env_prefix", ""))
+        updates: dict[str, Any] = {}
+        for key, value in file_data.items():
+            if key not in LabConfig.model_fields:
+                continue
+            env_key = f"{env_prefix}{key}".upper()
+            if env_key in os.environ:
+                continue
+            updates[key] = value
+
+        if updates:
+            config = config.model_copy(update=updates)
 
     logger.debug(f"Loaded config: DATA_ROOT={config.data_root}, DB_URL={'Set' if config.database_url else 'Unset'}")
     return config
 
 
-def create_default_config(workspace_root: Path, 
-                          initial_input: Path | None = None, 
-                          initial_results: Path | None = None):
+def create_default_config(
+    workspace_root: Path,
+    initial_input: Path | None = None,
+    initial_results: Path | None = None,
+) -> Path:
     """
     Creates a basic config.yaml if it doesn't exist.
+
+    Returns:
+        The path to the config file.
     """
     config_path = workspace_root / DEFAULT_CONFIG_FILENAME
     if config_path.exists():
-        return
+        return config_path
 
     config_data = {
         "config_version": "1.0.0",
@@ -117,8 +134,9 @@ def create_default_config(workspace_root: Path,
     config_data = {k: v for k, v in config_data.items() if v is not None}
 
     try:
-        with open(config_path, "w") as f:
-            yaml.dump(config_data, f)
+        with open(config_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(config_data, f, sort_keys=False)
         logger.info(f"Created default config at {config_path}")
     except Exception as e:
         logger.warning(f"Failed to create default config: {e}")
+    return config_path

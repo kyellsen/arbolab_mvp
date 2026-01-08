@@ -2,6 +2,19 @@
 
 **Binding Rules:** See `../../AGENTS.md`.
 
+## Implementation Status (MVP)
+
+| ID | Title | Status |
+|----|-------|--------|
+| US-001 | Create or open a Lab | **Partial** (Core Lab implemented) |
+| US-002 | Offline experiment documentation package | Planned |
+| US-004 | Import metadata package into Lab DB | **Done** (via `MetadataImporter`) |
+| US-005 | Discover and load plugins | Planned |
+| US-006 | Link metadata to raw sensor files | Planned |
+| US-007 | Ingest raw sensor data into variants | Planned |
+| US-008 | Web Login MVP | Planned |
+| US-009 | Run Recipe via Web | Planned |
+
 ## Vision
 ArboLab makes full-resolution experimental sensor data analysis reproducible and ergonomic.
 * **Analytics-first:** DuckDB-backed analysis on full-resolution Parquet observations.

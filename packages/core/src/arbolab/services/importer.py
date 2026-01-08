@@ -8,6 +8,7 @@ from typing import Any
 
 import polars as pl
 from arbolab_logger import get_logger
+from sqlalchemy import insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import Engine
 from sqlalchemy.inspection import inspect
@@ -166,7 +167,11 @@ class MetadataImporter:
         
         count = 0
         with Session(self.engine) as session:
-            stmt = sqlite_insert(model_cls).values(valid_records)
+            dialect_name = self.engine.dialect.name
+            if dialect_name == "sqlite":
+                stmt = sqlite_insert(model_cls).values(valid_records)
+            else:
+                stmt = insert(model_cls).values(valid_records)
             
             # Simple ON CONFLICT DO UPDATE on 'id' if permitted
             # But wait, typically we want to update all fields.
@@ -186,7 +191,7 @@ class MetadataImporter:
             
             try:
                 # Naive upsert on primary key "id"
-                if 'id' in valid_records[0]:
+                if dialect_name == "sqlite" and 'id' in valid_records[0]:
                      set_dict = {
                          c.name: c
                          for c in stmt.excluded

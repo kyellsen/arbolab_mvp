@@ -3,13 +3,16 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: arbolab
-      POSTGRES_PASSWORD: arbolab_password_secret
-      POSTGRES_DB: arbolab
+      POSTGRES_USER: ${POSTGRES_USER:-arbolab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arbolab_password_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-arbolab}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arbolab}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   app:
     build: 
@@ -17,16 +20,38 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      - ARBO_DATABASE_URL=postgresql://arbolab:arbolab_password_secret@db:5432/arbolab
-      - ARBO_DATA_ROOT=/data
-      # Add other config here
+      - ARBO_DATABASE_URL=${ARBO_DATABASE_URL}
+      - ARBO_DATA_ROOT=${ARBO_DATA_ROOT:-/data}
     volumes:
-      - arbolab_data:/data
-    ports:
-      - "8000:8000"
+      # Named volumes for persistence mapping to specific subdirs
+      - arbolab_input:/data/input:ro
+      - arbolab_workspace:/data/workspace
+      - arbolab_results:/data/results
+      # Example of mounting a local host directory for dev/loading:
+      # - ./my_local_input:/data/input:ro
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - app
 
 volumes:
   postgres_data:
-  arbolab_data:
+  arbolab_input:
+  arbolab_workspace:
+  arbolab_results:

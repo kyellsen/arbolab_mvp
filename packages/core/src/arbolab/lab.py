@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from arbolab_logger import get_logger
 
