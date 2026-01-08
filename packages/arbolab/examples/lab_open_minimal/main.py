@@ -22,8 +22,8 @@ configure_logger(LoggerConfig(
     log_file_path="./example_workspace/logs/arbolab.log"
 ))
 
-# User might get a logger for their own scripts, but minimal example doesn't need to log internals
-# logger = get_logger("user_script") 
+# User might get a logger for their own scripts
+logger = get_logger("user_script") 
 
 def main():
     # Define roots
@@ -53,7 +53,7 @@ def main():
         session.add(project)
         # Commit triggers logs
         
-    logger.success("First run complete. Testing persistence...")
+    logger.info("First run complete. Testing persistence...")
 
     # 4. Re-open Lab (Persistence Check)
     # We deliberately DO NOT pass input/results roots. 
@@ -62,11 +62,11 @@ def main():
     lab_reopened = Lab.open(workspace_root=workspace_root)
     
     if str(lab_reopened.input_root) == str(input_root.resolve()):
-        logger.success(f"Restored Input Root correctly: {lab_reopened.input_root}")
+        logger.info(f"Restored Input Root correctly: {lab_reopened.input_root}")
     else:
         logger.error(f"Failed to restore Input Root! Got: {lab_reopened.input_root}, Expected: {input_root.resolve()}")
         
-    logger.success("Verification successful!")
+    logger.info("Verification successful!")
 
 if __name__ == "__main__":
     main()
