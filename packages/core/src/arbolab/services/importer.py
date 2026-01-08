@@ -192,11 +192,12 @@ class MetadataImporter:
             try:
                 # Naive upsert on primary key "id"
                 if dialect_name == "sqlite" and 'id' in valid_records[0]:
-                     set_dict = {
-                         c.name: c
-                         for c in stmt.excluded
-                         if c.name != "id" and c.name != "created_at" # Don't overwrite created_at usually?
-                     }
+                     record_keys = [
+                         key
+                         for key in valid_records[0].keys()
+                         if key not in {"id", "created_at"}
+                     ]
+                     set_dict = {key: getattr(stmt.excluded, key) for key in record_keys}
                      # If set_dict is empty (only ID in row), do nothing
                      if set_dict:
                          stmt = stmt.on_conflict_do_update(

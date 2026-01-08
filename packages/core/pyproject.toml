@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "arbolab"
 version = "0.1.0"
 description = "Core workspace package for the Arbolab platform."
-readme = "AGENTS.md"
+readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [

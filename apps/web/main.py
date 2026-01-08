@@ -11,6 +11,10 @@ from apps.web.core.security import get_password_hash, verify_password
 
 # Importiere Modelle und Security
 from apps.web.models.auth import User
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
 
 # 1. Datenbank Setup
 from arbolab.config import load_config
@@ -46,6 +50,10 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 # ----------------- ROUTEN -----------------
 
