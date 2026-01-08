@@ -32,6 +32,10 @@ class LabConfig(BaseSettings):
     # Default to sqlite for local dev if not set, but production should set ARBO_DATABASE_URL
     database_url: str | None = Field(default=None, description="Connection string for the SaaS database")
 
+    # Explicit Overrides (Legacy/Flexible)
+    input_path: str | None = Field(default=None, description="Explicit path to input root")
+    results_path: str | None = Field(default=None, description="Explicit path to results root")
+
     # Derived paths (can be overridden, but usually derived from data_root)
     input_dir_name: str = "input"
     workspace_dir_name: str = "workspace"
@@ -91,3 +95,30 @@ def load_config(workspace_root: Path | None = None) -> LabConfig:
 
     logger.debug(f"Loaded config: DATA_ROOT={config.data_root}, DB_URL={'Set' if config.database_url else 'Unset'}")
     return config
+
+
+def create_default_config(workspace_root: Path, 
+                          initial_input: Path | None = None, 
+                          initial_results: Path | None = None):
+    """
+    Creates a basic config.yaml if it doesn't exist.
+    """
+    config_path = workspace_root / DEFAULT_CONFIG_FILENAME
+    if config_path.exists():
+        return
+
+    config_data = {
+        "config_version": "1.0.0",
+        "input_path": str(initial_input) if initial_input else None,
+        "results_path": str(initial_results) if initial_results else None
+    }
+    
+    # Filter None
+    config_data = {k: v for k, v in config_data.items() if v is not None}
+
+    try:
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+        logger.info(f"Created default config at {config_path}")
+    except Exception as e:
+        logger.warning(f"Failed to create default config: {e}")

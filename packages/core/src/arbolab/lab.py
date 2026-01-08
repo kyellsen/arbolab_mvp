@@ -136,6 +136,19 @@ class Lab:
             variant_store=store,
             input_root=input_path
         )
+        
+    @property
+    def importer(self):
+        """Lazy access to MetadataImporter service."""
+        from arbolab.services.importer import MetadataImporter
+        return MetadataImporter(self.database.engine)
+        
+    def import_metadata(self, package_path: Path) -> dict[str, Any]:
+        """
+        Import an experiment metadata package.
+        Wrapper around MetadataImporter.
+        """
+        return self.importer.import_package(package_path)
 
     def run_recipe(self, recipe_path: Path | None = None):
         """

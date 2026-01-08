@@ -61,12 +61,17 @@ If behavior is not specified there, it must not be implemented.
 
 The following principles are invariant:
 
-* Observations are **Parquet‑first**.
-* Analytics operate in **DuckDB at full resolution**.
-* Metadata and domain entities are **relational** (DuckDB by default).
-* File‑based exports are **interoperability layers**, never core constraints.
+*   **Observations** are **Parquet‑first** (Wide Layout).
+*   **Analytics** operate in **DuckDB at full resolution**.
+*   **Core Metadata & Entities** (Projects, Experiments, Sensors) are stored in **DuckDB** (within the Lab workspace).
+*   **SaaS Entities** (Users, Organizations, Sessions) are stored in **PostgreSQL**.
 
-No row‑wise canonical observation tables. SaaS concerns must be isolated in the Web App layer.
+**Data Persistence Boundary:**
+*   **Core/Analytics (DuckDB/Parquet)**: Everything related to the scientific domain and the Lab lifecycle. Lives in the filesystem (`/data` or `workspace_root`).
+*   **Web/SaaS (Postgres)**: Everything related to identity, multi-tenancy, and application state.
+*   **Flow**: The Web App reads/writes SaaS data in Postgres. It interacts with Core data by launching/connecting to Lab instances which manage their own DuckDB/Parquet state.
+
+No row‑wise canonical observation tables in the relational layer.
 
 ---
 
@@ -113,17 +118,6 @@ Model evolution must preserve reproducibility.
 
 * No additional `AGENTS.md` files are allowed anywhere in the repository.
 
----
-
-### 7. Language and Communication
-
-#### Language Policy
-
-* **Repository content** (code, docs, comments, commits, configs): **English only**.
-* **Chat output by agents** (human explanations only): **German only**.
-* Chat output is never committed.
-
----
 
 ### 8. Tooling and Quality Gates (Externalized)
 

@@ -8,12 +8,14 @@ Normative schema for `core_` tables.
 
 ```mermaid
 erDiagram
-  %% EXPERIMENTAL CONTEXT
-  core_projects ||--o{ core_experiments : contains
+  %% PROJECT CONTEXT
+  core_projects ||--o{ core_experiments : defines
   core_projects ||--o{ core_things : owns
   core_projects ||--o{ core_sensors : owns
   core_projects ||--o{ core_treatments : defines
+  core_projects ||--o{ core_experimental_units : defines
 
+  %% EXPERIMENTAL CONTEXT
   core_experiments ||--o{ core_runs : groups
   core_experiments ||--o{ core_sensor_deployments : context_for
   core_experiments ||--o{ core_treatment_applications : context_for
@@ -22,27 +24,29 @@ erDiagram
   core_experimental_units ||--o{ core_sensor_deployments : hosts
   core_things ||--o{ core_experimental_units : participates_in
 
+  %% THINGS & LOCATIONS
+  core_locations ||--o{ core_things : locates
+  core_things ||--|| core_trees : is_a
+  core_things ||--|| core_cables : is_a
+  core_tree_species ||--o{ core_trees : classifies
+
+  %% TREATMENTS
+  core_treatments ||--o{ core_treatment_applications : applied_as
+  core_things ||--o{ core_treatment_applications : subjected_to
+
   %% DEPLOYMENT & SENSORS
   core_sensors ||--o{ core_sensor_deployments : installed_as
   core_sensor_models ||--o{ core_sensors : classifies
-  core_things ||--o{ core_sensor_deployments : mounted_on
 
   %% DATASTREAM & STORAGE
   core_sensor_deployments ||--o{ core_datastreams : produces
   core_datastreams ||--o{ core_data_variants : persists
+  core_datastreams ||--o{ core_datastream_channels : defines
+  core_observed_properties ||--o{ core_datastream_channels : measures
+  core_units_of_measurement ||--o{ core_datastream_channels : expressed_in
 
   %% VIRTUAL / PARQUET
   core_data_variants ||--o{ parquet_observations : describes
-
-  %% TABLES definition
-  core_projects { int id PK }
-  core_experiments { int id PK int project_id FK }
-  core_runs { int id PK int experiment_id FK }
-  core_things { int id PK int project_id FK }
-  core_sensors { int id PK int sensor_model_id FK }
-  core_sensor_deployments { int id PK int sensor_id FK int thing_id FK }
-  core_datastreams { int id PK int deployment_id FK }
-  core_data_variants { int id PK int datastream_id FK json column_specs }
 ```
 
 ## 2. Relational Schema (DuckDB)
@@ -52,63 +56,80 @@ Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 ### 2.1 Physical Perspective (Assets)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
+| `core_locations` | `id` | INTEGER | PK | Spatial reference. |
+| | `name` | VARCHAR | | |
 | `core_things` | `id` | INTEGER | PK | Stable object identity. |
 | | `project_id` | INTEGER | FK | |
-| | `kind` | VARCHAR | | Discriminator (e.g., 'tree', 'cable'). |
-| | `properties` | JSON | | Extensible attributes. |
+| | `location_id` | INTEGER | FK | |
+| | `kind` | VARCHAR | | Discriminator ('tree', 'cable', ...). |
+| `core_trees` | `id` | INTEGER | PK, FK | **SubType** of Thing. |
+| | `species_id` | INTEGER | FK | |
+| `core_tree_species` | `id` | INTEGER | PK | |
+| | `name` | VARCHAR | | |
+| `core_cables` | `id` | INTEGER | PK, FK | **SubType** of Thing. |
 | `core_sensor_models` | `id` | INTEGER | PK | |
-| | `model_name` | VARCHAR | UNIQUE | Manufacturer model name. |
-| | `capabilities` | JSON | | Nominal units, channel names. |
+| | `model_name` | VARCHAR | | |
 | `core_sensors` | `id` | INTEGER | PK | |
 | | `project_id` | INTEGER | FK | |
 | | `sensor_model_id` | INTEGER | FK | |
-| | `serial_number` | VARCHAR | | Device ID. |
 
 ### 2.2 Experimental Perspective (Campaigns)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
 | `core_projects` | `id` | INTEGER | PK | |
-| | `name` | VARCHAR | UNIQUE | |
+| | `name` | VARCHAR | | |
 | `core_experiments` | `id` | INTEGER | PK | |
 | | `project_id` | INTEGER | FK | |
-| | `time_range` | INTERVAL | | Optional bounds. |
 | `core_runs` | `id` | INTEGER | PK | |
 | | `experiment_id` | INTEGER | FK | |
-| | `name` | VARCHAR | | e.g., "Run 01". |
-| | `start_time` | TIMESTAMP | | UTC. |
-| | `end_time` | TIMESTAMP | | UTC. |
+| | `start_time` | TIMESTAMP | | |
+| | `end_time` | TIMESTAMP | | |
+| `core_experimental_units` | `id` | INTEGER | PK | Statistical subject. |
+| | `project_id` | INTEGER | FK | |
+| | `thing_id` | INTEGER | FK | Optional link to Thing. |
 | `core_sensor_deployments` | `id` | INTEGER | PK | **Central Context Entity.** |
 | | `experiment_id` | INTEGER | FK | |
-| | `sensor_id` | INTEGER | FK | Device used. |
-| | `thing_id` | INTEGER | FK | Object measured. |
-| | `start_time` | TIMESTAMP | | Installation. |
-| | `end_time` | TIMESTAMP | | Removal (NULL = active). |
-| | `mounting` | JSON | | Height, orientation, offset. |
+| | `experimental_unit_id` | INTEGER | FK | |
+| | `sensor_id` | INTEGER | FK | |
+| | `start_time` | TIMESTAMP | | |
+| | `end_time` | TIMESTAMP | | |
+| | `mounting` | JSON | | |
 
 ### 2.3 Analytical Perspective (Logic)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
 | `core_treatments` | `id` | INTEGER | PK | Abstract condition. |
 | | `project_id` | INTEGER | FK | |
-| | `definition` | JSON | | Factors and levels. |
 | `core_treatment_applications` | `id` | INTEGER | PK | Concrete application. |
+| | `experiment_id` | INTEGER | FK | |
 | | `treatment_id` | INTEGER | FK | |
 | | `thing_id` | INTEGER | FK | |
 | | `start_time` | TIMESTAMP | | |
-| `core_experimental_units` | `id` | INTEGER | PK | Statistical subject. |
-| | `definition` | JSON | | References to participating Things. |
+| | `end_time` | TIMESTAMP | | |
 
 ### 2.4 Data Perspective (Storage)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
 | `core_datastreams` | `id` | INTEGER | PK | Logical container. |
-| | `deployment_id` | INTEGER | FK | 1:1 Origin. |
+| | `sensor_deployment_id` | INTEGER | FK | |
+| `core_observed_properties` | `id` | INTEGER | PK | e.g. "temperature". |
+| `core_units_of_measurement` | `id` | INTEGER | PK | e.g. "degree Celsius". |
+| `core_datastream_channels` | `id` | INTEGER | PK | Channel definition. |
+| | `datastream_id` | INTEGER | FK | |
+| | `observed_property_id` | INTEGER | FK | |
+| | `unit_of_measurement_id`| INTEGER | FK | |
+| | `channel_index` | INTEGER | | |
 | `core_data_variants` | `id` | INTEGER | PK | Physical Dataset Metadata. |
 | | `datastream_id` | INTEGER | FK | |
-| | `variant_name` | VARCHAR | | e.g., 'raw', 'resampled'. |
-| | `format` | VARCHAR | | 'parquet'. |
-| | `relative_path` | VARCHAR | | Path relative to `workspace_root`. |
-| | `column_specs` | JSON | | **Normative**: See Section 3. |
+| | `variant_name` | VARCHAR | | e.g., 'raw'. |
+| | `format` | VARCHAR | | 'wide'. |
+| | `data_format` | VARCHAR | | 'parquet'. |
+| | `column_specs` | JSON | | |
+| | `data_path` | VARCHAR | | Relative path to files. |
+| | `data_files` | JSON | | List of filenames. |
+| | `row_count` | INTEGER | | |
+| | `first_timestamp` | TIMESTAMP | | |
+| | `last_timestamp` | TIMESTAMP | | |
 
 ## 3. Column Metadata & Units
 
