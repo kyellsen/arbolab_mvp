@@ -24,3 +24,9 @@ treeqinetic = "arbolab_plugins.treeqinetic.plugin"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/arbolab_plugins"]
+
+[tool.hatch.build]
+exclude = [
+  "tests/",
+  "examples/",
+]

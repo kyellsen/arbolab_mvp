@@ -18,3 +18,11 @@ ls3 = "arbolab_plugins.ls3"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/arbolab_plugins"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# Exclude tests and examples from the wheel
+[tool.hatch.build]
+exclude = [
+  "tests/",
+  "examples/",
+]

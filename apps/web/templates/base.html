@@ -15,7 +15,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ mobileMenuOpen: false, rightSidebarOpen: false, activeEntity: 'project' }">
+<body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ mobileMenuOpen: false, rightSidebarOpen: false, activeEntity: 'project', logDrawerOpen: false }">
 
     {% if user %}
     <!-- A. Header (Top Bar) -->
@@ -61,6 +61,18 @@
                             {% endif %}
                         </button>
                         {% endfor %}
+
+                        <!-- Divider -->
+                        <div class="border-t border-slate-700/50 my-1"></div>
+                        
+                        <!-- New Lab Button -->
+                        <a href="/workspaces/new" 
+                           class="w-full text-left px-4 py-2 text-sm text-emerald-400 hover:bg-slate-700 hover:text-emerald-300 flex items-center gap-2 transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span>Neues Lab erstellen</span>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
@@ -115,8 +127,16 @@
          {% include 'components/_footer.html' %}
     </footer>
 
-    <!-- Logger Drawer (Slide up) -->
-    <div id="logger-drawer" class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 h-64 transform translate-y-full transition-transform duration-300 z-50 shadow-2xl">
+    <!-- F. Logger Panel (Integrated - shrinks main content when open) -->
+    <div id="logger-drawer" 
+         x-show="logDrawerOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 max-h-0"
+         x-transition:enter-end="opacity-100 max-h-80"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 max-h-80"
+         x-transition:leave-end="opacity-0 max-h-0"
+         class="bg-slate-900 border-t border-slate-700 h-80 shrink-0 overflow-hidden">
          {% include 'partials/logger_drawer.html' %}
     </div>
 

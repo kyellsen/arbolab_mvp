@@ -1,9 +1,0 @@
-[2;36m[2026-01-08 18:16:01][0m[2;36m [0m[34mINFO    [0m Loaded plugin: treeqinetic                                                                                                                                                                                                                                                            ]8;id=325185;file:///mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/src/arbolab/plugins/__init__.py\[2m__init__.py[0m]8;;\[2m:[0m]8;id=247120;file:///mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/src/arbolab/plugins/__init__.py#30\[2m30[0m]8;;\
-[2;36m[2026-01-08 18:16:01][0m[2;36m [0m[34mINFO    [0m Loaded plugin: ls3                                                                                                                                                                                                                                                                    ]8;id=730343;file:///mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/src/arbolab/plugins/__init__.py\[2m__init__.py[0m]8;;\[2m:[0m]8;id=247122;file:///mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/src/arbolab/plugins/__init__.py#30\[2m30[0m]8;;\
-Verifying plugins...
-Found entry points: ['treeqinetic', 'ls3']
-Checking for known plugins: ['treeqinetic', 'ls3']
-PASS: ls3 loaded: <function register at 0x7f45b6aaaca0>
-FAIL: ls3 missing register()
-PASS: treeqinetic loaded: <function register at 0x7f45b6f6c040>
-FAIL: treeqinetic missing register()

@@ -6,12 +6,13 @@ from sqlalchemy import pool
 
 from alembic import context
 from sqlmodel import SQLModel
+from pathlib import Path
 
 # Import Arbolab Config
 from arbolab.config import load_config
 
 # Import Models (make sure all models are imported here for Metadata)
-from apps.web.models import auth  # noqa
+from apps.web.models import user as user_models  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,9 +29,13 @@ lab_config = load_config()
 # For migration generation, we need a DB. Local defaults to sqlite in main.py, let's mirror that or use the config.
 db_url = lab_config.database_url
 if not db_url:
-    # Fallback logic similar to main.py
-    sqlite_path = lab_config.data_root / "saas.db"
-    db_url = f"sqlite:///{sqlite_path}"
+    # 1. Check relative to apps/web (standard dev)
+    sqlite_path = Path("data/saas.db")
+    if not sqlite_path.exists():
+        # 2. Fallback logic from config
+        sqlite_path = lab_config.data_root / "saas.db"
+    
+    db_url = f"sqlite:///{sqlite_path.absolute()}"
 
 config.set_main_option("sqlalchemy.url", db_url)
 

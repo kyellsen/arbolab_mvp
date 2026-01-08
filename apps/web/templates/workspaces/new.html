@@ -3,9 +3,13 @@
 {% block content %}
 <div class="flex items-center justify-center min-h-screen bg-slate-900">
     <div class="w-full max-w-md p-8 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
+        {% if is_first_lab %}
         <h1 class="text-2xl font-bold text-white mb-2 text-center">Willkommen bei Arbolab</h1>
         <p class="text-slate-400 text-center mb-6">Bitte erstelle dein erstes Lab, um zu beginnen.</p>
-
+        {% else %}
+        <h1 class="text-2xl font-bold text-white mb-2 text-center">Neues Lab erstellen</h1>
+        <p class="text-slate-400 text-center mb-6">Erstelle ein neues Lab für dein nächstes Projekt.</p>
+        {% endif %}
         {% if error %}
         <div class="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm">
             {{ error }}

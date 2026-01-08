@@ -12,6 +12,8 @@ COPY pyproject.toml uv.lock ./
 # Copy packages
 COPY packages/core ./packages/core
 COPY packages/arbolab-logger ./packages/arbolab-logger
+COPY packages/arbolab-linescale3 ./packages/arbolab-linescale3
+COPY packages/arbolab-treeqinetic ./packages/arbolab-treeqinetic
 
 # Copy app
 COPY apps/web ./apps/web
@@ -41,12 +43,14 @@ COPY --from=builder /app/.venv /app/.venv
 # But for this MVP/Monorepo setup, copying source + venv is easiest.
 COPY packages/core/src /app/packages/core/src
 COPY packages/arbolab-logger/src /app/packages/arbolab-logger/src
+COPY packages/arbolab-linescale3/src /app/packages/arbolab-linescale3/src
+COPY packages/arbolab-treeqinetic/src /app/packages/arbolab-treeqinetic/src
 COPY apps/web /app/apps/web
 
 # Set path to use venv
 ENV PATH="/app/.venv/bin:$PATH"
 # Add src dirs to PYTHONPATH so editable installs work without full bind mounting
-ENV PYTHONPATH="/app/packages/core/src:/app/packages/arbolab-logger/src:$PYTHONPATH"
+ENV PYTHONPATH="/app/packages/core/src:/app/packages/arbolab-logger/src:/app/packages/arbolab-linescale3/src:/app/packages/arbolab-treeqinetic/src:$PYTHONPATH"
 
 # Defaults
 ENV ARBO_DATA_ROOT="/data"

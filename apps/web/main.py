@@ -17,9 +17,9 @@ from arbolab.lab import Lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from pathlib import Path
 from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router
+from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router
 from apps.web.core.domain import get_entity_counts
-from apps.web.core.receipts import ReceiptManager
+from arbolab.core.recipes.executor import RecipeExecutor
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -40,7 +40,31 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.on_event("startup")
 def on_startup():
-    create_db_and_tables()
+    import time
+    from sqlalchemy.exc import OperationalError
+    
+    # 1. Create Tables
+    max_retries = 10
+    retry_delay = 2
+    for i in range(max_retries):
+        try:
+            create_db_and_tables()
+            print("Database connected and tables verified.")
+            break
+        except OperationalError as e:
+            if i < max_retries - 1:
+                print(f"Postgres not ready (attempt {i+1}/{max_retries}), waiting...")
+                time.sleep(retry_delay)
+            else:
+                print("Could not connect to database after multiple retries.")
+                raise e
+
+    # 2. Run Seeder
+    from apps.web.core import seeder
+    try:
+        seeder.run_seed()
+    except Exception as e:
+        print(f"Error during seeding: {e}")
 
 @app.get("/health")
 async def health():
@@ -51,6 +75,7 @@ app.include_router(api.router)
 app.include_router(workspaces_router.router)
 app.include_router(explorer_router.router)
 app.include_router(settings_router.router)
+app.include_router(logs_router.router)
 
 # ----------------- ROUTEN -----------------
 
@@ -153,8 +178,9 @@ async def home(
             except Exception:
                 counts = {} # Fallback if DB is empty/initing
             
-            # Fetch Recent Activity from receipts
-            recent_activity = ReceiptManager.get_recent_activity(lab)
+            # Fetch Recipe History
+            recipe = RecipeExecutor.load_recipe(lab)
+            recent_activity = recipe.steps[::-1] # Show latest first
             
             # Get current project name (simple logic for MVP: first project)
             try:

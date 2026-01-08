@@ -76,47 +76,48 @@ async def get_entity(session: Session, entity_type: str, entity_id: int):
     return result
 
 async def create_entity(session: Session, entity_type: str, data: dict[str, Any], lab: Lab = None):
-    info = get_entity_info(entity_type)
-    model = info["model"]
+    if not lab:
+        raise ValueError("Lab instance required for create operation")
     
-    # Simple instantiation for MVP - might need more logic for complex entities
-    obj = model(**data)
-    session.add(obj)
-    session.flush()
+    # Dispatch to the recipe-aware Lab method
+    # e.g. define_project, define_sensor, etc.
+    method_name = f"define_{entity_type}"
+    handler = getattr(lab, method_name, None)
     
-    if lab:
-        ReceiptManager.log_event(lab, entity_type, "Create", data, entity_id=getattr(obj, "id", None))
-        
-    return obj
+    if handler:
+        return handler(**data)
+    else:
+        # Fallback for generic entities
+        return lab.execute_step(method_name, data)
 
 async def update_entity(session: Session, entity_type: str, entity_id: int, data: dict[str, Any], lab: Lab = None):
-    obj = await get_entity(session, entity_type, entity_id)
-    if not obj:
-        return None
+    if not lab:
+        raise ValueError("Lab instance required for update operation")
     
-    for key, value in data.items():
-        if hasattr(obj, key):
-            setattr(obj, key, value)
+    method_name = f"modify_{entity_type}"
+    handler = getattr(lab, method_name, None)
     
-    session.flush()
+    # Include ID in params for the executor
+    params = {"id": entity_id, **data}
     
-    if lab:
-        ReceiptManager.log_event(lab, entity_type, "Update", data, entity_id=entity_id)
-        
-    return obj
+    if handler:
+        return handler(**params)
+    else:
+        return lab.execute_step(method_name, params)
 
 async def delete_entity(session: Session, entity_type: str, entity_id: int, lab: Lab = None):
-    obj = await get_entity(session, entity_type, entity_id)
-    if not obj:
-        return False
+    if not lab:
+        raise ValueError("Lab instance required for delete operation")
     
-    session.delete(obj)
-    session.flush()
+    method_name = f"remove_{entity_type}"
+    handler = getattr(lab, method_name, None)
     
-    if lab:
-        ReceiptManager.log_event(lab, entity_type, "Delete", {}, entity_id=entity_id)
-        
-    return True
+    params = {"id": entity_id}
+    
+    if handler:
+        return handler(**params)
+    else:
+        return lab.execute_step(method_name, params)
 
 async def get_entity_counts(session: Session):
     """Returns counts for all entity types."""

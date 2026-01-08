@@ -47,6 +47,13 @@ class Lab:
         # Initialize Runtime (DB connection, Directory structure)
         self._initialize()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Could handle cleanup here
+        pass
+
     def _initialize(self):
         """Ensures the workspace is ready for use."""
         # Viewers should not trigger structure creation if it's missing?
@@ -185,16 +192,67 @@ class Lab:
 
     def run_recipe(self, recipe_path: Path | None = None):
         """
-        Execute a recipe. MVP Stub.
+        Execute a recipe.
         """
         if self.role != LabRole.ADMIN:
             raise PermissionError("Only ADMINs can run recipes.")
             
         if recipe_path is None:
-            recipe_path = self.layout.recipe_path()
+            recipe_path = self.layout.recipe_path("current.json")
             
         if not recipe_path.exists():
             raise FileNotFoundError(f"No recipe found at {recipe_path}")
             
-        logger.info(f"Executing recipe from {recipe_path} (MVP Stub)")
-        # In real impl: load JSON, iterate steps, dispatch to internal handlers
+        logger.info(f"Executing recipe from {recipe_path}")
+        from arbolab.core.recipes.executor import RecipeExecutor
+        recipe = RecipeExecutor.load_recipe(self)
+        for step in recipe.steps:
+            if step.step_type == "open_lab":
+                continue
+            self.execute_step(step.step_type, step.params, step.author_id)
+
+    def execute_step(self, step_type: str, params: dict[str, Any], author_id: str | None = None) -> Any:
+        """Executes a recipe step and records it."""
+        if self.role != LabRole.ADMIN:
+             raise PermissionError("Operations that modify the Lab require ADMIN role.")
+        from arbolab.core.recipes.executor import RecipeExecutor
+        return RecipeExecutor.apply(self, step_type, params, author_id)
+
+    # --- Recipe-Aware CRUD Wrappers ---
+    # These provide a clean API for the transpiler and frontend
+
+    def define_project(self, **params) -> Any:
+        return self.execute_step("define_project", params)
+
+    def modify_project(self, id: int, **params) -> Any:
+        params["id"] = id
+        return self.execute_step("modify_project", params)
+
+    def remove_project(self, id: int) -> Any:
+        return self.execute_step("remove_project", {"id": id})
+
+    def define_sensor(self, **params) -> Any:
+        return self.execute_step("define_sensor", params)
+
+    def modify_sensor(self, id: int, **params) -> Any:
+        params["id"] = id
+        return self.execute_step("modify_sensor", params)
+
+    def remove_sensor(self, id: int) -> Any:
+        return self.execute_step("remove_sensor", {"id": id})
+
+    # Generic accessors for all models to avoid bloating this file
+    def __getattr__(self, name: str) -> Any:
+        # Avoid recursion and side-effects for internal attrs
+        if name.startswith("_"):
+            raise AttributeError(f"'Lab' object has no attribute {name!r}")
+            
+        for prefix in ["define_", "modify_", "remove_"]:
+            if name.startswith(prefix):
+                from arbolab.core.recipes.handlers import MODEL_MAP
+                entity = name[len(prefix):]
+                if entity in MODEL_MAP:
+                    def wrapper(**params):
+                        return self.execute_step(name, params)
+                    return wrapper
+        raise AttributeError(f"'Lab' object has no attribute {name!r}")

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 
 from apps.web.core.database import get_session
-from apps.web.routers.api import get_current_user_id
+from apps.web.routers.api import get_current_user_id, get_current_user
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
@@ -29,7 +29,12 @@ async def list_workspaces(
     session: Annotated[Session, Depends(get_session)]
 ):
     """List all workspaces for the current user."""
-    stmt = select(Workspace).where(Workspace.owner_id == user_id).order_by(Workspace.created_at)
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+        .order_by(Workspace.created_at)
+    )
     workspaces = session.exec(stmt).all()
     return workspaces
 
@@ -41,13 +46,18 @@ async def activate_workspace(
     session: Annotated[Session, Depends(get_session)]
 ):
     """Sets the active workspace in the session."""
-    # Verify ownership
+    # Verify access via association
     try:
         w_uuid = UUID(workspace_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID")
 
-    stmt = select(Workspace).where(Workspace.id == w_uuid, Workspace.owner_id == user_id)
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(Workspace.id == w_uuid)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+    )
     workspace = session.exec(stmt).first()
     
     if not workspace:
@@ -59,29 +69,47 @@ async def activate_workspace(
     return {"status": "activated", "workspace": workspace.name}
 
 @router.get("/new", response_class=HTMLResponse)
-async def new_workspace_page(request: Request):
+async def new_workspace_page(
+    request: Request,
+    session: Annotated[Session, Depends(get_session)]
+):
     user = request.session.get("user")
     if not user:
          return RedirectResponse(url="/auth/login")
-    return templates.TemplateResponse("workspaces/new.html", {"request": request})
+    
+    # Check if user has any existing workspaces via association
+    user_id = UUID(user.get("id"))
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+    )
+    existing_workspaces = session.exec(stmt).all()
+    is_first_lab = len(existing_workspaces) == 0
+    
+    return templates.TemplateResponse("workspaces/new.html", {
+        "request": request,
+        "user": user,
+        "is_first_lab": is_first_lab
+    })
 
 @router.post("/")
 async def create_workspace(
     request: Request,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    current_user: Annotated[User, Depends(get_current_user)],
     session: Annotated[Session, Depends(get_session)],
     name: str = Form(...),
 ):
     """Creates a new workspace and sets it as active."""
-    # 1. Create Workspace
-    workspace = Workspace(name=name, owner_id=user_id)
+    # 1. Create Workspace (no owner_id anymore - uses association table)
+    workspace = Workspace(name=name)
     session.add(workspace)
     session.commit()
     session.refresh(workspace)
     
     # 2. Create Association (Admin)
     association = UserWorkspaceAssociation(
-        user_id=user_id,
+        user_id=current_user.id,
         workspace_id=workspace.id,
         role=LabRole.ADMIN
     )
@@ -93,3 +121,4 @@ async def create_workspace(
     
     # 4. Redirect to Dashboard
     return RedirectResponse(url="/", status_code=303)
+

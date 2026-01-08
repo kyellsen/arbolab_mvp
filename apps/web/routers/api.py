@@ -11,7 +11,10 @@ from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from apps.web.core.database import get_session as get_saas_session
 from arbolab.lab import Lab
 from arbolab.core.security import LabRole
+from arbolab.core.recipes.executor import RecipeExecutor
+from arbolab.core.recipes.transpiler import RecipeTranspiler
 from pathlib import Path
+from fastapi.responses import PlainTextResponse
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
@@ -34,13 +37,15 @@ async def get_current_user_id(request: Request) -> UUID:
 # User import handled at top of file
 
 async def get_current_user(
+    request: Request,
     user_id: UUID = Depends(get_current_user_id),
     session: SaasSession = Depends(get_saas_session)
 ) -> User:
     """Verifies user existence in DB to prevent ghost sessions (session exists, user deleted)."""
     user = session.get(User, user_id)
     if not user:
-        # Clear invalid session and force login
+        # Clear invalid session and force re-login
+        request.session.clear()
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
@@ -193,3 +198,13 @@ async def api_delete_entity(entity_type: str, entity_id: int, lab: Lab = Depends
             return {"status": "deleted"}
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/recipes/export")
+async def api_export_recipe(lab: Lab = Depends(get_lab)):
+    """Transpiles the current recipe to standalone Python."""
+    recipe = RecipeExecutor.load_recipe(lab)
+    code = RecipeTranspiler.to_python(recipe)
+    return PlainTextResponse(
+        content=code,
+        headers={"Content-Disposition": "attachment; filename=exported_recipe.py"}
+    )

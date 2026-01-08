@@ -1,5 +1,6 @@
 # AGENTS.md
 
+For temp files use /scripts not root directory!
 ## Purpose
 
 This file defines **all binding rules, boundaries, and expectations** for humans, agents, and automation working in the ArboLab repository.

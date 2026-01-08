@@ -1,21 +1,228 @@
-<div class="h-full flex flex-col">
-    <div class="flex items-center justify-between p-3 border-b border-slate-700 bg-slate-800">
-        <h3 class="font-mono text-xs uppercase tracking-wider text-slate-400">System Logs</h3>
-        <button onclick="document.getElementById('logger-drawer').classList.remove('translate-y-0'); document.getElementById('logger-drawer').classList.add('translate-y-full')" class="text-slate-500 hover:text-white">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+<div class="h-full flex flex-col" 
+     x-data="logDrawer()"
+     x-init="init()">
+    <!-- Header with Tabs -->
+    <div class="flex items-center justify-between p-2 border-b border-slate-700 bg-slate-800">
+        <div class="flex items-center gap-1">
+            <!-- Tab Buttons -->
+            <template x-if="config.frontendEnabled">
+                <button @click="activeTab = 'frontend'" 
+                        :class="activeTab === 'frontend' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+                        class="px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                    Frontend
+                </button>
+            </template>
+            <template x-if="config.recipeEnabled">
+                <button @click="activeTab = 'recipe'" 
+                        :class="activeTab === 'recipe' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+                        class="px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                    Recipe
+                </button>
+            </template>
+            <template x-if="config.systemEnabled">
+                <button @click="activeTab = 'system'" 
+                        :class="activeTab === 'system' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
+                        class="px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                    System
+                </button>
+            </template>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <!-- Status indicator -->
+            <span x-show="polling" class="flex items-center gap-1 text-xs text-slate-500">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Live
+            </span>
+            
+            <!-- Clear button -->
+            <button @click="clearLogs()" class="text-slate-500 hover:text-slate-300 text-xs px-2">
+                Clear
+            </button>
+            
+            <!-- Close button -->
+            <button @click="closeDrawer()" class="text-slate-500 hover:text-white p-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
     </div>
     
-    <div class="flex-1 overflow-y-auto p-4 font-mono text-xs space-y-1 bg-black text-green-400" id="log-container">
-        <div class="flex gap-2">
-            <span class="text-slate-500">[10:00:01]</span>
-            <span class="text-blue-400">INFO</span>
-            <span>System initialized. Connected to DuckDB session 'stadtpark_sued'.</span>
-        </div>
-        <div class="flex gap-2">
-            <span class="text-slate-500">[10:00:02]</span>
-            <span class="text-blue-400">INFO</span>
-            <span>Loaded 142 trees, 4 experiments.</span>
-        </div>
+    <!-- Log Content -->
+    <div class="flex-1 overflow-y-auto p-3 font-mono text-xs space-y-0.5 bg-black" id="log-container">
+        <template x-if="logs.length === 0">
+            <div class="text-slate-600 italic">No logs yet...</div>
+        </template>
+        
+        <template x-for="log in logs" :key="log.timestamp + log.message">
+            <div class="flex gap-2 py-0.5 hover:bg-slate-900/50 px-1 rounded">
+                <!-- Timestamp -->
+                <span class="text-slate-600 shrink-0" x-text="formatTime(log.timestamp)"></span>
+                
+                <!-- Level Badge -->
+                <span :class="{
+                    'text-blue-400': log.level === 'info',
+                    'text-yellow-500': log.level === 'warn',
+                    'text-red-500': log.level === 'error',
+                    'text-slate-500': log.level === 'debug'
+                }" class="shrink-0 uppercase w-12" x-text="log.level"></span>
+                
+                <!-- Source Badge (only if showing all tabs) -->
+                <template x-if="!activeTab">
+                    <span class="text-slate-600 shrink-0" x-text="'[' + log.source + ']'"></span>
+                </template>
+                
+                <!-- Message -->
+                <span class="text-green-400" x-text="log.message"></span>
+            </div>
+        </template>
     </div>
 </div>
+
+<script>
+function logDrawer() {
+    return {
+        activeTab: 'recipe',  // Default tab
+        logs: [],
+        polling: false,
+        pollInterval: null,
+        lastTimestamp: null,
+        config: {
+            frontendEnabled: true,
+            recipeEnabled: true, 
+            systemEnabled: true,
+            pollIntervalMs: 1000
+        },
+        
+        init() {
+            // Load config from backend
+            this.loadConfig();
+            
+            // Start polling when drawer becomes visible
+            this.startPolling();
+        },
+        
+        async loadConfig() {
+            try {
+                const response = await fetch('/api/logs/config');
+                if (response.ok) {
+                    this.config = await response.json();
+                    // Set default active tab to first enabled
+                    if (this.config.recipeEnabled) this.activeTab = 'recipe';
+                    else if (this.config.frontendEnabled) this.activeTab = 'frontend';
+                    else if (this.config.systemEnabled) this.activeTab = 'system';
+                }
+            } catch (e) {
+                console.error('Failed to load log config:', e);
+            }
+        },
+        
+        startPolling() {
+            if (this.pollInterval) return;
+            
+            this.polling = true;
+            this.fetchLogs(); // Initial fetch
+            
+            this.pollInterval = setInterval(() => {
+                // Only poll if drawer is visible
+                const drawer = document.getElementById('logger-drawer');
+                if (drawer && !drawer.classList.contains('translate-y-full')) {
+                    this.fetchLogs();
+                }
+            }, this.config.pollIntervalMs);
+        },
+        
+        stopPolling() {
+            if (this.pollInterval) {
+                clearInterval(this.pollInterval);
+                this.pollInterval = null;
+            }
+            this.polling = false;
+        },
+        
+        async fetchLogs() {
+            try {
+                // Always fetch without since filter for now (simpler, works)
+                let url = `/api/logs?tab=${this.activeTab}`;
+                
+                console.log('[LogDrawer] Fetching:', url);
+                
+                const response = await fetch(url, {
+                    credentials: 'same-origin'  // Send session cookies
+                });
+                console.log('[LogDrawer] Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('[LogDrawer] Got logs:', data.logs?.length || 0);
+                    
+                    // Always replace logs with fresh data
+                    this.logs = data.logs || [];
+                    this.lastTimestamp = data.timestamp;
+                } else {
+                    console.error('[LogDrawer] Bad response:', response.status);
+                    // If auth fails, show error in logs
+                    if (response.status === 401) {
+                        this.logs = [{
+                            timestamp: new Date().toISOString(),
+                            level: 'error',
+                            source: 'system',
+                            message: 'Not authenticated - please login'
+                        }];
+                    }
+                }
+            } catch (e) {
+                console.error('[LogDrawer] Failed to fetch logs:', e);
+                this.logs = [{
+                    timestamp: new Date().toISOString(),
+                    level: 'error',
+                    source: 'system',
+                    message: `Fetch error: ${e.message}`
+                }];
+            }
+        },
+        
+        formatTime(timestamp) {
+            if (!timestamp) return '--:--:--';
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('de-DE', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+        },
+        
+        clearLogs() {
+            this.logs = [];
+            this.lastTimestamp = null;
+        },
+        
+        closeDrawer() {
+            // Use Alpine's $dispatch or directly access body's Alpine data
+            // We dispatch an event that the body component can listen to
+            // Or simply access the Alpine component on body and set the state
+            const body = document.body;
+            if (body._x_dataStack && body._x_dataStack[0]) {
+                body._x_dataStack[0].logDrawerOpen = false;
+            }
+        }
+    };
+}
+
+// Capture JS errors and send to backend
+window.onerror = function(message, source, lineno, colno, error) {
+    try {
+        fetch('/api/logs/frontend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                level: 'error',
+                message: `${message} (${source}:${lineno})`,
+                action: 'js_error'
+            })
+        });
+    } catch (e) {
+        // Silently fail
+    }
+    return false;
+};
+</script>
