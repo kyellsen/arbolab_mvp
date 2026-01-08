@@ -42,9 +42,9 @@ async def list_workspaces(
 @router.post("/activate")
 async def activate_workspace(
     request: Request,
-    workspace_id: Annotated[str | None, Form()] = None,
     user_id: Annotated[UUID, Depends(get_current_user_id)],
-    session: Annotated[Session, Depends(get_session)]
+    session: Annotated[Session, Depends(get_session)],
+    workspace_id: Annotated[str | None, Form()] = None
 ):
     """Sets the active workspace in the session."""
     if workspace_id is None:
