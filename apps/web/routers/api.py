@@ -55,35 +55,42 @@ async def get_current_workspace(
 ) -> Workspace:
     """
     Determines the current active workspace for the user.
-    Checks session['active_workspace_id'] first, then falls back to default/first.
+    Checks session['active_workspace_id'] first, then user.last_active_workspace_id,
+    then falls back to the earliest workspace.
     """
     user_id = user.id
+
+    def _fetch_workspace(workspace_id: UUID) -> Workspace | None:
+        stmt = (
+            select(Workspace)
+            .join(UserWorkspaceAssociation)
+            .where(Workspace.id == workspace_id)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+        )
+        return session.exec(stmt).first()
+
+    workspace = None
     # 1. Try Session
     active_ws_id = request.session.get("active_workspace_id")
     if active_ws_id:
         try:
-            # Query via Association
-            stmt = (
-                select(Workspace)
-                .join(UserWorkspaceAssociation)
-                .where(Workspace.id == UUID(active_ws_id))
-                .where(UserWorkspaceAssociation.user_id == user_id)
-            )
-            workspace = session.exec(stmt).first()
-            if workspace:
-                request.state.workspace_id = workspace.id
-                return workspace
+            workspace = _fetch_workspace(UUID(active_ws_id))
         except (ValueError, TypeError):
-            pass # Invalid ID in session, fall back
+            workspace = None
 
-    # 2. Fallback: First available
-    stmt = (
-        select(Workspace)
-        .join(UserWorkspaceAssociation)
-        .where(UserWorkspaceAssociation.user_id == user_id)
-        .order_by(Workspace.created_at)
-    )
-    workspace = session.exec(stmt).first()
+    # 2. Try persisted last active workspace
+    if not workspace and user.last_active_workspace_id:
+        workspace = _fetch_workspace(user.last_active_workspace_id)
+
+    # 3. Fallback: First available
+    if not workspace:
+        stmt = (
+            select(Workspace)
+            .join(UserWorkspaceAssociation)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+            .order_by(Workspace.created_at)
+        )
+        workspace = session.exec(stmt).first()
     
     if not workspace:
         # Migration/Onboarding: Create default workspace
@@ -104,6 +111,11 @@ async def get_current_workspace(
         session.commit()
 
     request.state.workspace_id = workspace.id
+    request.session["active_workspace_id"] = str(workspace.id)
+    if user.last_active_workspace_id != workspace.id:
+        user.last_active_workspace_id = workspace.id
+        session.add(user)
+        session.commit()
     return workspace
 
 def get_lab(

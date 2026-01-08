@@ -8,7 +8,7 @@ from sqlmodel import Session, select
 from apps.web.core.database import get_session
 from apps.web.routers.api import get_current_user_id, get_current_user, get_current_workspace
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from pathlib import Path
 from fastapi import Form
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
@@ -47,6 +47,9 @@ async def activate_workspace(
     workspace_id: Annotated[str | None, Form()] = None
 ):
     """Sets the active workspace in the session."""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     if workspace_id is None:
         try:
             payload = await request.json()
@@ -75,6 +78,10 @@ async def activate_workspace(
     
     # Update Session
     request.session["active_workspace_id"] = str(workspace.id)
+    if user.last_active_workspace_id != workspace.id:
+        user.last_active_workspace_id = workspace.id
+        session.add(user)
+        session.commit()
 
     response = JSONResponse({"status": "activated", "workspace": workspace.name})
     response.headers["HX-Trigger"] = json.dumps({
@@ -151,11 +158,15 @@ async def create_workspace(
         workspace_id=workspace.id,
         role=LabRole.ADMIN
     )
+    current_user.last_active_workspace_id = workspace.id
     session.add(association)
+    session.add(current_user)
     session.commit()
     
     # 3. Set Active Session
     request.session["active_workspace_id"] = str(workspace.id)
     
     # 4. Redirect to Dashboard
+    if request.headers.get("HX-Request"):
+        return Response(status_code=200, headers={"HX-Redirect": "/"})
     return RedirectResponse(url="/", status_code=303)

@@ -40,7 +40,32 @@ def _get_user_workspace_context(request: Request, user_id: UUID, session: Sessio
     active_ws_id = request.session.get("active_workspace_id")
     current_workspace = None
     if active_ws_id:
-        current_workspace = session.get(Workspace, UUID(active_ws_id))
+        try:
+            active_uuid = UUID(active_ws_id)
+        except (ValueError, TypeError):
+            active_uuid = None
+
+        if active_uuid:
+            for workspace in all_workspaces:
+                if workspace.id == active_uuid:
+                    current_workspace = workspace
+                    break
+
+    if not current_workspace and user.last_active_workspace_id:
+        for workspace in all_workspaces:
+            if workspace.id == user.last_active_workspace_id:
+                current_workspace = workspace
+                break
+
+    if not current_workspace and all_workspaces:
+        current_workspace = all_workspaces[0]
+
+    if current_workspace:
+        request.session["active_workspace_id"] = str(current_workspace.id)
+        if user.last_active_workspace_id != current_workspace.id:
+            user.last_active_workspace_id = current_workspace.id
+            session.add(user)
+            session.commit()
 
     return user, current_workspace, all_workspaces
 

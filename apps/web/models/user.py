@@ -22,6 +22,7 @@ class User(SQLModel, table=True):
     hashed_password: str
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_active_workspace_id: UUID | None = Field(default=None, foreign_key="workspace.id")
 
     # Profile fields
     full_name: str | None = Field(default=None)

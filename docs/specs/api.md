@@ -82,6 +82,8 @@ The Web App is an optional SaaS layer that orchestrates the `Lab` through HTTP.
 - `POST /workspaces` creates a Workspace from explicit roots or a `base_root`.
 - `GET /workspaces` lists registered Workspaces.
 - The Web App MUST use the same root safety rules as `Lab.open(...)`.
+- The Web App MUST resolve the current Workspace in this order: session `active_workspace_id`, the user's persisted `last_active_workspace_id` (if associated), then the earliest created Workspace.
+- When a Workspace is activated or created, the Web App MUST persist `last_active_workspace_id` and update the session.
 
 ### 6.3 Recipes
 - `PUT /workspaces/{id}/recipe` persists the Recipe to the canonical Recipe path.

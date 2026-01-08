@@ -74,7 +74,9 @@ def run_seed():
                         workspace_id=new_workspace.id,
                         role=LabRole.ADMIN
                     )
+                    new_user.last_active_workspace_id = new_workspace.id
                     session.add(association)
+                    session.add(new_user)
                     session.commit()
             else:
                 # User exists, optionally ensure they have a workspace if they were seeded partially
@@ -93,6 +95,7 @@ def run_seed():
                         workspace_id=new_workspace.id,
                         role=LabRole.ADMIN
                     )
+                    existing_user.last_active_workspace_id = new_workspace.id
                     session.add(association)
+                    session.add(existing_user)
                     session.commit()
-

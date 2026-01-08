@@ -50,6 +50,10 @@ def resolve_workspace_context(request: Request, session: Session) -> tuple[Works
     except (ValueError, TypeError, KeyError):
         return None, []
 
+    user = session.get(User, user_id)
+    if not user:
+        return None, []
+
     current_workspace = None
     active_ws_id = request.session.get("active_workspace_id")
     if active_ws_id:
@@ -72,8 +76,21 @@ def resolve_workspace_context(request: Request, session: Session) -> tuple[Works
     )
     all_workspaces = session.exec(stmt).all()
 
+    if not current_workspace and user and user.last_active_workspace_id:
+        for workspace in all_workspaces:
+            if workspace.id == user.last_active_workspace_id:
+                current_workspace = workspace
+                break
+
     if not current_workspace and all_workspaces:
         current_workspace = all_workspaces[0]
+
+    if current_workspace:
+        request.session["active_workspace_id"] = str(current_workspace.id)
+        if user.last_active_workspace_id != current_workspace.id:
+            user.last_active_workspace_id = current_workspace.id
+            session.add(user)
+            session.commit()
 
     return current_workspace, all_workspaces
 
@@ -132,10 +149,9 @@ async def home(
     try:
         user_id = UUID(str(user_data["id"]))
 
-        # Manual workspace resolution to avoid dependency chain issues
-        from apps.web.routers.api import get_current_workspace
-        # Note: We can't easily reuse the dependency function here because it requires Depends injection.
-        # Instead, we replicate the logic or rely on the fact that if we are here, we have a user.
+        user = saas_session.get(User, user_id)
+        if not user:
+            return RedirectResponse(url="/auth/login")
         
         # 1. Try Session for Workspace ID
         active_ws_id = request.session.get("active_workspace_id")
@@ -152,6 +168,15 @@ async def home(
                 current_workspace = saas_session.exec(stmt).first()
             except Exception:
                 pass
+
+        if not current_workspace and user.last_active_workspace_id:
+            stmt = (
+                select(Workspace)
+                .join(UserWorkspaceAssociation)
+                .where(Workspace.id == user.last_active_workspace_id)
+                .where(UserWorkspaceAssociation.user_id == user_id)
+            )
+            current_workspace = saas_session.exec(stmt).first()
         
         if not current_workspace:
              # Fallback: First available
@@ -178,6 +203,12 @@ async def home(
                 "show_onboarding": True
             }
              return templates.TemplateResponse("dashboard.html", context)
+
+        request.session["active_workspace_id"] = str(current_workspace.id)
+        if user.last_active_workspace_id != current_workspace.id:
+            user.last_active_workspace_id = current_workspace.id
+            saas_session.add(user)
+            saas_session.commit()
         
         # 1. Fetch all workspaces for context switcher
         stmt = (
