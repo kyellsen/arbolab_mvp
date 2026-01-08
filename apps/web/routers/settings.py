@@ -52,7 +52,7 @@ async def settings_index(
         "active_tab": "profile"
     }
     
-    if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
         return templates.TemplateResponse("settings/partials/profile_form.html", context)
     
     return templates.TemplateResponse("settings/settings_layout.html", context)
@@ -60,13 +60,13 @@ async def settings_index(
 @router.put("/profile", response_class=HTMLResponse)
 async def update_profile(
     request: Request,
-    full_name: Annotated[str, Form()],
-    organization: Annotated[str, Form()],
-    address_line1: Annotated[str, Form()],
-    address_line2: Annotated[str, Form()] = None,
-    city: Annotated[str, Form()] = None,
-    zip_code: Annotated[str, Form()] = None,
-    country: Annotated[str, Form()] = None,
+    full_name: Annotated[str | None, Form()] = None,
+    organization: Annotated[str | None, Form()] = None,
+    address_line1: Annotated[str | None, Form()] = None,
+    address_line2: Annotated[str | None, Form()] = None,
+    city: Annotated[str | None, Form()] = None,
+    zip_code: Annotated[str | None, Form()] = None,
+    country: Annotated[str | None, Form()] = None,
     user_id: UUID = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
@@ -74,13 +74,26 @@ async def update_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    user.full_name = full_name
-    user.organization = organization
-    user.address_line1 = address_line1
-    user.address_line2 = address_line2
-    user.city = city
-    user.zip_code = zip_code
-    user.country = country
+    def normalize_text(value: str | None) -> tuple[bool, str | None]:
+        """Normalize optional text fields and signal whether the input was provided."""
+        if value is None:
+            return False, None
+        normalized = value.strip()
+        return True, normalized if normalized else None
+
+    updates = {
+        "full_name": full_name,
+        "organization": organization,
+        "address_line1": address_line1,
+        "address_line2": address_line2,
+        "city": city,
+        "zip_code": zip_code,
+        "country": country,
+    }
+    for field_name, raw_value in updates.items():
+        provided, cleaned = normalize_text(raw_value)
+        if provided:
+            setattr(user, field_name, cleaned)
     
     session.add(user)
     session.commit()

@@ -208,8 +208,8 @@ async def home(
                 "recent_activity": recent_activity
             }
             
-            # Check HTMX request to swap only content
-            if request.headers.get("HX-Request"):
+            # Check HTMX request to swap only content (but not boosted full-page nav)
+            if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
                 return templates.TemplateResponse("partials/dashboard_content.html", context)
 
             return templates.TemplateResponse("dashboard.html", context)
@@ -226,7 +226,7 @@ async def explorer(request: Request):
     if not user:
          return RedirectResponse(url="/auth/login")
     
-    if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
          return templates.TemplateResponse("partials/explorer_content.html", {"request": request, "user": user})
     
     return templates.TemplateResponse("explorer.html", {"request": request, "user": user})
@@ -237,7 +237,7 @@ async def lab(request: Request):
     if not user:
          return RedirectResponse(url="/auth/login")
     
-    if request.headers.get("HX-Request"):
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
          return templates.TemplateResponse("partials/lab_content.html", {"request": request, "user": user})
     
     return templates.TemplateResponse("lab.html", {"request": request, "user": user})
@@ -290,7 +290,7 @@ async def tree(
                 "counts": counts
             }
 
-            if request.headers.get("HX-Request"):
+            if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
                  return templates.TemplateResponse("partials/tree_content.html", context)
             
             return templates.TemplateResponse("tree.html", context)
@@ -303,7 +303,7 @@ async def tree(
             "user": user_data,
             "counts": {}
         }
-        if request.headers.get("HX-Request"):
+        if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
              return templates.TemplateResponse("partials/tree_content.html", context)
         return templates.TemplateResponse("tree.html", context)
 
