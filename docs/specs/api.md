@@ -48,3 +48,46 @@ Configuration resolution order (Highest to Lowest priority):
 - **Database**: Access via `lab.database.session()`. Ad-hoc engine creation is FORBIDDEN.
 - **Metadata**: Import/Validation via `lab.metadata.import_package()`.
 - **Analytics**: Large datasets return **Arrow/Parquet** objects, not JSON.
+
+## 5. Recipe Contract
+Recipes provide a declarative execution plan for the Web App.
+
+### 5.1 Requirements
+- The Web App MUST require a Recipe for any ingest or analysis execution.
+- Direct Python usage of the `Lab` MUST remain recipe-optional.
+- The canonical Recipe path is `workspace_root/recipes/recipe.json`.
+- Recipe JSON MUST include:
+  - `recipe_version` (semantic version string)
+  - `steps` (ordered list)
+- Each `steps[]` entry MUST include:
+  - `type` (string step identifier)
+  - `params` (object)
+- Step parameters that reference input files MUST use paths relative to `input_root`.
+  Absolute paths are FORBIDDEN.
+
+### 5.2 Execution
+- The core MUST provide `Lab.run_recipe(...)` that maps step types to Lab operations.
+- Recipe execution MUST be idempotent; re-running a Recipe must not duplicate persisted state.
+- The Web App MAY expose a "view as Python" export derived from the Recipe; direct Python usage does not require this export.
+
+## 6. Web App API (SaaS)
+The Web App is an optional SaaS layer that orchestrates the `Lab` through HTTP.
+
+### 6.1 Authentication (MVP)
+- `POST /auth/login` accepts a name and password and establishes a session.
+- The MVP uses a single test user; no registration or password reset is required.
+- Authentication data is stored in the SaaS metadata store (separate from Workspace DuckDB).
+
+### 6.2 Workspaces
+- `POST /workspaces` creates a Workspace from explicit roots or a `base_root`.
+- `GET /workspaces` lists registered Workspaces.
+- The Web App MUST use the same root safety rules as `Lab.open(...)`.
+
+### 6.3 Recipes
+- `PUT /workspaces/{id}/recipe` persists the Recipe to the canonical Recipe path.
+- `POST /workspaces/{id}/recipe/run` executes the stored Recipe.
+- Execution responses MAY return HTML fragments for HTMX updates.
+
+### 6.4 Components (Optional)
+- `GET /components/plot/{id}` returns a server-rendered Plotly HTML fragment.
+- `GET /components/log-viewer` returns log output suitable for polling.

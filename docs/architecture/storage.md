@@ -12,6 +12,7 @@ Managed internal structure within `workspace_root`:
 
 * `db/`: DuckDB persistence (SQLAlchemy models).
 * `storage/variants/`: Parquet data, grouped by project/datastream.
+* `recipes/`: Recipe JSON files and execution logs.
 * `logs/`, `tmp/`: Runtime ephemerals.
 
 ## Data Variants (`DataVariant`)
@@ -24,6 +25,10 @@ Measurements are stored as **Variants** (e.g., `raw`, `processed`).
     * `RAW_DATA_VARIANT_NAME` is the canonical entry point.
     * Plugin ingestion writes Parquet here, then registers metadata in DuckDB.
     * Internal paths are strictly relative to `workspace_root`.
+
+## Recipes
+Recipes are stored under `workspace_root/recipes/` and are required for Web App execution.
+Direct Python usage of the `Lab` remains recipe-optional.
 
 ## Persistence Contract
 * **DuckDB:** Stores relational metadata, configuration state, and provenance.

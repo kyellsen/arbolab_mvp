@@ -47,3 +47,15 @@ Events define the state transitions of the ArboLab ecosystem. They act as the "D
 * **Source of Truth:** Parquet files + `DataVariant` (DuckDB).
 * **Payload:** `parent_variant_id`, `transformation_log`, `new_variant_name`.
 * **"Done" Condition:** The derived dataset is stored alongside the raw data.
+
+### 7. RecipePersisted
+* **Trigger:** User saves a Recipe in the Web App.
+* **Source of Truth:** `workspace_root/recipes/recipe.json`.
+* **Payload:** `workspace_id`, `recipe_version`, `step_count`.
+* **"Done" Condition:** The Recipe is valid JSON and can be executed by the Lab.
+
+### 8. RecipeExecuted
+* **Trigger:** User executes a Recipe in the Web App.
+* **Source of Truth:** Workspace DuckDB + persisted DataVariants.
+* **Payload:** `workspace_id`, `recipe_version`, `execution_id`, `status`.
+* **"Done" Condition:** All steps complete and outputs are persisted under `workspace_root` or `results_root` as appropriate.
