@@ -50,7 +50,7 @@ Events define the state transitions of the ArboLab ecosystem. They act as the "D
 
 ### 7. RecipePersisted
 * **Trigger:** User saves a Recipe in the Web App.
-* **Source of Truth:** `workspace_root/recipes/recipe.json`.
+* **Source of Truth:** `workspace_root/recipes/current.json`.
 * **Payload:** `workspace_id`, `recipe_version`, `step_count`.
 * **"Done" Condition:** The Recipe is valid JSON and can be executed by the Lab.
 

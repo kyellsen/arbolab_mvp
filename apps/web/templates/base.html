@@ -13,6 +13,17 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        @media (min-width: 1024px) {
+            .sidebar-label {
+                opacity: 0;
+                transition: opacity 150ms ease-in-out;
+                white-space: nowrap;
+            }
+            .group:hover .sidebar-label {
+                opacity: 1;
+                transition-delay: 280ms;
+            }
+        }
     </style>
 </head>
 <body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ mobileMenuOpen: false, rightSidebarOpen: false, activeEntity: 'project', logDrawerOpen: false }">
@@ -28,54 +39,8 @@
             <span class="font-bold text-emerald-500 text-xl tracking-tight">ARBOLAB</span>
             
             <!-- Context Switcher (Desktop) -->
-            <div class="hidden md:flex items-center gap-2 ml-4">
-                {% if current_workspace %}
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-700 transition-colors">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span class="font-medium">{{ current_workspace.name }}</span>
-                        <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <!-- Dropdown -->
-                    <div x-show="open" 
-                         x-transition:enter="transition ease-out duration-100"
-                         x-transition:enter-start="transform opacity-0 scale-95"
-                         x-transition:enter-end="transform opacity-100 scale-100"
-                         x-transition:leave="transition ease-in duration-75"
-                         x-transition:leave-start="transform opacity-100 scale-100"
-                         x-transition:leave-end="transform opacity-0 scale-95"
-                         class="absolute top-full left-0 mt-1 w-64 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 overflow-hidden" 
-                         style="display: none;">
-                        
-                        <div class="px-3 py-2 text-xs text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-700/50 mb-1">
-                            Switch Lab
-                        </div>
-
-                        {% for ws in all_workspaces %}
-                        <button 
-                            @click="fetch('/workspaces/activate?workspace_id={{ ws.id }}', {method: 'POST'}).then(() => window.location.reload())"
-                            class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center justify-between group">
-                            <span>{{ ws.name }}</span>
-                            {% if ws.id == current_workspace.id %}
-                            <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            {% endif %}
-                        </button>
-                        {% endfor %}
-
-                        <!-- Divider -->
-                        <div class="border-t border-slate-700/50 my-1"></div>
-                        
-                        <!-- New Lab Button -->
-                        <a href="/workspaces/new" 
-                           class="w-full text-left px-4 py-2 text-sm text-emerald-400 hover:bg-slate-700 hover:text-emerald-300 flex items-center gap-2 transition-colors">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            <span>Neues Lab erstellen</span>
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
+            <div id="workspace-switcher" class="hidden md:flex items-center gap-2 ml-4">
+                {% include "partials/workspace_switcher_content.html" %}
             </div>
         </div>
 
@@ -86,6 +51,8 @@
                     {{ user.email[0]|upper }}
                 </button>
                  <div x-show="open" class="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50" style="display: none;">
+                    <a href="/settings" hx-get="/settings" hx-target="#main-stage" hx-swap="innerHTML" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700">Profile Settings</a>
+                    <div class="border-t border-slate-700/60 my-1"></div>
                     <a href="/logout" class="block px-4 py-2 text-sm text-red-400 hover:bg-slate-700">Logout</a>
                 </div>
             </div>
@@ -101,7 +68,7 @@
         
         <!-- Sidebar Content -->
         <!-- Ensure lg:translate-x-0 !important kind of logic via order or just explicit structure -->
-        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 hover:lg:w-64 bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:transform-none flex flex-col group shrink-0">
+        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 lg:hover:w-max bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:transform-none flex flex-col group shrink-0">
              {% include 'components/_sidebar_left.html' %}
         </aside>
 
@@ -156,12 +123,61 @@
              // But since we use Alpine x-data="{ rightSidebarOpen: false }", we need to bridge it.
              // We can dispatch a custom event that Alpine listens to, or just click a hidden button.
         });
+
+        function setActiveSidebarNav(pathname) {
+            const navItems = document.querySelectorAll('[data-nav-path]');
+            if (!navItems.length) {
+                return;
+            }
+            const currentPath = pathname || window.location.pathname;
+            navItems.forEach((item) => {
+                const targetPath = item.dataset.navPath;
+                const matchMode = item.dataset.navMatch || 'exact';
+                let isActive = false;
+                if (matchMode === 'prefix') {
+                    isActive = currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+                } else {
+                    isActive = currentPath === targetPath;
+                }
+                item.classList.toggle('bg-slate-800', isActive);
+                item.classList.toggle('text-emerald-400', isActive);
+                item.classList.toggle('text-slate-400', !isActive);
+                if (isActive) {
+                    item.setAttribute('aria-current', 'page');
+                } else {
+                    item.removeAttribute('aria-current');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveSidebarNav();
+        });
         
         // HTMX Hooks
         document.body.addEventListener('htmx:afterSwap', function(evt) {
             // If we swapped into main-stage, maybe scroll to top?
-            if(evt.detail.target.id === 'main-stage') {
+            if (evt.detail.target && evt.detail.target.id === 'main-stage') {
                 evt.detail.target.scrollTop = 0;
+                if (evt.detail.xhr && evt.detail.xhr.responseURL) {
+                    try {
+                        const nextPath = new URL(evt.detail.xhr.responseURL).pathname;
+                        setActiveSidebarNav(nextPath);
+                    } catch (error) {
+                        setActiveSidebarNav();
+                    }
+                } else {
+                    setActiveSidebarNav();
+                }
+            }
+        });
+
+        document.body.addEventListener('workspace-activated', function() {
+            if (window.htmx) {
+                htmx.ajax('GET', '/workspaces/switcher', '#workspace-switcher');
+                htmx.ajax('GET', '/', '#main-stage');
+            } else {
+                window.location.reload();
             }
         });
     </script>

@@ -5,8 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
-from uuid import UUID
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -18,14 +17,11 @@ class LogEntry(BaseModel):
     
     timestamp: datetime = Field(default_factory=datetime.now)
     level: Literal["debug", "info", "warn", "error"] = "info"
-    source: Literal["frontend", "recipe", "system"] = "system"
+    source: Literal["recipe", "system"] = "system"
     action: str | None = None  # e.g., "recipe_started", "entity_created"
     entity: str | None = None  # e.g., "Tree", "SensorCalibration"
+    params: dict[str, Any] | None = None
     message: str = ""
-
-
-# In-memory buffer for frontend logs (per workspace)
-_frontend_logs: dict[str, list[LogEntry]] = {}
 
 
 class LogService:
@@ -33,45 +29,13 @@ class LogService:
     
     @staticmethod
     def get_feature_flags() -> dict:
-        """Return current feature flags for frontend config."""
+        """Return current feature flags for log drawer config."""
         return {
-            "frontendEnabled": log_flags.LOG_FRONTEND_ENABLED,
             "recipeEnabled": log_flags.LOG_RECIPE_ENABLED,
             "systemEnabled": log_flags.LOG_SYSTEM_ENABLED,
             "pollIntervalMs": log_flags.LOG_POLL_INTERVAL_MS,
             "maxEntries": log_flags.LOG_MAX_ENTRIES,
         }
-    
-    @staticmethod
-    def add_frontend_log(workspace_id: str, entry: LogEntry) -> None:
-        """Add a frontend log entry to the in-memory buffer."""
-        if not log_flags.LOG_FRONTEND_ENABLED:
-            return
-        
-        if workspace_id not in _frontend_logs:
-            _frontend_logs[workspace_id] = []
-        
-        entry.source = "frontend"
-        _frontend_logs[workspace_id].append(entry)
-        
-        # Keep only last N entries
-        max_entries = log_flags.LOG_MAX_ENTRIES
-        if len(_frontend_logs[workspace_id]) > max_entries:
-            _frontend_logs[workspace_id] = _frontend_logs[workspace_id][-max_entries:]
-    
-    @staticmethod
-    def get_frontend_logs(
-        workspace_id: str,
-        since: datetime | None = None
-    ) -> list[LogEntry]:
-        """Get frontend logs for a workspace, optionally filtered by timestamp."""
-        if not log_flags.LOG_FRONTEND_ENABLED:
-            return []
-        
-        logs = _frontend_logs.get(workspace_id, [])
-        if since:
-            logs = [log for log in logs if log.timestamp > since]
-        return logs[-log_flags.LOG_MAX_ENTRIES:]
     
     @staticmethod
     def get_recipe_logs(
@@ -121,6 +85,7 @@ class LogService:
                 source="recipe",
                 action=step.get("step_type", "unknown"),
                 entity=step.get("params", {}).get("entity_type"),
+                params=step.get("params") or None,
                 message=f"Recipe step: {step.get('step_type', 'unknown')}"
             ))
         
@@ -204,16 +169,12 @@ class LogService:
     
     @staticmethod
     def get_all_logs(
-        workspace_id: str,
         workspace_root: Path,
-        tab: Literal["frontend", "recipe", "system"] | None = None,
+        tab: Literal["recipe", "system"] | None = None,
         since: datetime | None = None
     ) -> list[LogEntry]:
         """Get logs from all sources or a specific tab."""
         logs: list[LogEntry] = []
-        
-        if tab is None or tab == "frontend":
-            logs.extend(LogService.get_frontend_logs(workspace_id, since))
         
         if tab is None or tab == "recipe":
             logs.extend(LogService.get_recipe_logs(workspace_root, since))

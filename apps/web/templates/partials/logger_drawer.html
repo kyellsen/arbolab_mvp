@@ -1,17 +1,11 @@
 <div class="h-full flex flex-col" 
      x-data="logDrawer()"
-     x-init="init()">
+     x-init="init()"
+     x-effect="logDrawerOpen ? startPolling() : stopPolling()">
     <!-- Header with Tabs -->
     <div class="flex items-center justify-between p-2 border-b border-slate-700 bg-slate-800">
         <div class="flex items-center gap-1">
             <!-- Tab Buttons -->
-            <template x-if="config.frontendEnabled">
-                <button @click="activeTab = 'frontend'" 
-                        :class="activeTab === 'frontend' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
-                        class="px-3 py-1.5 rounded text-xs font-medium transition-colors">
-                    Frontend
-                </button>
-            </template>
             <template x-if="config.recipeEnabled">
                 <button @click="activeTab = 'recipe'" 
                         :class="activeTab === 'recipe' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'"
@@ -40,10 +34,6 @@
                 Clear
             </button>
             
-            <!-- Close button -->
-            <button @click="closeDrawer()" class="text-slate-500 hover:text-white p-1">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
         </div>
     </div>
     
@@ -72,7 +62,13 @@
                 </template>
                 
                 <!-- Message -->
-                <span class="text-green-400" x-text="log.message"></span>
+                <div class="min-w-0 flex flex-col">
+                    <span class="text-green-400" x-text="log.message"></span>
+                    <template x-if="hasParams(log.params)">
+                        <span class="text-slate-500 whitespace-pre-wrap break-words" 
+                              x-text="formatParams(log.params)"></span>
+                    </template>
+                </div>
             </div>
         </template>
     </div>
@@ -87,18 +83,14 @@ function logDrawer() {
         pollInterval: null,
         lastTimestamp: null,
         config: {
-            frontendEnabled: true,
             recipeEnabled: true, 
             systemEnabled: true,
-            pollIntervalMs: 1000
+            pollIntervalMs: 3000
         },
         
         init() {
             // Load config from backend
             this.loadConfig();
-            
-            // Start polling when drawer becomes visible
-            this.startPolling();
         },
         
         async loadConfig() {
@@ -108,7 +100,6 @@ function logDrawer() {
                     this.config = await response.json();
                     // Set default active tab to first enabled
                     if (this.config.recipeEnabled) this.activeTab = 'recipe';
-                    else if (this.config.frontendEnabled) this.activeTab = 'frontend';
                     else if (this.config.systemEnabled) this.activeTab = 'system';
                 }
             } catch (e) {
@@ -123,11 +114,7 @@ function logDrawer() {
             this.fetchLogs(); // Initial fetch
             
             this.pollInterval = setInterval(() => {
-                // Only poll if drawer is visible
-                const drawer = document.getElementById('logger-drawer');
-                if (drawer && !drawer.classList.contains('translate-y-full')) {
-                    this.fetchLogs();
-                }
+                this.fetchLogs();
             }, this.config.pollIntervalMs);
         },
         
@@ -141,6 +128,11 @@ function logDrawer() {
         
         async fetchLogs() {
             try {
+                const drawer = document.getElementById('logger-drawer');
+                if (!drawer || window.getComputedStyle(drawer).display === 'none') {
+                    return;
+                }
+
                 // Always fetch without since filter for now (simpler, works)
                 let url = `/api/logs?tab=${this.activeTab}`;
                 
@@ -190,39 +182,25 @@ function logDrawer() {
                 second: '2-digit' 
             });
         },
+
+        hasParams(params) {
+            return params && typeof params === 'object' && Object.keys(params).length > 0;
+        },
+
+        formatParams(params) {
+            if (!params) return '';
+            try {
+                return JSON.stringify(params);
+            } catch (e) {
+                return String(params);
+            }
+        },
         
         clearLogs() {
             this.logs = [];
             this.lastTimestamp = null;
-        },
-        
-        closeDrawer() {
-            // Use Alpine's $dispatch or directly access body's Alpine data
-            // We dispatch an event that the body component can listen to
-            // Or simply access the Alpine component on body and set the state
-            const body = document.body;
-            if (body._x_dataStack && body._x_dataStack[0]) {
-                body._x_dataStack[0].logDrawerOpen = false;
-            }
         }
     };
 }
 
-// Capture JS errors and send to backend
-window.onerror = function(message, source, lineno, colno, error) {
-    try {
-        fetch('/api/logs/frontend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                level: 'error',
-                message: `${message} (${source}:${lineno})`,
-                action: 'js_error'
-            })
-        });
-    } catch (e) {
-        // Silently fail
-    }
-    return false;
-};
 </script>

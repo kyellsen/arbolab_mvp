@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from apps.web.core.paths import resolve_workspace_paths
@@ -21,17 +21,9 @@ class LogResponse(BaseModel):
     timestamp: datetime
 
 
-class FrontendLogRequest(BaseModel):
-    """Request model for posting frontend logs."""
-    level: Literal["debug", "info", "warn", "error"] = "info"
-    message: str
-    action: str | None = None
-
-
 @router.get("")
 async def get_logs(
-    request: Request,
-    tab: Literal["frontend", "recipe", "system"] | None = None,
+    tab: Literal["recipe", "system"] | None = None,
     since: str | None = None,
     workspace: Workspace = Depends(get_current_workspace),
 ) -> LogResponse:
@@ -39,10 +31,9 @@ async def get_logs(
     Returns recent logs for the specified tab, filtered by workspace.
     
     Query params:
-    - tab: "frontend", "recipe", or "system". None returns all enabled tabs.
+    - tab: "recipe" or "system". None returns all enabled tabs.
     - since: ISO timestamp to filter logs after this time.
     """
-    workspace_id = str(workspace.id)
     paths = resolve_workspace_paths(workspace.id)
     
     since_dt = None
@@ -53,7 +44,6 @@ async def get_logs(
             pass
     
     logs = LogService.get_all_logs(
-        workspace_id=workspace_id,
         workspace_root=paths.workspace_root,
         tab=tab,
         since=since_dt
@@ -66,30 +56,7 @@ async def get_logs(
     )
 
 
-@router.post("/frontend")
-async def post_frontend_log(
-    data: FrontendLogRequest,
-    workspace: Workspace = Depends(get_current_workspace),
-) -> dict:
-    """
-    Receives a frontend log entry from the browser.
-    Used to capture JS errors or explicit logging calls.
-    """
-    workspace_id = str(workspace.id)
-    
-    entry = LogEntry(
-        level=data.level,
-        source="frontend",
-        action=data.action,
-        message=data.message
-    )
-    
-    LogService.add_frontend_log(workspace_id, entry)
-    
-    return {"status": "ok"}
-
-
 @router.get("/config")
 async def get_log_config() -> dict:
-    """Returns log feature flags for frontend configuration."""
+    """Returns log feature flags for log drawer configuration."""
     return LogService.get_feature_flags()

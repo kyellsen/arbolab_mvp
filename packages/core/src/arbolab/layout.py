@@ -33,7 +33,7 @@ class WorkspaceLayout:
     def variants_dir(self) -> Path:
         return self._root / "storage" / "variants"
         
-    def recipe_path(self, name: str = "recipe.json") -> Path:
+    def recipe_path(self, name: str = "current.json") -> Path:
         return self.recipes_dir / name
 
     def receipt_path(self, name: str = "receipt.json") -> Path:

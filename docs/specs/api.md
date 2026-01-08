@@ -55,7 +55,7 @@ Recipes provide a declarative execution plan for the Web App.
 ### 5.1 Requirements
 - The Web App MUST require a Recipe for any ingest or analysis execution.
 - Direct Python usage of the `Lab` MUST remain recipe-optional.
-- The canonical Recipe path is `workspace_root/recipes/recipe.json`.
+- The canonical Recipe path is `workspace_root/recipes/current.json`.
 - Recipe JSON MUST include:
   - `recipe_version` (semantic version string)
   - `steps` (ordered list)

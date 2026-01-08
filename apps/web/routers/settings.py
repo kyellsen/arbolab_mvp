@@ -7,30 +7,28 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 from pathlib import Path
 
-from apps.web.core.database import get_session, SessionDep
+from apps.web.core.database import get_session
 from apps.web.models.user import User
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
 from apps.web.core.security import get_password_hash, verify_password
 from apps.web.routers.api import get_current_user_id, get_current_workspace
-from arbolab.lab import Lab
+from apps.web.core.lab_cache import invalidate_cached_lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from arbolab.config import load_config, update_config
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-@router.get("/", response_class=HTMLResponse)
-async def settings_index(
-    request: Request,
-    user_id: UUID = Depends(get_current_user_id),
-    session: Session = Depends(get_session)
-):
+def _is_hx_target(request: Request, target: str) -> bool:
+    return request.headers.get("HX-Request") and request.headers.get("HX-Target") == target
+
+def _get_user_workspace_context(request: Request, user_id: UUID, session: Session):
     user = session.get(User, user_id)
     if not user:
-        return RedirectResponse(url="/auth/login")
-    
-    # Get Workspaces for sidebar context
+        return None, None, []
+
     stmt = (
         select(Workspace)
         .join(UserWorkspaceAssociation)
@@ -38,11 +36,28 @@ async def settings_index(
         .order_by(Workspace.created_at)
     )
     all_workspaces = session.exec(stmt).all()
-    
+
     active_ws_id = request.session.get("active_workspace_id")
     current_workspace = None
     if active_ws_id:
         current_workspace = session.get(Workspace, UUID(active_ws_id))
+
+    return user, current_workspace, all_workspaces
+
+def _load_workspace_config(current_workspace: Workspace):
+    paths = resolve_workspace_paths(current_workspace.id)
+    ensure_workspace_paths(paths)
+    return load_config(paths.workspace_root)
+
+@router.get("/", response_class=HTMLResponse)
+async def settings_index(
+    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
+    session: Session = Depends(get_session)
+):
+    user, current_workspace, all_workspaces = _get_user_workspace_context(request, user_id, session)
+    if not user:
+        return RedirectResponse(url="/auth/login")
 
     context = {
         "request": request,
@@ -51,10 +66,13 @@ async def settings_index(
         "all_workspaces": all_workspaces,
         "active_tab": "profile"
     }
-    
-    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+
+    if _is_hx_target(request, "settings-content"):
         return templates.TemplateResponse("settings/partials/profile_form.html", context)
-    
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return templates.TemplateResponse("settings/partials/user_settings_content.html", context)
+
     return templates.TemplateResponse("settings/settings_layout.html", context)
 
 @router.put("/profile", response_class=HTMLResponse)
@@ -109,8 +127,25 @@ async def update_profile(
 
 @router.get("/security", response_class=HTMLResponse)
 async def security_tab(request: Request, user_id: UUID = Depends(get_current_user_id), session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
-    return templates.TemplateResponse("settings/partials/security_form.html", {"request": request, "user": user})
+    user, current_workspace, all_workspaces = _get_user_workspace_context(request, user_id, session)
+    if not user:
+        return RedirectResponse(url="/auth/login")
+
+    context = {
+        "request": request,
+        "user": user,
+        "current_workspace": current_workspace,
+        "all_workspaces": all_workspaces,
+        "active_tab": "security"
+    }
+
+    if _is_hx_target(request, "settings-content"):
+        return templates.TemplateResponse("settings/partials/security_form.html", context)
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return templates.TemplateResponse("settings/partials/user_settings_content.html", context)
+
+    return templates.TemplateResponse("settings/settings_layout.html", context)
 
 @router.put("/password", response_class=HTMLResponse)
 async def update_password(
@@ -175,18 +210,48 @@ async def delete_account(
     request.session.clear()
     return HTMLResponse(content="", headers={"HX-Redirect": "/auth/login"})
 
+@router.get("/lab", response_class=HTMLResponse)
+async def lab_settings_page(
+    request: Request,
+    user_id: UUID = Depends(get_current_user_id),
+    session: Session = Depends(get_session),
+    current_workspace: Workspace = Depends(get_current_workspace),
+):
+    user = session.get(User, user_id)
+    if not user:
+        return RedirectResponse(url="/auth/login")
+
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+        .order_by(Workspace.created_at)
+    )
+    all_workspaces = session.exec(stmt).all()
+
+    config = _load_workspace_config(current_workspace)
+
+    context = {
+        "request": request,
+        "user": user,
+        "current_workspace": current_workspace,
+        "all_workspaces": all_workspaces,
+        "config": config,
+        "workspace": current_workspace
+    }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+        return templates.TemplateResponse("settings/partials/lab_settings_content.html", context)
+
+    return templates.TemplateResponse("settings/lab_settings.html", context)
+
 @router.get("/lab/config", response_class=HTMLResponse)
 async def lab_config_tab(
     request: Request,
     current_workspace: Workspace = Depends(get_current_workspace),
 ):
-    # Read config.yaml
-    paths = resolve_workspace_paths(current_workspace.id)
-    ensure_workspace_paths(paths)
-    
-    from arbolab.config import load_config
-    config = load_config(paths.workspace_root)
-    
+    config = _load_workspace_config(current_workspace)
+
     return templates.TemplateResponse("settings/partials/lab_config.html", {
         "request": request,
         "config": config,
@@ -214,25 +279,11 @@ async def update_lab_config(
                 updates[key] = form_data[key]
     
     paths = resolve_workspace_paths(current_workspace.id)
-    
-    from arbolab.config import load_config
-    import yaml
-    
-    # Custom helper function we'll add to config.py later or implement here
-    config_path = paths.workspace_root / "config.yaml"
-    
-    if config_path.exists():
-        with open(config_path, "r") as f:
-            full_config = yaml.safe_load(f) or {}
-    else:
-        full_config = {}
-        
-    full_config.update(updates)
-    
-    with open(config_path, "w") as f:
-        yaml.safe_dump(full_config, f, sort_keys=False)
-        
+    ensure_workspace_paths(paths)
+
+    update_config(paths.workspace_root, updates)
     config = load_config(paths.workspace_root)
+    invalidate_cached_lab(current_workspace.id)
     
     response = templates.TemplateResponse("settings/partials/lab_config.html", {
         "request": request,

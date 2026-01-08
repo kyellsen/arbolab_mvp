@@ -19,8 +19,8 @@
             <form hx-{% if entity %}put{% else %}post{% endif %}="/api/entities/{{ entity_type }}{% if entity %}/{{ entity.id }}{% endif %}"
                   hx-ext="json-enc"
                   hx-target="#modal-container"
-                  hx-swap="innerHTML"
-                  hx-on::after-request="if(event.detail.successful) { {% if redirect_url %} window.location.href = '{{ redirect_url }}'; {% else %} document.getElementById('modal-container').innerHTML = ''; htmx.trigger('#entity-list-container', 'refreshList'); {% endif %} }"
+                  hx-swap="none"
+                  hx-on::after-request="if(event.detail.successful) { {% if redirect_url %} window.location.href = '{{ redirect_url }}'; {% else %} document.getElementById('modal-container').innerHTML = ''; const listContainer = document.getElementById('entity-list-container'); if(listContainer){ htmx.ajax('GET', '/explorer-ui/list/{{ entity_type }}', '#entity-list-container'); } const inspector = document.getElementById('inspector-panel'); {% if entity %} if(inspector){ htmx.ajax('GET', '/explorer-ui/inspector/{{ entity_type }}/{{ entity.id }}', '#inspector-panel'); } {% endif %} {% endif %} }"
                   class="space-y-4">
                 
                 {% for field_name, field in fields.items() %}

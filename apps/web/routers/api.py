@@ -7,14 +7,11 @@ from uuid import UUID
 from apps.web.core.domain import list_entities, get_entity, create_entity, update_entity, delete_entity
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
 from apps.web.models.user import User
-from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from apps.web.core.lab_cache import get_cached_lab
 from apps.web.core.database import get_session as get_saas_session
 from arbolab.lab import Lab
 from arbolab.core.security import LabRole
-from arbolab.core.recipes.executor import RecipeExecutor
-from arbolab.core.recipes.transpiler import RecipeTranspiler
-from pathlib import Path
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
@@ -74,6 +71,7 @@ async def get_current_workspace(
             )
             workspace = session.exec(stmt).first()
             if workspace:
+                request.state.workspace_id = workspace.id
                 return workspace
         except (ValueError, TypeError):
             pass # Invalid ID in session, fall back
@@ -104,7 +102,8 @@ async def get_current_workspace(
         )
         session.add(assoc)
         session.commit()
-        
+
+    request.state.workspace_id = workspace.id
     return workspace
 
 def get_lab(
@@ -127,15 +126,7 @@ def get_lab(
          raise HTTPException(status_code=403, detail="Access denied to workspace")
 
     try:
-        paths = resolve_workspace_paths(workspace.id)
-        ensure_workspace_paths(paths)
-        
-        return Lab.open(
-            workspace_root=paths.workspace_root,
-            input_root=paths.input_root,
-            results_root=paths.results_root,
-            role=assoc.role
-        )
+        return get_cached_lab(workspace.id, assoc.role)
     except ValueError as e:
         # Security violation (Path traversal)
         raise HTTPException(status_code=403, detail=str(e))
@@ -201,10 +192,12 @@ async def api_delete_entity(entity_type: str, entity_id: int, lab: Lab = Depends
 
 @router.get("/recipes/export")
 async def api_export_recipe(lab: Lab = Depends(get_lab)):
-    """Transpiles the current recipe to standalone Python."""
-    recipe = RecipeExecutor.load_recipe(lab)
-    code = RecipeTranspiler.to_python(recipe)
-    return PlainTextResponse(
-        content=code,
-        headers={"Content-Disposition": "attachment; filename=exported_recipe.py"}
+    """Downloads the current recipe JSON file."""
+    recipe_path = lab.layout.recipe_path("current.json")
+    if not recipe_path.exists():
+        raise HTTPException(status_code=404, detail="Recipe file not found")
+    return FileResponse(
+        path=recipe_path,
+        media_type="application/json",
+        filename="current.json",
     )

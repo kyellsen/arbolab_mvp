@@ -13,6 +13,7 @@
     <form hx-{% if entity %}put{% else %}post{% endif %}="/api/entities/{{ entity_type }}{% if entity %}/{{ entity.id }}{% endif %}"
           hx-ext="json-enc"
           hx-target="#explorer-content"
+          hx-swap="none"
           hx-on::after-request="if(event.detail.successful) htmx.ajax('GET', '/explorer-ui/list/{{ entity_type }}', '#explorer-content')"
           class="space-y-4">
         

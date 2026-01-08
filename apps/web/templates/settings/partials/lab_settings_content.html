@@ -1,0 +1,23 @@
+<div class="max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg" id="settings-content">
+        {% include "settings/partials/lab_config.html" %}
+    </div>
+</div>
+
+<script>
+    if (!document.body.dataset.toastListener) {
+        document.body.dataset.toastListener = "true";
+        document.body.addEventListener('show-toast', function(evt) {
+            const message = evt.detail.value;
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-10 right-10 bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-2xl z-50 transform translate-y-20 transition-transform duration-300';
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.transform = 'translateY(0)', 10);
+            setTimeout(() => {
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        });
+    }
+</script>

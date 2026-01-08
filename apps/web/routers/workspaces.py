@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 from uuid import UUID
 
@@ -5,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 
 from apps.web.core.database import get_session
-from apps.web.routers.api import get_current_user_id, get_current_user
+from apps.web.routers.api import get_current_user_id, get_current_user, get_current_workspace
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pathlib import Path
 from fastapi import Form
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
@@ -41,11 +42,20 @@ async def list_workspaces(
 @router.post("/activate")
 async def activate_workspace(
     request: Request,
-    workspace_id: str, # Form data or JSON
+    workspace_id: Annotated[str | None, Form()] = None,
     user_id: Annotated[UUID, Depends(get_current_user_id)],
     session: Annotated[Session, Depends(get_session)]
 ):
     """Sets the active workspace in the session."""
+    if workspace_id is None:
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+        workspace_id = payload.get("workspace_id")
+
+    if not workspace_id:
+        raise HTTPException(status_code=400, detail="Missing workspace_id")
     # Verify access via association
     try:
         w_uuid = UUID(workspace_id)
@@ -65,8 +75,36 @@ async def activate_workspace(
     
     # Update Session
     request.session["active_workspace_id"] = str(workspace.id)
-    
-    return {"status": "activated", "workspace": workspace.name}
+
+    response = JSONResponse({"status": "activated", "workspace": workspace.name})
+    response.headers["HX-Trigger"] = json.dumps({
+        "workspace-activated": {
+            "workspaceId": str(workspace.id),
+            "workspaceName": workspace.name,
+        }
+    })
+    return response
+
+
+@router.get("/switcher", response_class=HTMLResponse)
+async def workspace_switcher(
+    request: Request,
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    session: Annotated[Session, Depends(get_session)],
+    current_workspace: Workspace = Depends(get_current_workspace),
+):
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+        .order_by(Workspace.created_at)
+    )
+    all_workspaces = session.exec(stmt).all()
+    return templates.TemplateResponse("partials/workspace_switcher_content.html", {
+        "request": request,
+        "current_workspace": current_workspace,
+        "all_workspaces": all_workspaces,
+    })
 
 @router.get("/new", response_class=HTMLResponse)
 async def new_workspace_page(
@@ -121,4 +159,3 @@ async def create_workspace(
     
     # 4. Redirect to Dashboard
     return RedirectResponse(url="/", status_code=303)
-

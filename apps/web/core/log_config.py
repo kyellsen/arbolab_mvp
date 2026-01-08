@@ -11,12 +11,11 @@ class LogFeatureFlags(BaseSettings):
     """
     
     # Enable/disable individual log tabs
-    LOG_FRONTEND_ENABLED: bool = True   # JS console/error forwarding
     LOG_RECIPE_ENABLED: bool = True     # Recipe execution steps
     LOG_SYSTEM_ENABLED: bool = True     # arbolab-logger file logs
     
     # Polling configuration
-    LOG_POLL_INTERVAL_MS: int = 500     # Interval in milliseconds (faster for dev)
+    LOG_POLL_INTERVAL_MS: int = 3000    # Interval in milliseconds (readable + lower traffic)
     
     # Response limits
     LOG_MAX_ENTRIES: int = 200          # Max entries per request

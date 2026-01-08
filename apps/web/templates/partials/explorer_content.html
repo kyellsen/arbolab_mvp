@@ -1,4 +1,5 @@
-<div class="flex h-full overflow-hidden" x-data="{ activeEntity: 'project' }">
+{% set default_entity = active_entity|default('project', true) %}
+<div class="flex h-full overflow-hidden" x-data="{ activeEntity: '{{ default_entity }}' }">
     <!-- Left Pane: Navigation (Fixed Width) -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col">
         <div class="p-4 border-b border-slate-800">
@@ -53,7 +54,7 @@
                            name="search"
                            placeholder="Search..." 
                            class="bg-slate-800 border-none rounded-md px-3 py-1.5 text-sm w-48 focus:w-64 transition-all focus:ring-1 focus:ring-emerald-500 text-slate-200 pl-9 placeholder-slate-500"
-                           hx-get="/explorer-ui/list/"
+                           hx-get="/explorer-ui/list/{{ default_entity }}"
                            :hx-get="'/explorer-ui/list/' + activeEntity"
                            hx-trigger="keyup changed delay:300ms"
                            hx-target="#entity-list-container"
@@ -64,7 +65,7 @@
                 <div class="h-6 w-px bg-slate-800 mx-1"></div>
 
                 <!-- New Button -->
-                <button hx-get="/explorer-ui/form/project"
+                <button hx-get="/explorer-ui/form/{{ default_entity }}"
                         :hx-get="'/explorer-ui/form/' + activeEntity"
                         hx-target="#modal-container"
                         class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-sm shadow-emerald-900/20">
@@ -76,7 +77,7 @@
 
         <!-- Entity List Container -->
         <div id="entity-list-container" 
-             hx-get="/explorer-ui/list/project"
+             hx-get="/explorer-ui/list/{{ default_entity }}"
              :hx-get="'/explorer-ui/list/' + activeEntity"
              hx-trigger="load, refreshList from:body"
              class="flex-1 overflow-auto bg-slate-900">
@@ -95,3 +96,9 @@
 
 <!-- Modal Container -->
 <div id="modal-container"></div>
+{% if open_form_entity %}
+<div class="hidden"
+     hx-get="/explorer-ui/form/{{ open_form_entity }}"
+     hx-target="#modal-container"
+     hx-trigger="load"></div>
+{% endif %}

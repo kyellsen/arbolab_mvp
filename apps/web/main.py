@@ -1,5 +1,5 @@
 import os
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -8,17 +8,17 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from starlette.middleware.sessions import SessionMiddleware
 
 from apps.web.core.security import get_password_hash, verify_password
+from apps.web.core.access_log import access_log_middleware
 
 # Importiere Modelle und Security
 from uuid import UUID
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
 from apps.web.models.user import User
-from arbolab.lab import Lab
-from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from apps.web.core.lab_cache import get_cached_lab
 from pathlib import Path
 from arbolab.models.core import Project
 from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router
-from apps.web.core.domain import get_entity_counts
+from apps.web.core.domain import get_entity_counts, ENTITY_MAP
 from arbolab.core.recipes.executor import RecipeExecutor
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -35,8 +35,47 @@ def create_db_and_tables():
 app = FastAPI()
 # WICHTIG: Session Middleware für Login-Cookies
 app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY_CHANGE_ME") 
+app.middleware("http")(access_log_middleware)
 
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+
+def resolve_workspace_context(request: Request, session: Session) -> tuple[Workspace | None, list[Workspace]]:
+    user_data = request.session.get("user")
+    if not user_data:
+        return None, []
+
+    try:
+        user_id = UUID(str(user_data["id"]))
+    except (ValueError, TypeError, KeyError):
+        return None, []
+
+    current_workspace = None
+    active_ws_id = request.session.get("active_workspace_id")
+    if active_ws_id:
+        try:
+            stmt = (
+                select(Workspace)
+                .join(UserWorkspaceAssociation)
+                .where(Workspace.id == UUID(active_ws_id))
+                .where(UserWorkspaceAssociation.user_id == user_id)
+            )
+            current_workspace = session.exec(stmt).first()
+        except (ValueError, TypeError):
+            current_workspace = None
+
+    stmt = (
+        select(Workspace)
+        .join(UserWorkspaceAssociation)
+        .where(UserWorkspaceAssociation.user_id == user_id)
+        .order_by(Workspace.created_at)
+    )
+    all_workspaces = session.exec(stmt).all()
+
+    if not current_workspace and all_workspaces:
+        current_workspace = all_workspaces[0]
+
+    return current_workspace, all_workspaces
 
 @app.on_event("startup")
 def on_startup():
@@ -161,15 +200,7 @@ async def home(
         role = assoc.role if assoc else LabRole.VIEWER
 
         # 3. Get Lab
-        paths = resolve_workspace_paths(current_workspace.id)
-        ensure_workspace_paths(paths)
-        
-        lab = Lab.open(
-            workspace_root=paths.workspace_root,
-            input_root=paths.input_root,
-            results_root=paths.results_root,
-            role=role
-        )
+        lab = get_cached_lab(current_workspace.id, role)
         
         # 3. Use Lab Session
         with lab.database.session() as session:
@@ -221,26 +252,69 @@ async def home(
         return RedirectResponse(url="/auth/login")
 
 @app.get("/explorer", response_class=HTMLResponse)
-async def explorer(request: Request):
+async def explorer(
+    request: Request,
+    entity: Optional[str] = None,
+    open_form: Optional[str] = None,
+    saas_session: Session = Depends(get_session),
+):
     user = request.session.get("user")
     if not user:
          return RedirectResponse(url="/auth/login")
-    
-    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
-         return templates.TemplateResponse("partials/explorer_content.html", {"request": request, "user": user})
-    
-    return templates.TemplateResponse("explorer.html", {"request": request, "user": user})
 
-@app.get("/lab", response_class=HTMLResponse)
-async def lab(request: Request):
+    current_workspace, all_workspaces = resolve_workspace_context(request, saas_session)
+
+    active_entity = "project"
+    entity_param = None
+    if entity:
+        normalized_entity = entity.strip().lower()
+        if normalized_entity in ENTITY_MAP:
+            active_entity = normalized_entity
+            entity_param = normalized_entity
+
+    open_form_entity = None
+    if open_form:
+        normalized_form = open_form.strip().lower()
+        if normalized_form in ENTITY_MAP:
+            open_form_entity = normalized_form
+            if entity_param is None:
+                active_entity = normalized_form
+
+    context = {
+        "request": request,
+        "user": user,
+        "active_entity": active_entity,
+        "open_form_entity": open_form_entity,
+        "current_workspace": current_workspace,
+        "all_workspaces": all_workspaces,
+    }
+
+    if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
+         return templates.TemplateResponse("partials/explorer_content.html", context)
+
+    return templates.TemplateResponse("explorer.html", context)
+
+@app.get("/analysis", response_class=HTMLResponse)
+async def analysis(
+    request: Request,
+    saas_session: Session = Depends(get_session),
+):
     user = request.session.get("user")
     if not user:
          return RedirectResponse(url="/auth/login")
+
+    current_workspace, all_workspaces = resolve_workspace_context(request, saas_session)
+    context = {
+        "request": request,
+        "user": user,
+        "current_workspace": current_workspace,
+        "all_workspaces": all_workspaces,
+    }
     
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
-         return templates.TemplateResponse("partials/lab_content.html", {"request": request, "user": user})
+         return templates.TemplateResponse("partials/analysis_content.html", context)
     
-    return templates.TemplateResponse("lab.html", {"request": request, "user": user})
+    return templates.TemplateResponse("analysis.html", context)
 
 @app.get("/tree", response_class=HTMLResponse)
 async def tree(
@@ -252,9 +326,17 @@ async def tree(
     if not user_data:
          return RedirectResponse(url="/auth/login")
     
+    all_workspaces = []
     # Authenticated: Setup Lab Session manually
     try:
         user_id = UUID(str(user_data["id"]))
+        stmt = (
+            select(Workspace)
+            .join(UserWorkspaceAssociation)
+            .where(UserWorkspaceAssociation.user_id == user_id)
+            .order_by(Workspace.created_at)
+        )
+        all_workspaces = saas_session.exec(stmt).all()
         
         # 1. Get Role for current workspace
         assoc = saas_session.exec(
@@ -267,15 +349,7 @@ async def tree(
         role = assoc.role if assoc else LabRole.VIEWER
 
         # 2. Get Lab
-        paths = resolve_workspace_paths(current_workspace.id)
-        ensure_workspace_paths(paths)
-        
-        lab = Lab.open(
-            workspace_root=paths.workspace_root,
-            input_root=paths.input_root,
-            results_root=paths.results_root,
-            role=role
-        )
+        lab = get_cached_lab(current_workspace.id, role)
         
         # 3. Use Lab Session to get counts
         with lab.database.session() as session:
@@ -287,7 +361,9 @@ async def tree(
             context = {
                 "request": request, 
                 "user": user_data,
-                "counts": counts
+                "counts": counts,
+                "current_workspace": current_workspace,
+                "all_workspaces": all_workspaces,
             }
 
             if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -301,7 +377,9 @@ async def tree(
         context = {
             "request": request, 
             "user": user_data,
-            "counts": {}
+            "counts": {},
+            "current_workspace": current_workspace,
+            "all_workspaces": all_workspaces,
         }
         if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
              return templates.TemplateResponse("partials/tree_content.html", context)
