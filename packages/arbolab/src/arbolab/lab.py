@@ -72,10 +72,10 @@ class Lab:
         ws_path = Path(workspace_root).resolve()
         
         # 0. Log Configured Roots
-        logger.info(f"Lab Roots Configuration:")
-        logger.info(f"  Workspace Root: {ws_path}")
-        logger.info(f"  Input Root:     {input_root}")
-        logger.info(f"  Results Root:   {results_root}")
+        logger.debug(f"Lab Roots Configuration:")
+        logger.debug(f"  Workspace Root: {ws_path}")
+        logger.debug(f"  Input Root:     {input_root}")
+        logger.debug(f"  Results Root:   {results_root}")
 
         
         # Create directory if strictly entirely missing? 
@@ -99,11 +99,11 @@ class Lab:
         # 4. Fallback from Config if not provided explicitly
         if not input_root and config.input_path:
              input_root = Path(config.input_path)
-             logger.info(f"Restored Input Root from config: {input_root}")
+             logger.debug(f"Restored Input Root from config: {input_root}")
              
         if not results_root and config.results_path:
              results_root = Path(config.results_path)
-             logger.info(f"Restored Results Root from config: {results_root}")
+             logger.debug(f"Restored Results Root from config: {results_root}")
         
         # 5. Construct Layouts
         layout = WorkspaceLayout(ws_path)
