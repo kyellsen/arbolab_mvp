@@ -12,14 +12,20 @@ from apps.web.core.security import get_password_hash, verify_password
 # Importiere Modelle und Security
 from apps.web.models.auth import User
 
-# 1. Datenbank Setup (SQLite für MVP)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
+# 1. Datenbank Setup
+from arbolab.config import load_config
 
-sqlite_file_name = os.path.join(DATA_DIR, "saas.db")
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-engine = create_engine(sqlite_url)
+config = load_config()
+config.ensure_directories()
+
+# Use configured DB URL or fallback to local sqlite (though Postgres is desired)
+database_url = config.database_url
+if not database_url:
+    # Fallback to sqlite in data_root for local dev without containers
+    sqlite_file_name = config.data_root / "saas.db"
+    database_url = f"sqlite:///{sqlite_file_name}"
+
+engine = create_engine(database_url)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
