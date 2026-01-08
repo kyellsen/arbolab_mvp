@@ -30,14 +30,27 @@ async def get_current_user_id(request: Request) -> UUID:
         raise HTTPException(status_code=401, detail="Invalid user session")
 
 async def get_current_workspace(
+    request: Request,
     user_id: UUID = Depends(get_current_user_id),
     session: SaasSession = Depends(get_saas_session)
 ) -> Workspace:
     """
     Determines the current active workspace for the user.
-    MVP: Auto-selects the first workspace or creates a default one.
+    Checks session['active_workspace_id'] first, then falls back to default/first.
     """
-    stmt = select(Workspace).where(Workspace.owner_id == user_id)
+    # 1. Try Session
+    active_ws_id = request.session.get("active_workspace_id")
+    if active_ws_id:
+        try:
+            stmt = select(Workspace).where(Workspace.id == UUID(active_ws_id), Workspace.owner_id == user_id)
+            workspace = session.exec(stmt).first()
+            if workspace:
+                return workspace
+        except (ValueError, TypeError):
+            pass # Invalid ID in session, fall back
+
+    # 2. Fallback: First available or create default
+    stmt = select(Workspace).where(Workspace.owner_id == user_id).order_by(Workspace.created_at)
     workspace = session.exec(stmt).first()
     
     if not workspace:

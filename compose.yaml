@@ -24,9 +24,7 @@ services:
     environment:
       - ARBO_DATA_ROOT=/data
     volumes:
-      - ./data/input:/data/input:ro,Z
-      - ./data/workspace:/data/workspace:Z
-      - ./data/results:/data/results:Z
+      - ./data:/data:Z
       - ./apps/web:/app/apps/web:Z
       - ./packages:/app/packages:Z
     command: ["uvicorn", "apps.web.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/apps/web", "--reload-dir", "/app/packages"]

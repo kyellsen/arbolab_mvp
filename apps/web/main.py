@@ -10,10 +10,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from apps.web.core.security import get_password_hash, verify_password
 
 # Importiere Modelle und Security
-from apps.web.models.auth import User
+from uuid import UUID
+from apps.web.models.auth import User, Workspace
+from arbolab.lab import Lab
+from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from pathlib import Path
 from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router
+from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router
 from apps.web.core.domain import get_entity_counts
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -43,40 +46,77 @@ async def health():
 
 # Register Routers
 app.include_router(api.router)
+app.include_router(workspaces_router.router)
 app.include_router(explorer_router.router)
 
 # ----------------- ROUTEN -----------------
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, session: Session = Depends(api.get_db_session)):
+async def home(
+    request: Request, 
+    current_workspace: Workspace = Depends(api.get_current_workspace),
+    saas_session: Session = Depends(get_session)
+):
     """Dashboard oder Redirect zu Login"""
-    user = request.session.get("user")
-    if not user:
+    user_data = request.session.get("user")
+    if not user_data:
         return RedirectResponse(url="/auth/login")
     
-    counts = await get_entity_counts(session)
-    
-    # Get current project name (simple logic for MVP: first project)
-    project_name = "No Project Found"
-    first_project = session.execute(select(Project)).scalars().first()
-    if first_project:
-        project_name = first_project.name or f"Project #{first_project.id}"
-    
-    # Check HTMX request to swap only content
-    if request.headers.get("HX-Request"):
-        return templates.TemplateResponse("partials/dashboard_content.html", {
-            "request": request, 
-            "user": user,
-            "counts": counts,
-            "project_name": project_name
-        })
+    # Authenticated: Setup Lab Session manually to avoid 401 in dependencies
+    try:
+        user_id = UUID(str(user_data["id"]))
+        
+        # 1. Fetch all workspaces for context switcher
+        stmt = select(Workspace).where(Workspace.owner_id == user_id).order_by(Workspace.created_at)
+        all_workspaces = saas_session.exec(stmt).all()
+        
+        # 2. Get Lab (using current_workspace determined by Depends)
+        paths = resolve_workspace_paths(user_id, current_workspace.id)
+        ensure_workspace_paths(paths)
+        
+        lab = Lab.open(
+            workspace_root=paths.workspace_root,
+            input_root=paths.input_root,
+            results_root=paths.results_root
+        )
+        
+        # 3. Use Lab Session
+        with lab.database.session() as session:
+            try:
+                counts = await get_entity_counts(session)
+            except Exception:
+                counts = {} # Fallback if DB is empty/initing
+            
+            # Get current project name (simple logic for MVP: first project)
+            project_name = "No Project Found"
+            try:
+                first_project = session.execute(select(Project)).scalars().first()
+                if first_project:
+                    project_name = first_project.name or f"Project #{first_project.id}"
+            except Exception:
+                pass
+            
+            # Template Data
+            context = {
+                "request": request, 
+                "user": user_data,
+                "counts": counts,
+                "project_name": project_name,
+                "current_workspace": current_workspace,
+                "all_workspaces": all_workspaces
+            }
+            
+            # Check HTMX request to swap only content
+            if request.headers.get("HX-Request"):
+                return templates.TemplateResponse("partials/dashboard_content.html", context)
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request, 
-        "user": user,
-        "counts": counts,
-        "project_name": project_name
-    })
+            return templates.TemplateResponse("dashboard.html", context)
+
+    except Exception as e:
+        # If anything breaks in setup (e.g. malformed cookie, db error), redirect to login or show error
+        # Clearing session might be safer if it's a cookie issue
+        print(f"Error in home dashboard: {e}") 
+        return RedirectResponse(url="/auth/login")
 
 @app.get("/explorer", response_class=HTMLResponse)
 async def explorer(request: Request):

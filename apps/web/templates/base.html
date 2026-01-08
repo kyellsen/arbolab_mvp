@@ -30,15 +30,36 @@
             <!-- Context Switcher (Desktop) -->
             <div class="hidden md:flex items-center gap-2 ml-4">
                 <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-700">
+                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-700 transition-colors">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        Project: Stadtpark Süd
-                        <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <span class="font-medium">{{ current_workspace.name }}</span>
+                        <svg class="w-4 h-4 text-slate-500 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <!-- Dropdown Placeholder -->
-                    <div x-show="open" class="absolute top-full left-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 overflow-hidden" style="display: none;">
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Allee Nord</a>
-                        <a href="#" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Demo Garden</a>
+                    <!-- Dropdown -->
+                    <div x-show="open" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute top-full left-0 mt-1 w-64 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 overflow-hidden" 
+                         style="display: none;">
+                        
+                        <div class="px-3 py-2 text-xs text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-700/50 mb-1">
+                            Switch Lab
+                        </div>
+
+                        {% for ws in all_workspaces %}
+                        <button 
+                            @click="fetch('/workspaces/activate?workspace_id={{ ws.id }}', {method: 'POST'}).then(() => window.location.reload())"
+                            class="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center justify-between group">
+                            <span>{{ ws.name }}</span>
+                            {% if ws.id == current_workspace.id %}
+                            <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            {% endif %}
+                        </button>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
