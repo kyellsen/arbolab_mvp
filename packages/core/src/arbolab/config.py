@@ -30,9 +30,9 @@ class LabConfig(BaseSettings):
     data_root: Path = Field(default=Path("./data"), description="Root directory for all data")
     
     # Database (SaaS)
-    # Default to postgres for local dev with docker compose
+    # Default to arbolab for local dev with docker compose
     database_url: str | None = Field(
-        default="postgresql://postgres:postgres@db:5432/arbolab",
+        default="postgresql://arbolab:arbolab@db:5432/arbolab",
         description="Connection string for the SaaS database"
     )
 

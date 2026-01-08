@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbolab SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ mobileMenuOpen: false, rightSidebarOpen: false }">
+
+    
+    <!-- Login/Register Pages Fullscreen -->
+    <main class="h-full">
+        
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+...
+</div>
+
+    </main>
+    
+
+    <script>
+        // Simple global event bus/handlers
+        document.body.addEventListener('toggle-inspector', function() {
+            // Logic to open/close right sidebar
+             const sidebar = document.querySelector('aside[class*="right-0"]');
+             // For now just toggle a class or attribute if we weren't using Alpine fully for the logic
+             // But since we use Alpine x-data="{ rightSidebarOpen: false }", we need to bridge it.
+             // We can dispatch a custom event that Alpine listens to, or just click a hidden button.
+        });
+        
+        // HTMX Hooks
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            // If we swapped into main-stage, maybe scroll to top?
+            if(evt.detail.target.id === 'main-stage') {
+                evt.detail.target.scrollTop = 0;
+            }
+        });
+    </script>
+</body>
+</html>

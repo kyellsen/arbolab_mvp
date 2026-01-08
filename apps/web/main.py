@@ -12,6 +12,9 @@ from apps.web.core.security import get_password_hash, verify_password
 # Importiere Modelle und Security
 from apps.web.models.auth import User
 from pathlib import Path
+from arbolab.models.core import Project
+from apps.web.routers import api, explorer as explorer_router
+from apps.web.core.domain import get_entity_counts
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -55,20 +58,42 @@ def on_startup():
 async def health():
     return {"status": "ok"}
 
+# Register Routers
+app.include_router(api.router)
+app.include_router(explorer_router.router)
+
 # ----------------- ROUTEN -----------------
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+async def home(request: Request, session: Session = Depends(api.get_db_session)):
     """Dashboard oder Redirect zu Login"""
     user = request.session.get("user")
     if not user:
         return RedirectResponse(url="/auth/login")
     
+    counts = await get_entity_counts(session)
+    
+    # Get current project name (simple logic for MVP: first project)
+    project_name = "No Project Found"
+    first_project = session.execute(select(Project)).scalars().first()
+    if first_project:
+        project_name = first_project.name or f"Project #{first_project.id}"
+    
     # Check HTMX request to swap only content
     if request.headers.get("HX-Request"):
-        return templates.TemplateResponse("partials/dashboard_content.html", {"request": request, "user": user})
+        return templates.TemplateResponse("partials/dashboard_content.html", {
+            "request": request, 
+            "user": user,
+            "counts": counts,
+            "project_name": project_name
+        })
 
-    return templates.TemplateResponse("dashboard.html", {"request": request, "user": user})
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request, 
+        "user": user,
+        "counts": counts,
+        "project_name": project_name
+    })
 
 @app.get("/explorer", response_class=HTMLResponse)
 async def explorer(request: Request):
@@ -91,6 +116,17 @@ async def lab(request: Request):
          return templates.TemplateResponse("partials/lab_content.html", {"request": request, "user": user})
     
     return templates.TemplateResponse("lab.html", {"request": request, "user": user})
+
+@app.get("/tree", response_class=HTMLResponse)
+async def tree(request: Request):
+    user = request.session.get("user")
+    if not user:
+         return RedirectResponse(url="/auth/login")
+    
+    if request.headers.get("HX-Request"):
+         return templates.TemplateResponse("partials/tree_content.html", {"request": request, "user": user})
+    
+    return templates.TemplateResponse("tree.html", {"request": request, "user": user})
 
 @app.get("/inspector/tree/{tree_id}", response_class=HTMLResponse)
 async def inspector_tree(request: Request, tree_id: str):

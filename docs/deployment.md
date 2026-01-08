@@ -6,10 +6,15 @@ This guide describes how to get ArboLab up and running locally with zero configu
 1. **Install Docker** (or Podman).
 2. **Start the environment**:
    ```bash
-   docker compose up
+   podman-compose up --build
    ```
-   *(Or `podman-compose up`)*
 3. **Access the App**: [http://localhost:8000](http://localhost:8000)
+
+### Cleanup
+```bash
+podman-compose down -v
+rm -rf ./data/input/* ./data/workspace/* ./data/results/*
+```
 
 ---
 
@@ -35,4 +40,5 @@ The system uses local bind mounts to ensure your data is accessible on the host 
 - **Logs**: `docker compose logs -f`
 - **Shell Access**: `docker compose exec app /bin/bash`
 - **Reset Database**: `docker compose down -v` (Warning: This deletes all DB data).
+- **SELinux (Fedora/RHEL)**: If you get "Permission Denied" on mounts, ensure your volumes in `compose.yaml` have the `:Z` suffix (already included in the default config).
 

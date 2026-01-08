@@ -1,0 +1,49 @@
+<div class="p-6 bg-slate-900 border border-slate-800 rounded-lg max-w-2xl mx-auto shadow-2xl">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-white">
+            {% if entity %}Edit{% else %}Create{% endif %} {{ entity_type|title }}
+        </h2>
+        <button class="text-slate-400 hover:text-white"
+                hx-get="/explorer-ui/list/{{ entity_type }}"
+                hx-target="#explorer-content">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+
+    <form hx-{% if entity %}put{% else %}post{% endif %}="/api/entities/{{ entity_type }}{% if entity %}/{{ entity.id }}{% endif %}"
+          hx-ext="json-enc"
+          hx-target="#explorer-content"
+          hx-on::after-request="if(event.detail.successful) htmx.ajax('GET', '/explorer-ui/list/{{ entity_type }}', '#explorer-content')"
+          class="space-y-4">
+        
+        {% for field_name, field in fields.items() %}
+            {% if field_name not in ['id', 'created_at', 'updated_at', 'project', 'experiment', 'experiments', 'runs', 'things', 'sensors', 'treatments', 'experimental_units', 'sensor_deployments', 'treatment_applications', 'datastreams', 'channels', 'variants', 'species', 'tree', 'cable', 'sensor_model', 'observed_property', 'unit_of_measurement', 'location'] %}
+            <div>
+                <label class="block text-sm font-medium text-slate-400 mb-1">{{ field_name|title|replace('_', ' ') }}</label>
+                {% if field_name == 'description' %}
+                <textarea name="{{ field_name }}" rows="3" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500">{{ entity[field_name] if entity else '' }}</textarea>
+                {% elif 'id' in field_name %}
+                <input type="number" name="{{ field_name }}" value="{{ entity[field_name] if entity else '' }}" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500">
+                {% else %}
+                <input type="text" name="{{ field_name }}" value="{{ entity[field_name] if entity else '' }}" class="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500">
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+            <button type="button" 
+                    hx-get="/explorer-ui/list/{{ entity_type }}"
+                    hx-target="#explorer-content"
+                    class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded transition-colors">
+                Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded transition-colors">
+                {% if entity %}Update{% else %}Create{% endif %} {{ entity_type|title }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Simple script to handle JSON encoding if not already present -->
+<script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>

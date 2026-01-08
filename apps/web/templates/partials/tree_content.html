@@ -1,0 +1,111 @@
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-white">Entity Relations (Cascades)</h1>
+        <p class="text-sm text-slate-500">Visualization of how domain entities are structured and how deletions propagate.</p>
+    </div>
+
+    <!-- Tree Visualization (Standard HTML/CSS for MVP) -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-8 overflow-x-auto min-h-[500px]">
+        <div class="flex justify-center">
+            <div class="space-y-12">
+                <!-- Root: Project -->
+                <div class="flex flex-col items-center">
+                    <div @click="activeEntity = 'project'" hx-get="/explorer" hx-target="#main-stage" 
+                         class="group cursor-pointer bg-emerald-900/30 border-2 border-emerald-500 p-4 rounded-lg w-48 text-center hover:bg-emerald-500 hover:text-white transition-all shadow-lg">
+                        <span class="font-bold block">Project</span>
+                        <span class="text-xs text-emerald-400 group-hover:text-emerald-100 italic">Central Root</span>
+                    </div>
+
+                    <!-- Branches -->
+                    <div class="h-12 w-0.5 bg-slate-700"></div>
+                    
+                    <div class="flex gap-20">
+                        <!-- Left: Physical Assets -->
+                        <div class="flex flex-col items-center">
+                            <div class="h-0.5 w-full bg-slate-700 -mb-0.5"></div>
+                            <div class="flex gap-12 pt-12">
+                                <!-- Things -->
+                                <div class="flex flex-col items-center">
+                                    <div @click="activeEntity = 'thing'" hx-get="/explorer" hx-target="#main-stage"
+                                         class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
+                                        <span class="font-semibold block">Thing</span>
+                                        <span class="text-[10px] text-slate-500 uppercase tracking-tighter">Physical Object</span>
+                                    </div>
+                                    <div class="h-8 w-0.5 bg-slate-700"></div>
+                                    <div class="flex gap-4">
+                                        <div @click="activeEntity = 'tree'" hx-get="/explorer" hx-target="#main-stage"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-24 text-center text-sm hover:border-emerald-500 transition-colors">Tree</div>
+                                        <div @click="activeEntity = 'cable'" hx-get="/explorer" hx-target="#main-stage"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-24 text-center text-sm hover:border-emerald-500 transition-colors">Cable</div>
+                                    </div>
+                                </div>
+
+                                <!-- Sensors -->
+                                <div class="flex flex-col items-center">
+                                    <div @click="activeEntity = 'sensor'" hx-get="/explorer" hx-target="#main-stage"
+                                         class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-36 text-center hover:border-emerald-500 transition-colors">
+                                        <span class="font-semibold block">Sensor</span>
+                                    </div>
+                                    <div class="h-8 w-0.5 bg-slate-700"></div>
+                                    <div @click="activeEntity = 'sensor_model'" hx-get="/explorer" hx-target="#main-stage"
+                                         class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-32 text-center text-sm hover:border-emerald-500 transition-colors">Sensor Model</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Experiments -->
+                        <div class="flex flex-col items-center">
+                             <div class="h-0.5 w-full bg-slate-700 -mb-0.5"></div>
+                             <div class="flex flex-col items-center pt-12">
+                                <div @click="activeEntity = 'experiment'" hx-get="/explorer" hx-target="#main-stage"
+                                     class="group cursor-pointer bg-purple-900/20 border-2 border-purple-500 p-4 rounded-lg w-48 text-center hover:bg-purple-500 hover:text-white transition-all shadow-lg">
+                                    <span class="font-bold block">Experiment</span>
+                                    <span class="text-xs text-purple-400 group-hover:text-purple-100 italic">Campaign Root</span>
+                                </div>
+                                
+                                <div class="h-10 w-0.5 bg-slate-700"></div>
+                                
+                                <div class="flex gap-12">
+                                    <!-- Deployments -->
+                                    <div class="flex flex-col items-center">
+                                        <div @click="activeEntity = 'sensor_deployment'" hx-get="/explorer" hx-target="#main-stage"
+                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-40 text-center hover:border-emerald-500 transition-colors">
+                                            <span class="font-semibold block text-sm">Sensor Deployment</span>
+                                        </div>
+                                        <div class="h-8 w-0.5 bg-slate-700"></div>
+                                        <div @click="activeEntity = 'datastream'" hx-get="/explorer" hx-target="#main-stage"
+                                             class="cursor-pointer bg-slate-900 border border-slate-700 p-2 rounded w-32 text-center text-sm hover:border-emerald-500 transition-colors">Datastream</div>
+                                    </div>
+
+                                    <!-- Runs -->
+                                    <div class="flex flex-col items-center">
+                                        <div @click="activeEntity = 'run'" hx-get="/explorer" hx-target="#main-stage"
+                                             class="group cursor-pointer bg-slate-800 border border-slate-700 p-3 rounded-md w-32 text-center hover:border-emerald-500 transition-colors">
+                                            <span class="font-semibold block text-sm">Run</span>
+                                        </div>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Legend / Info -->
+        <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 border-t border-slate-800">
+            <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                <h4 class="text-emerald-500 font-bold text-sm mb-2">Cascading Deletes</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Deletions flow top-down. Deleting a Project removes all child experiments, things, and sensors associated with it.</p>
+            </div>
+            <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                <h4 class="text-purple-500 font-bold text-sm mb-2">Experiment Boundaries</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Experiments group time-bounded campaigns. Sensor deployments bridge physical assets (Sensors/Things) into the experimental context.</p>
+            </div>
+             <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                <h4 class="text-slate-400 font-bold text-sm mb-2">Navigation</h4>
+                <p class="text-xs text-slate-500 leading-relaxed">Click any node in the tree to open the Explorer for that specific entity type.</p>
+            </div>
+        </div>
+    </div>
+</div>
