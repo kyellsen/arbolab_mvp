@@ -78,3 +78,28 @@ def test_plugin_runtime_holds_registry() -> None:
     runtime = PluginRuntime(registry)
 
     assert runtime.registry is registry
+
+
+def test_plugin_runtime_initialization_handles_errors() -> None:
+    """Handles plugins without register() and registration failures."""
+    registry = PluginRegistry()
+    called: dict[str, bool] = {"ok": False}
+
+    def register(_: Any) -> None:
+        """Record that the plugin was initialized."""
+        called["ok"] = True
+
+    def register_raises(_: Any) -> None:
+        """Raise an error during plugin initialization."""
+        raise RuntimeError("boom")
+
+    registry._plugins = {
+        "good": types.SimpleNamespace(register=register),
+        "bad": types.SimpleNamespace(register=register_raises),
+        "missing": types.SimpleNamespace(),
+    }
+
+    runtime = PluginRuntime(registry)
+    runtime.initialize_plugins(object())
+
+    assert called["ok"] is True

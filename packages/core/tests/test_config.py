@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -77,3 +78,79 @@ def test_load_config_invalid_yaml_raises(tmp_path: Path) -> None:
 
     with pytest.raises(RuntimeError):
         load_config(tmp_path)
+
+
+def test_lab_config_paths_and_ensure_directories(tmp_path: Path) -> None:
+    """Creates derived paths and ensures directories exist.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+    """
+    config = LabConfig(data_root=tmp_path)
+
+    assert config.input_root == tmp_path / "input"
+    assert config.workspace_root == tmp_path / "workspace"
+
+    config.ensure_directories()
+
+    assert config.data_root.exists()
+    assert config.input_root.exists()
+    assert config.workspace_root.exists()
+
+
+def test_load_config_rejects_non_mapping(tmp_path: Path) -> None:
+    """Raises when config.yaml does not contain a mapping.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+    """
+    config_path = tmp_path / DEFAULT_CONFIG_FILENAME
+    config_path.write_text("- item\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeError):
+        load_config(tmp_path)
+
+
+def test_load_config_skips_unknown_and_env_override(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Skips unknown keys and honors environment overrides.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    config_path = tmp_path / DEFAULT_CONFIG_FILENAME
+    payload = {
+        "input_path": "from-file",
+        "enabled_plugins": ["alpha"],
+        "unknown_key": "ignore-me",
+    }
+    config_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    monkeypatch.setenv("ARBO_INPUT_PATH", "from-env")
+
+    config = load_config(tmp_path)
+    assert config.input_path == "from-env"
+    assert config.enabled_plugins == ["alpha"]
+
+
+def test_create_default_config_write_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Returns path and logs when config file creation fails.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    def raise_open(*_args: Any, **_kwargs: Any) -> Any:
+        """Raise an error to simulate write failure."""
+        raise OSError("boom")
+
+    monkeypatch.setattr("builtins.open", raise_open)
+
+    config_path = create_default_config(tmp_path)
+    assert config_path == tmp_path / DEFAULT_CONFIG_FILENAME

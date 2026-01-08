@@ -52,7 +52,7 @@ class Lab:
 
     @classmethod
     def open(cls, 
-             workspace_root: Path, # can be str, but Path preferred in typing
+             workspace_root: Path | None, # can be str, but Path preferred in typing
              input_root: Path | None = None,
              results_root: Path | None = None,
              base_root: Path | None = None) -> 'Lab':
@@ -72,6 +72,8 @@ class Lab:
             if not results_root:
                 results_root = base / "results"
         
+        assert workspace_root is not None
+
         # Ensure workspace_root is path
         ws_path = Path(workspace_root).resolve()
         

@@ -127,3 +127,56 @@ def test_lab_run_recipe_existing_succeeds(tmp_path: Path, monkeypatch: pytest.Mo
     recipe_path.write_text('{"recipe_version": "1.0.0", "steps": []}', encoding="utf-8")
 
     lab.run_recipe(recipe_path)
+
+
+def test_lab_open_with_base_root_and_missing_workspace_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Derives workspace root when base_root is set and workspace_root is None.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    _patch_empty_entry_points(monkeypatch)
+
+    base_root = tmp_path / "base"
+
+    lab = Lab.open(workspace_root=None, base_root=base_root)
+
+    assert lab.layout.root == (base_root / "workspace").resolve()
+
+
+def test_lab_open_defaults_results_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Falls back to workspace/results when results root is not configured.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    _patch_empty_entry_points(monkeypatch)
+
+    workspace_root = tmp_path / "workspace"
+    input_root = tmp_path / "input"
+
+    lab = Lab.open(workspace_root=workspace_root, input_root=input_root, results_root=None)
+
+    assert lab.results.root == (workspace_root / "results").resolve()
+    assert (workspace_root / "results").exists()
+
+
+def test_lab_run_recipe_default_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Runs recipe from the default workspace path when no path is provided.
+
+    Args:
+        tmp_path: Temporary directory fixture.
+        monkeypatch: Pytest monkeypatch fixture.
+    """
+    _patch_empty_entry_points(monkeypatch)
+
+    lab = Lab.open(workspace_root=tmp_path / "workspace")
+    recipe_path = lab.layout.recipe_path()
+    recipe_path.write_text('{"recipe_version": "1.0.0", "steps": []}', encoding="utf-8")
+
+    lab.run_recipe()

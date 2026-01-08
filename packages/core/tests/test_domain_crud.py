@@ -100,3 +100,12 @@ def test_export_to_dict(session: Session) -> None:
     # Check that it includes mixin fields
     assert "created_at" in data
     assert "updated_at" in data
+
+
+def test_view_representation_falls_back_to_object_string() -> None:
+    """Falls back to default object string when name and id are missing."""
+    project = Project()
+
+    value = str(project)
+
+    assert "Project" in value
