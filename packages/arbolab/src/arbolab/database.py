@@ -1,14 +1,15 @@
-import duckdb
-from pathlib import Path
-from typing import Optional, Generator
+from collections.abc import Generator
 from contextlib import contextmanager
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import sessionmaker, Session
+from pathlib import Path
 
+import duckdb
 from arbolab_logger import get_logger
-from arbolab.models.base import Base
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
+
 # Import core models to ensure they are registered in Base.metadata
 import arbolab.models.core  # noqa: F401
+from arbolab.models.base import Base
 
 logger = get_logger(__name__)
 

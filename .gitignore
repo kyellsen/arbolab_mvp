@@ -78,3 +78,5 @@ treemotion_lab_migration/
 # Swap files
 *.swp
 .pyproject.toml.kate-swap
+
+*.log

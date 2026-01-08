@@ -10,9 +10,10 @@ Usage:
 """
 import shutil
 from pathlib import Path
+
 from arbolab.lab import Lab
 from arbolab.models.core import Project
-from arbolab_logger import configure_logger, LoggerConfig, get_logger
+from arbolab_logger import LoggerConfig, configure_logger, get_logger
 
 # 1. Setup Logging (Global Config for the runtime)
 configure_logger(LoggerConfig(

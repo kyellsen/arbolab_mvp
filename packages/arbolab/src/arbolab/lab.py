@@ -1,13 +1,12 @@
 from pathlib import Path
-from typing import Optional
 
 from arbolab_logger import get_logger
 
-from .config import LabConfig, load_config, create_default_config
-from .layout import WorkspaceLayout, ResultsLayout
+from .config import LabConfig, create_default_config, load_config
 from .database import WorkspaceDatabase
-from .store import VariantStore
+from .layout import ResultsLayout, WorkspaceLayout
 from .plugins import PluginRegistry, PluginRuntime
+from .store import VariantStore
 
 logger = get_logger(__name__)
 
@@ -23,7 +22,7 @@ class Lab:
                  results_layout: ResultsLayout,
                  database: WorkspaceDatabase,
                  variant_store: VariantStore,
-                 input_root: Optional[Path] = None):
+                 input_root: Path | None = None):
         
         self.config = config
         self.layout = workspace_layout
@@ -49,9 +48,9 @@ class Lab:
     @classmethod
     def open(cls, 
              workspace_root: Path, # can be str, but Path preferred in typing
-             input_root: Optional[Path] = None,
-             results_root: Optional[Path] = None,
-             base_root: Optional[Path] = None) -> 'Lab':
+             input_root: Path | None = None,
+             results_root: Path | None = None,
+             base_root: Path | None = None) -> 'Lab':
         """
         Opens a Lab Workspace.
         Supports explicit roots or base_root derivation.
@@ -72,7 +71,7 @@ class Lab:
         ws_path = Path(workspace_root).resolve()
         
         # 0. Log Configured Roots
-        logger.debug(f"Lab Roots Configuration:")
+        logger.debug("Lab Roots Configuration:")
         logger.debug(f"  Workspace Root: {ws_path}")
         logger.debug(f"  Input Root:     {input_root}")
         logger.debug(f"  Results Root:   {results_root}")
@@ -134,7 +133,7 @@ class Lab:
             input_root=input_path
         )
 
-    def run_recipe(self, recipe_path: Optional[Path] = None):
+    def run_recipe(self, recipe_path: Path | None = None):
         """
         Execute a recipe. MVP Stub.
         """

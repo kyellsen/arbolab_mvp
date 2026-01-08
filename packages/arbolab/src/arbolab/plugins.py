@@ -1,5 +1,5 @@
 import importlib.metadata
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 from arbolab_logger import get_logger
 
@@ -12,9 +12,9 @@ class PluginRegistry:
     ENTRY_POINT_GROUP = "arbolab.plugins"
     
     def __init__(self):
-        self._plugins: Dict[str, Any] = {}
+        self._plugins: dict[str, Any] = {}
         
-    def discover(self, enabled_list: List[str]):
+    def discover(self, enabled_list: list[str]):
         """
         Loads plugins that are present in the enabled_list.
         If enabled_list is empty, no plugins are loaded.
@@ -42,7 +42,7 @@ class PluginRegistry:
             else:
                  logger.debug(f"Skipping disabled plugin: {ep.name}")
 
-    def get_plugin(self, name: str) -> Optional[Any]:
+    def get_plugin(self, name: str) -> Any | None:
         return self._plugins.get(name)
 
 class PluginRuntime:

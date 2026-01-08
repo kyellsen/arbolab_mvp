@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from arbolab.config import DEFAULT_CONFIG_FILENAME, LabConfig, create_default_config, load_config
 
 

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Callable
 import types
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 import pytest
-
 from arbolab.plugins import PluginRegistry, PluginRuntime
 
 

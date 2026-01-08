@@ -1,10 +1,8 @@
 from pathlib import Path
-from typing import List, Optional
-import os
-import yaml
-from pydantic import BaseModel, ConfigDict, Field
 
+import yaml
 from arbolab_logger import get_logger
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = get_logger(__name__)
 
@@ -19,10 +17,10 @@ class LabConfig(BaseModel):
     config_version: str = Field(default="1.0.0", description="Schema version")
     
     # Persisted Roots
-    input_path: Optional[str] = Field(default=None, description="Path to input data root (relative or absolute)")
-    results_path: Optional[str] = Field(default=None, description="Path to results root (relative or absolute)")
+    input_path: str | None = Field(default=None, description="Path to input data root (relative or absolute)")
+    results_path: str | None = Field(default=None, description="Path to results root (relative or absolute)")
     
-    enabled_plugins: List[str] = Field(default_factory=list, description="Allow-list of enabled plugin entry points")
+    enabled_plugins: list[str] = Field(default_factory=list, description="Allow-list of enabled plugin entry points")
     
     # Plugin specific settings (namespaced)
     plugins: dict = Field(default_factory=dict, description="Plugin-specific configuration")
@@ -38,7 +36,7 @@ def load_config(workspace_root: Path) -> LabConfig:
         return LabConfig()
         
     try:
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         
         logger.debug(f"Loaded config from {config_path}")
@@ -47,8 +45,8 @@ def load_config(workspace_root: Path) -> LabConfig:
         raise RuntimeError(f"Failed to load configuration from {config_path}: {e}") from e
 
 def create_default_config(workspace_root: Path, 
-                          initial_input: Optional[Path] = None, 
-                          initial_results: Optional[Path] = None) -> Path:
+                          initial_input: Path | None = None, 
+                          initial_results: Path | None = None) -> Path:
     """
     Bootstrap a new configuration file if it doesn't exist.
     """

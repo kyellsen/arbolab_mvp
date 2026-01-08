@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from sqlmodel import SQLModel, Session, create_engine, select
-from starlette.middleware.sessions import SessionMiddleware
 import os
 
-# Importiere Modelle und Security
-from apps.web.models.auth import User, ProjectLink
+from fastapi import Depends, FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlmodel import Session, SQLModel, create_engine, select
+from starlette.middleware.sessions import SessionMiddleware
+
 from apps.web.core.security import get_password_hash, verify_password
+
+# Importiere Modelle und Security
+from apps.web.models.auth import User
 
 # 1. Datenbank Setup (SQLite für MVP)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -84,9 +85,17 @@ async def register_submit(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
+    password_repeat: str = Form(...),
     session: Session = Depends(get_session)
 ):
-    # Check ob existiert
+    # 1. Passwörter abgleichen
+    if password != password_repeat:
+        return templates.TemplateResponse("auth/register.html", {
+            "request": request, 
+            "error": "Die Passwörter stimmen nicht überein."
+        })
+
+    # 2. Check ob User existiert
     statement = select(User).where(User.email == email)
     if session.exec(statement).first():
          return templates.TemplateResponse("auth/register.html", {
@@ -94,7 +103,7 @@ async def register_submit(
             "error": "Email bereits registriert"
         })
     
-    # User anlegen
+    # 3. User anlegen
     new_user = User(email=email, hashed_password=get_password_hash(password))
     session.add(new_user)
     session.commit()

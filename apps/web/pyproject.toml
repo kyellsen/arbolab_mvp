@@ -11,7 +11,7 @@ dependencies = [
     "jinja2",
     "python-multipart",
     "sqlmodel",
-    "passlib[bcrypt]",
+    "bcrypt",
     "itsdangerous",
 ]
 

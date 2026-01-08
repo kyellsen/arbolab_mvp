@@ -5,9 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
-
 from arbolab.database import WorkspaceDatabase
+from sqlalchemy import text
 
 
 def test_workspace_database_connect_and_session(tmp_path: Path) -> None:

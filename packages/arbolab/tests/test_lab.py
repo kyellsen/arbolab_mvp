@@ -7,9 +7,8 @@ from typing import Any
 
 import pytest
 import yaml
-from sqlalchemy import text
-
 from arbolab.lab import Lab
+from sqlalchemy import text
 
 
 def _patch_empty_entry_points(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -87,10 +87,10 @@ version = "0.1.0"
 source = { editable = "apps/web" }
 dependencies = [
     { name = "arbolab" },
+    { name = "bcrypt" },
     { name = "fastapi" },
     { name = "itsdangerous" },
     { name = "jinja2" },
-    { name = "passlib", extra = ["bcrypt"] },
     { name = "python-multipart" },
     { name = "sqlmodel" },
     { name = "uvicorn" },
@@ -99,10 +99,10 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "arbolab", editable = "packages/arbolab" },
+    { name = "bcrypt" },
     { name = "fastapi" },
     { name = "itsdangerous" },
     { name = "jinja2" },
-    { name = "passlib", extras = ["bcrypt"] },
     { name = "python-multipart" },
     { name = "sqlmodel" },
     { name = "uvicorn" },
