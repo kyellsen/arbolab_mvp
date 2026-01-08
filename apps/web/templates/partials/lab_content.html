@@ -1,0 +1,86 @@
+
+<div class="h-full flex flex-col">
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between mb-4 shrink-0">
+        <h1 class="text-2xl font-bold text-white">Lab <span class="text-sm font-normal text-slate-500 ml-2">v.1.0-alpha</span></h1>
+        <div class="flex gap-2">
+            <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded text-sm font-medium">Run Pipeline</button>
+            <button class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded border border-slate-700">Export</button>
+        </div>
+    </div>
+
+    <!-- Main Canvas / Graph Area -->
+    <div class="flex-1 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center relative overflow-hidden group">
+        <!-- Grid Background -->
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#4b5563 1px, transparent 1px); background-size: 20px 20px;"></div>
+        
+        <!-- Plotly Placeholder -->
+        <div class="text-center z-10 p-10 bg-slate-900/80 backdrop-blur rounded-xl border border-slate-800 shadow-2xl">
+            <div class="mb-4 flex gap-4 justify-center items-end h-32 w-64 mx-auto border-b border-l border-slate-600 p-2">
+                <div class="w-8 bg-emerald-500/80 h-[40%] rounded-t animate-pulse"></div>
+                <div class="w-8 bg-blue-500/80 h-[70%] rounded-t"></div>
+                <div class="w-8 bg-purple-500/80 h-[50%] rounded-t"></div>
+                <div class="w-8 bg-orange-500/80 h-[85%] rounded-t"></div>
+            </div>
+            <h3 class="text-lg font-medium text-white mb-2">No Data Visualized</h3>
+            <p class="text-slate-400 text-sm max-w-xs mx-auto">Configure the pipeline parameters in the Inspector panel to generate a plot.</p>
+        </div>
+    </div>
+</div>
+
+<!-- OOB Swap to inject controls into Inspector Panel automatically when Lab is loaded -->
+<div id="inspector-panel" hx-swap-oob="innerHTML">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between shrink-0 h-14 bg-slate-900/50 backdrop-blur">
+        <h3 class="font-semibold text-slate-200">Pipeline Config</h3>
+           <button @click="rightSidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    <div class="p-4 space-y-6 overflow-y-auto flex-1">
+        <!-- Input Source -->
+        <div class="space-y-2">
+             <label class="text-xs font-bold text-slate-500 tracking-wider uppercase">Source Data</label>
+             <select class="w-full bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 p-2 focus:ring-emerald-500">
+                 <option>Tree 104 - Sap Flow</option>
+                 <option>Tree 104 - Dendrometer</option>
+                 <option>Station A - Weather</option>
+             </select>
+        </div>
+
+        <!-- Filter -->
+        <div class="space-y-2">
+             <label class="text-xs font-bold text-slate-500 tracking-wider uppercase">Time Range</label>
+             <select class="w-full bg-slate-800 border border-slate-700 rounded text-sm text-slate-200 p-2">
+                 <option>Last 24 Hours</option>
+                 <option>Last 7 Days</option>
+                 <option>Custom...</option>
+             </select>
+        </div>
+
+         <!-- Parameters -->
+         <div class="space-y-4 pt-4 border-t border-slate-800">
+             <div class="space-y-2">
+                 <div class="flex justify-between text-sm">
+                     <span class="text-slate-400">Smoothing</span>
+                     <span class="text-emerald-400">0.5</span>
+                 </div>
+                 <div class="h-1 bg-slate-700 rounded overflow-hidden">
+                     <div class="h-full bg-emerald-500 w-1/2"></div>
+                 </div>
+             </div>
+              <div class="space-y-2">
+                 <div class="flex justify-between text-sm">
+                     <span class="text-slate-400">Outlier Threshold</span>
+                     <span class="text-emerald-400">2.0</span>
+                 </div>
+                  <div class="h-1 bg-slate-700 rounded overflow-hidden">
+                     <div class="h-full bg-emerald-500 w-1/4"></div>
+                 </div>
+             </div>
+         </div>
+    </div>
+     <div class="p-4 border-t border-slate-800">
+        <button class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded shadow-lg shadow-emerald-900/50 transition-all">Update Plot</button>
+    </div>
+</div>
+

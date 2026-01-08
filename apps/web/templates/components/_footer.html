@@ -1,0 +1,22 @@
+<div class="flex items-center gap-2 overflow-hidden whitespace-nowrap mask-linear-fade">
+    <span class="text-slate-600">Home</span>
+    <span class="text-slate-700">/</span>
+    <span class="text-slate-400 font-medium">Dashboard</span>
+</div>
+
+<div class="flex items-center gap-4">
+    <!-- System Status -->
+    <div class="flex items-center gap-2">
+         <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span>Ready</span>
+    </div>
+
+    <!-- Logger Toggle -->
+    <button onclick="document.getElementById('logger-drawer').classList.toggle('translate-y-full')" class="flex items-center gap-1 hover:text-slate-300 transition-colors px-2 py-1 -mr-2 rounded hover:bg-slate-800">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <span>Logs</span>
+    </button>
+</div>

@@ -24,6 +24,9 @@ dependencies = [
   # keine types-* hier, die wandern in die Dev-Dependencies des Workspaces
 ]
 
+[project.entry-points."arbolab.plugins"]
+ptq = "arbolab.plugins.ptq"
+
 [project.optional-dependencies]
 # treeqinetic = ["arbolab-treeqinetic>=0.1.0"]
 # linescale = ["arbolab-linescale>=0.1.0"]

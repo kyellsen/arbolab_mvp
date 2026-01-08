@@ -32,7 +32,7 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-  "packages/arbolab",
+  "packages/core",
   "packages/arbolab-logger",
   "apps/web",
 ]

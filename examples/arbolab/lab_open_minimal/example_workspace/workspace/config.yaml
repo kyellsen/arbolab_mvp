@@ -1,0 +1,5 @@
+config_version: 1.0.0
+input_path: examples/arbolab/lab_open_minimal/example_workspace/input
+results_path: examples/arbolab/lab_open_minimal/example_workspace/results
+enabled_plugins: []
+plugins: {}

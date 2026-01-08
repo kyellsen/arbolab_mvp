@@ -4,7 +4,7 @@ from pathlib import Path
 
 import duckdb
 from arbolab_logger import get_logger
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 # Import core models to ensure they are registered in Base.metadata
@@ -36,15 +36,35 @@ class WorkspaceDatabase:
         self._engine = create_engine(conn_str)
         
         # Initialize Schema (MVP: Create all tables if missing)
-        Base.metadata.create_all(self._engine)
+        # Core tables go to default schema (or 'main' if configured, but default is easier for now)
+        self.create_tables(Base.metadata)
         
         self._session_factory = sessionmaker(bind=self._engine)
         
         # Register event listeners for logging
         event.listen(self._session_factory, "after_flush", self._log_after_flush)
-        
-        # We might want to run migrations here in a real scenario
-        # Base.metadata.create_all(self._engine)
+
+    def ensure_schema(self, schema_name: str):
+        """Ensures a DuckDB schema (namespace) exists."""
+        if self._engine is None:
+            self.connect()
+            
+        with self._engine.begin() as conn:
+            conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+            
+    def create_tables(self, metadata, schema: str | None = None):
+        """
+        Creates tables from the given metadata.
+        If schema is provided, ensures the schema exists first.
+        """
+        if self._engine is None:
+            self.connect()
+
+        if schema:
+            self.ensure_schema(schema)
+            
+        # SQLAlchemy create_all handles checking existence
+        metadata.create_all(self._engine)
 
     def _log_after_flush(self, session, flush_context):
         """Log created, updated, or deleted entities."""

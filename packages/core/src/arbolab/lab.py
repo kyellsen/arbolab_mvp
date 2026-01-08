@@ -16,7 +16,7 @@ class Lab:
     Wires together configuration, storage, database, and plugins.
     """
     
-    def __init__(self, 
+    def __init__(self,  # noqa: PLR0913
                  config: LabConfig,
                  workspace_layout: WorkspaceLayout,
                  results_layout: ResultsLayout,
@@ -43,6 +43,10 @@ class Lab:
         """Ensures the workspace is ready for use."""
         self.layout.ensure_structure()
         self.database.connect()
+        
+        # Initialize plugins (after DB is connected)
+        self.plugin_runtime.initialize_plugins(self)
+        
         logger.info(f"Lab initialized at {self.layout.root}")
 
     @classmethod

@@ -6,38 +6,120 @@
     <title>Arbolab SaaS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
-<body class="h-full text-slate-200">
-    
+<body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ mobileMenuOpen: false, rightSidebarOpen: false }">
+
     {% if user %}
-    <nav class="bg-slate-800 border-b border-slate-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <span class="font-bold text-emerald-500 text-xl">ARBOLAB</span>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <span class="text-sm text-slate-400">Angemeldet als {{ user.email }}</span>
-                        <a href="/logout" class="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</a>
-                    </div>
-                </div>
-                <div class="-mr-2 flex md:hidden">
-                    <button type="button" class="bg-slate-800 p-2 rounded-md text-slate-400 hover:text-white focus:outline-none">
-                        <span class="sr-only">Menü öffnen</span>
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                        </svg>
+    <!-- A. Header (Top Bar) -->
+    <header class="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center gap-4">
+             <!-- Mobile Menu Button -->
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-slate-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <span class="font-bold text-emerald-500 text-xl tracking-tight">ARBOLAB</span>
+            
+            <!-- Context Switcher (Desktop) -->
+            <div class="hidden md:flex items-center gap-2 ml-4">
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-slate-900/50 px-3 py-1.5 rounded-md border border-slate-700">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Project: Stadtpark Süd
+                        <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
+                    <!-- Dropdown Placeholder -->
+                    <div x-show="open" class="absolute top-full left-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 overflow-hidden" style="display: none;">
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Allee Nord</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Demo Garden</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </nav>
+
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-slate-400 hidden sm:inline">{{ user.email }}</span>
+             <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" @click.away="open = false" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold ring-2 ring-slate-600 hover:ring-emerald-500 transition-all">
+                    {{ user.email[0]|upper }}
+                </button>
+                 <div x-show="open" class="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50" style="display: none;">
+                    <a href="/logout" class="block px-4 py-2 text-sm text-red-400 hover:bg-slate-700">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-1 flex overflow-hidden relative">
+        
+        <!-- B. Left Sidebar (Navigation) -->
+        <!-- Mobile Drawer Backdrop -->
+        <div x-show="mobileMenuOpen" class="fixed inset-0 bg-black/50 z-30 lg:hidden" @click="mobileMenuOpen = false" x-transition.opacity></div>
+        
+        <!-- Sidebar Content -->
+        <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 hover:lg:w-64 bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 flex flex-col group shrink-0">
+             {% include 'components/_sidebar_left.html' %}
+        </aside>
+
+        <!-- C. Main Stage -->
+        <main id="main-stage" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-950 relative scroll-smooth p-4 md:p-6" hx-boost="true">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- D. Right Sidebar (Inspector) -->
+        <!-- Mobile Overlay -->
+         <div x-show="rightSidebarOpen" class="fixed inset-0 bg-black/50 z-30 lg:hidden" @click="rightSidebarOpen = false" x-transition.opacity></div>
+
+        <aside :class="rightSidebarOpen ? 'translate-x-0' : 'translate-x-full'" class="fixed lg:static inset-y-0 right-0 z-40 w-80 lg:w-0 lg:data-[open=true]:w-80 bg-slate-900 border-l border-slate-800 transition-all duration-300 ease-in-out transform flex flex-col shrink-0">
+             <div id="inspector-panel" class="h-full flex flex-col">
+                 {% include 'components/_sidebar_right.html' %}
+             </div>
+        </aside>
+
+    </div>
+
+    <!-- E. Footer (Status Bar) -->
+    <footer class="h-8 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-4 shrink-0 text-xs text-slate-500 z-20">
+         {% include 'components/_footer.html' %}
+    </footer>
+
+    <!-- Logger Drawer (Slide up) -->
+    <div id="logger-drawer" class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 h-64 transform translate-y-full transition-transform duration-300 z-50 shadow-2xl">
+         {% include 'partials/logger_drawer.html' %}
+    </div>
+
+    {% else %}
+    <!-- Login/Register Pages Fullscreen -->
+    <main class="h-full">
+        {% block auth_content %}{% endblock %}
+    </main>
     {% endif %}
 
-    <main class="h-full">
-        {% block content %}{% endblock %}
-    </main>
-
+    <script>
+        // Simple global event bus/handlers
+        document.body.addEventListener('toggle-inspector', function() {
+            // Logic to open/close right sidebar
+             const sidebar = document.querySelector('aside[class*="right-0"]');
+             // For now just toggle a class or attribute if we weren't using Alpine fully for the logic
+             // But since we use Alpine x-data="{ rightSidebarOpen: false }", we need to bridge it.
+             // We can dispatch a custom event that Alpine listens to, or just click a hidden button.
+        });
+        
+        // HTMX Hooks
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            // If we swapped into main-stage, maybe scroll to top?
+            if(evt.detail.target.id === 'main-stage') {
+                evt.detail.target.scrollTop = 0;
+            }
+        });
+    </script>
 </body>
 </html>

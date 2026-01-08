@@ -29,13 +29,6 @@ class PluginRegistry:
                     self._plugins[ep.name] = plugin_module
                     logger.info(f"Loaded plugin: {ep.name}")
                     
-                    # Contract: Plugin must have a register(registry) or similar init function
-                    # For MVP, we just verify it loaded. 
-                    if hasattr(plugin_module, "register"):
-                         # In a real system, we'd pass a registry object here
-                         # plugin_module.register(self)
-                         pass
-                         
                 except Exception as e:
                     logger.error(f"Failed to load plugin {ep.name}: {e}")
                     # We continue despite errors to generally keep the lab usable
@@ -52,4 +45,17 @@ class PluginRuntime:
     def __init__(self, registry: PluginRegistry):
         self.registry = registry
         
-    # Future hooks: on_workspace_open, on_before_ingest, etc.
+    def initialize_plugins(self, lab):
+        """
+        Initializes all loaded plugins with the Lab instance.
+        This allows plugins to register models, routes, etc.
+        """
+        for name, plugin in self.registry._plugins.items():
+            if hasattr(plugin, "register"):
+                try:
+                    logger.debug(f"Registering plugin: {name}")
+                    plugin.register(lab)
+                except Exception as e:
+                    logger.error(f"Failed to register plugin {name}: {e}")
+            else:
+                logger.debug(f"Plugin {name} has no register() method.")

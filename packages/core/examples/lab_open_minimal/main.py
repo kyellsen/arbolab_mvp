@@ -28,7 +28,7 @@ logger = get_logger("user_script")
 
 def main():
     # Define roots
-    base_root = Path("./example_workspace")
+    base_root = Path("./examples/arbolab/lab_open_minimal/example_workspace")
     input_root = base_root / "input"
     workspace_root = base_root / "workspace"
     results_root = base_root / "results"

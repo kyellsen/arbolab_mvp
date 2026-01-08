@@ -1,5 +1,0 @@
-config_version: 1.0.0
-input_path: example_workspace/input
-results_path: example_workspace/results
-enabled_plugins: []
-plugins: {}
