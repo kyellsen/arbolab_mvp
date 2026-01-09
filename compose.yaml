@@ -23,7 +23,7 @@ services:
       - "8000:8000"
     environment:
       - ARBO_DATA_ROOT=/data
-      - ARBO_RUN_MIGRATIONS=1
+      - ARBO_RUN_MIGRATIONS=0
       - ARBO_RUN_SEED=1
     volumes:
       - ./data:/data:Z
