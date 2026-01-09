@@ -28,7 +28,7 @@ logger = get_logger("user_script")
 
 def main():
     # Define roots
-    base_root = Path("./examples/arbolab/lab_open_minimal/example_workspace")
+    base_root = Path("packages/arbolab/examples/lab_open_minimal/example_workspace")
     input_root = base_root / "input"
     workspace_root = base_root / "workspace"
     results_root = base_root / "results"
@@ -40,7 +40,6 @@ def main():
     input_root.mkdir(parents=True)
     
     # 2. Open Lab
-    # Logging happens internally: "Lab initialized at ..."
     lab = Lab.open(
         workspace_root=workspace_root,
         input_root=input_root,
@@ -48,17 +47,12 @@ def main():
     )
     
     # 3. Domain Operation (Create Project)
-    # Logging happens internally via DB events: "Created Project: My First Project"
-    with lab.database.session() as session:
-        project = Project(name="My First Project", description="Created via minimal example")
-        session.add(project)
-        # Commit triggers logs
+    # Using the Recipe-aware method instead of direct session.add()
+    project = lab.define_project(name="My First Project", description="Created via minimal example")
         
     logger.info("First run complete. Testing persistence...")
 
     # 4. Re-open Lab (Persistence Check)
-    # We deliberately DO NOT pass input/results roots. 
-    # It should pick them up from config.yaml created in step 2.
     logger.info("Re-opening Lab using ONLY workspace_root (expecting roots to be restored)...")
     lab_reopened = Lab.open(workspace_root=workspace_root)
     
