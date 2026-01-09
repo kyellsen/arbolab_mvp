@@ -1,36 +1,36 @@
-<div class="flex flex-col gap-4 p-4 lg:p-2 lg:items-center lg:group-hover:items-start transition-all">
+<div class="flex flex-col gap-4 p-4 lg:p-2 lg:items-center transition-all" :class="leftSidebarPinned ? 'lg:items-start lg:p-4' : 'lg:items-center lg:p-2'">
     <!-- Nav Items -->
-    <a href="/" hx-get="/" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max">
+    <a href="/" hx-get="/" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full">
         <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-        <span class="sidebar-label font-medium">Dashboard</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">Dashboard</span>
     </a>
     
-    <a href="/explorer" hx-get="/explorer" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/explorer" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max">
+    <a href="/explorer" hx-get="/explorer" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/explorer" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full">
         <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-        <span class="sidebar-label font-medium">Explorer</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">Explorer</span>
     </a>
 
-    <a href="/tree" hx-get="/tree" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/tree" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max">
+    <a href="/tree" hx-get="/tree" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/tree" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full">
         <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3L4 15h16L12 3zm0 2l6 9H6l6-9zm-1 9h2v4h-2v-4z"></path></svg>
-        <span class="sidebar-label font-medium">Tree</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">Tree</span>
     </a>
 
-    <a href="/analysis" hx-get="/analysis" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/analysis" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max">
+    <a href="/analysis" hx-get="/analysis" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/analysis" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full">
          <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-        <span class="sidebar-label font-medium">Analysis</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">Analysis</span>
     </a>
 
     {% for plugin in plugin_nav|default([]) %}
-    <a href="/plugins/{{ plugin.id }}" hx-get="/plugins/{{ plugin.id }}" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/plugins/{{ plugin.id }}" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max">
+    <a href="/plugins/{{ plugin.id }}" hx-get="/plugins/{{ plugin.id }}" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/plugins/{{ plugin.id }}" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full">
         <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.75h4.5v3h-4.5v-3zM6.75 6.75h10.5v3h-10.5v-3zM8.25 9.75h7.5v3h-7.5v-3zM6.75 12.75h10.5v3h-10.5v-3zM9.75 15.75h4.5v3h-4.5v-3z"></path></svg>
-        <span class="sidebar-label font-medium">{{ plugin.label }}</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">{{ plugin.label }}</span>
     </a>
     {% endfor %}
 
-    <div class="lg:hidden lg:group-hover:block border-t border-slate-800 my-2 w-full"></div>
+    <div class="border-t border-slate-800 my-2 w-full" :class="leftSidebarPinned ? 'block' : 'lg:hidden'"></div>
 
-    <a href="/settings/lab" hx-get="/settings/lab" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/settings" data-nav-match="prefix" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full lg:group-hover:w-max mt-auto">
+    <a href="/settings/lab" hx-get="/settings/lab" hx-target="#main-stage" hx-swap="innerHTML" data-nav-path="/settings" data-nav-match="prefix" class="flex items-center gap-3 p-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-emerald-400 transition-colors w-full mt-auto">
         <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        <span class="sidebar-label font-medium">Settings</span>
+        <span class="sidebar-label font-medium" :class="leftSidebarPinned ? 'opacity-100' : 'lg:hidden'">Settings</span>
     </a>
 </div>

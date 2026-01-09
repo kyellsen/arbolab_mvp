@@ -1,8 +1,15 @@
 <div class="p-4 border-b border-slate-800 flex items-center justify-between shrink-0 h-14 bg-slate-900/50 backdrop-blur">
     <h3 class="font-semibold text-slate-200">Inspector</h3>
-    <button @click="rightSidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-    </button>
+    <div class="flex items-center gap-1">
+        <!-- Desktop Unpin Button -->
+        <button @click="rightSidebarOpen = false; rightSidebarPinned = false" class="hidden lg:block text-slate-500 hover:text-white p-1" title="Close Inspector">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <!-- Mobile Close Button -->
+        <button @click="rightSidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white p-1">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
 </div>
 
 <!-- Dynamic Content Container -->

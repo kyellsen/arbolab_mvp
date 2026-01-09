@@ -1,14 +1,14 @@
-<div class="flex h-full overflow-hidden">
+<div class="flex flex-col lg:flex-row h-full overflow-hidden">
     <!-- Main Content: Dashboard Widgets (Flexible) -->
-    <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-900/50">
+    <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-900/50">
         <!-- Welcome Header -->
-        <div class="flex items-end justify-between">
+        <div class="flex items-end justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-white">Dashboard</h1>
                 <p class="text-slate-400 text-sm">Overview for project <span class="text-emerald-400">{{ project_name }}</span></p>
             </div>
             <div class="flex gap-2">
-                <button class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-sm font-medium transition-colors"
+                <button class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-sm font-medium transition-colors shrink-0"
                         hx-get="/explorer?entity=project&open_form=project"
                         hx-target="#main-stage"
                         hx-swap="innerHTML">
@@ -18,7 +18,7 @@
         </div>
 
         <!-- KPI Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 gap-3">
             <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg min-w-0">
                 <div class="text-slate-400 text-[11px] uppercase font-bold tracking-wider mb-1 leading-tight break-words">Projects</div>
                 <div class="text-2xl font-bold text-white">{{ counts.get('project', 0) }}</div>
@@ -43,15 +43,15 @@
                 <div class="text-slate-400 text-[11px] uppercase font-bold tracking-wider mb-1 leading-tight break-words">Treatments</div>
                 <div class="text-2xl font-bold text-white">{{ counts.get('treatment', 0) }}</div>
             </div>
-            <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg min-w-0">
+            <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg min-w-0 col-span-2 sm:col-span-1">
                 <div class="text-slate-400 text-[11px] uppercase font-bold tracking-wider mb-1 leading-tight break-words">Datastreams</div>
                 <div class="text-2xl font-bold text-white">{{ counts.get('datastream', 0) }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Right Sidebar: Recipe History (Fixed Width) -->
-    <aside class="w-96 bg-slate-900 border-l border-slate-800 flex-shrink-0 flex flex-col">
+    <!-- Right Sidebar: Recipe History (Stays bottom on mobile) -->
+    <aside class="w-full lg:w-96 bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-800 flex-shrink-0 flex flex-col h-[400px] lg:h-full">
         <div class="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur shrink-0 h-16 flex items-center justify-between">
             <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Recipe History</h2>
             <div class="flex gap-1.5">
