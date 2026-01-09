@@ -23,9 +23,6 @@ podman-compose down -v
 # Finds and deletes 'workspace' and 'results' directories at any depth
 find ./data -name "workspace" -type d -exec rm -rf {} +
 find ./data -name "results" -type d -exec rm -rf {} +
-# Also clear the main saas.db if it exists in data root (rare)
-rm -f ./data/saas.db
-
 # 3. Restart
 podman-compose up --build
 ```
@@ -66,4 +63,3 @@ The system uses local bind mounts to ensure your data is accessible on the host 
 - **Shell Access**: `docker compose exec app /bin/bash`
 - **Reset Database**: `docker compose down -v` (Warning: This deletes all DB data).
 - **SELinux (Fedora/RHEL)**: If you get "Permission Denied" on mounts, ensure your volumes in `compose.yaml` have the `:Z` suffix (already included in the default config).
-

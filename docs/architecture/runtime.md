@@ -23,8 +23,8 @@ The Web App is an optional SaaS layer that orchestrates the `Lab`:
 ## SaaS Metadata Store
 The Web App maintains a small metadata store for SaaS concerns:
 * **Contents:** Users, Tenants, sessions, and Workspace registrations.
-* **MVP Backend:** SQLite, accessed via SQLAlchemy.
-* **Upgrade Path:** Must be swappable to PostgreSQL without changing core domain storage.
+* **MVP Backend:** PostgreSQL, accessed via SQLAlchemy.
+* **Upgrade Path:** Must be swappable across supported relational backends without changing core domain storage.
 * **MVP Scope:** Single test user and single-tenant operation.
 
 ## Service Boundaries
