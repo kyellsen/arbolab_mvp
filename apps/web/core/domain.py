@@ -15,7 +15,7 @@ from arbolab.schemas.core import (
     DatastreamChannelSchema, DataVariantSchema
 )
 from pydantic import BaseModel
-from apps.web.core.receipts import ReceiptManager
+from apps.web.core.recipes import ReceiptManager
 from arbolab.lab import Lab
 
 ENTITY_MAP = {

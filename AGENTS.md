@@ -121,7 +121,21 @@ Model evolution must preserve reproducibility.
 * No additional `AGENTS.md` files are allowed anywhere in the repository.
 
 
-### 8. Tooling and Quality Gates (Externalized)
+### 7. Web & Frontend Layer Constraints (SaaS Layer)
+
+*   **Recipe-First Enforcement**: Web routers (FastAPI) must never directly commit domain entity changes to DuckDB using `SQLModel` sessions. They must use `Lab` instance methods (e.g., `lab.execute_step()`, `lab.define_project()`) or a recipe-aware domain facade (e.g., `apps.web.core.domain.create_entity`). This ensures every change is reproducible via the recipe log.
+*   **Aesthetics & Tooling**: Frontend templates must use **Jinja2 + Tailwind CSS**. Do not define new CSS classes in `styles.css` if existing Tailwind utility classes can achieve the design.
+*   **State-Management & Performance**: The web server is stateless in respect to analysis data. Long-running DuckDB queries or analysis steps must not block the async event loop; they must be offloaded to threads or specialized executors.
+*   **Path Hygiene**: The web layer must never build file paths using string concatenation. It must exclusively use `pathlib` and the `Layout` classes provided by the Core to resolve workspace locations.
+
+### 8. Testing Rules
+
+*   **Unit Tests**: Domain logic, schema validation, and pure functions. Located in `packages/{pkg}/tests/`.
+*   **Integration Tests**: API endpoints, database interactions, and middleware. Located in `apps/web/tests/integration/` (or similar).
+*   **E2E Tests**: Browser-based flows using Playwright. Located in `apps/web/tests/e2e/`.
+*   All tests must be able to run in isolation using a temporary workspace or a mock lab.
+
+### 9. Tooling and Quality Gates (Externalized)
 
 Tooling, quality gates, and development environment contracts are defined in:
 
