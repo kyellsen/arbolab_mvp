@@ -352,6 +352,7 @@ async def update_password(
     response.headers["HX-Trigger"] = '{"show-toast": "Password updated"}'
     return response
 
+@router.post("/account", response_class=HTMLResponse)
 @router.delete("/account", response_class=HTMLResponse)
 async def delete_account(
     request: Request,
@@ -368,7 +369,7 @@ async def delete_account(
             "request": request,
             "user": user,
             "error": "Current password incorrect"
-        }, status_code=400)
+        })
 
     orphaned_workspace_ids = _delete_user_and_orphaned_workspaces(session, user_id)
     session.commit()

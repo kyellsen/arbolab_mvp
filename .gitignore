@@ -57,15 +57,11 @@ docs/_build/
 
 # Data / intermediate artifacts
 data/
-apps/web/data/
-#test_data/
-test_workspaces/
-test_results/
+# DuckDB specific
 *.duckdb
+*.duckdb.wal
 *.parquet
 *.feather
-tms/
-tcc/
 
 # Secrets / tokens
 pypi_token.txt
@@ -73,13 +69,13 @@ PyPI-Recovery-Codes-*
 
 # Swap files
 *.log
-***.swp
+*.swp
 .pyproject.toml.kate-swap
 
 # Transient / Agent scripts
-*_seed.py
-*_test.py
-verify_*.py
+#*_seed.py
+#*_test.py
+#verify_*.py
 tmp_*.py
 check_*.py
 

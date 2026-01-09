@@ -153,6 +153,18 @@ def ensure_admin(lab: Lab):
     if lab.role != LabRole.ADMIN:
         raise HTTPException(status_code=403, detail="Read-only access: Only ADMINs can modify data.")
 
+@router.get("/recipes/export")
+async def api_export_recipe(lab: Lab = Depends(get_lab)):
+    """Downloads the current recipe JSON file."""
+    recipe_path = lab.layout.recipe_path("current.json")
+    if not recipe_path.exists():
+        raise HTTPException(status_code=404, detail="Recipe file not found")
+    return FileResponse(
+        path=recipe_path,
+        media_type="application/json",
+        filename="current.json",
+    )
+
 @router.get("/{entity_type}")
 async def api_list_entities(entity_type: str, search: str = None, tag: str = None, lab: Lab = Depends(get_lab)):
     with lab.database.session() as session:
@@ -201,15 +213,3 @@ async def api_delete_entity(entity_type: str, entity_id: int, lab: Lab = Depends
             return {"status": "deleted"}
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/recipes/export")
-async def api_export_recipe(lab: Lab = Depends(get_lab)):
-    """Downloads the current recipe JSON file."""
-    recipe_path = lab.layout.recipe_path("current.json")
-    if not recipe_path.exists():
-        raise HTTPException(status_code=404, detail="Recipe file not found")
-    return FileResponse(
-        path=recipe_path,
-        media_type="application/json",
-        filename="current.json",
-    )

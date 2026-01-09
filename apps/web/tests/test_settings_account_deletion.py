@@ -168,7 +168,7 @@ def test_delete_account_requires_password(
         )
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 200
     assert session.get(User, user.id) is not None
     assert session.get(Workspace, workspace.id) is not None
     assert base_dir.exists()

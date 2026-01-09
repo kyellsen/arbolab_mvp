@@ -44,41 +44,88 @@
     </section>
 
     <!-- Danger Zone -->
-    <section class="mt-12 pt-8 border-t border-slate-800 space-y-6" x-data="{ showDeleteModal: false }">
+    <section class="mt-12 pt-8 border-t border-slate-800 space-y-6" id="delete-account-root">
         <div class="p-4 border border-red-900/50 bg-red-900/10 rounded-xl">
              <h4 class="text-sm font-bold text-red-500 uppercase tracking-widest mb-2">Danger Zone</h4>
              <p class="text-sm text-slate-400 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
              
-             <button @click="showDeleteModal = true" class="px-4 py-2 border border-red-800 text-red-500 hover:bg-red-800 hover:text-white text-sm font-bold rounded flex items-center gap-2 transition-all">
+             <button type="button" data-delete-modal-open class="px-4 py-2 border border-red-800 text-red-500 hover:bg-red-800 hover:text-white text-sm font-bold rounded flex items-center gap-2 transition-all">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 Delete Account
              </button>
         </div>
 
         <!-- Delete Confirmation Modal -->
-        <template x-if="showDeleteModal">
-            <div class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-                <div @click.away="showDeleteModal = false" class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl transform transition-all">
-                    <h3 class="text-xl font-bold text-white mb-2">Are you absolutely sure?</h3>
-                    <p class="text-slate-400 text-sm mb-6">This will permanently delete your account and all associated workspaces. This action cannot be undone.</p>
-                    
-                    <form hx-delete="/settings/account" hx-target="#settings-content" hx-swap="innerHTML" class="space-y-4">
-                        <div>
-                            <label for="delete_password" class="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                            <input type="password" id="delete_password" name="password" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50">
-                        </div>
+        <div data-delete-modal class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm px-4" role="dialog" aria-modal="true" aria-hidden="true">
+            <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl transform transition-all">
+                <h3 class="text-xl font-bold text-white mb-2">Are you absolutely sure?</h3>
+                <p class="text-slate-400 text-sm mb-6">This will permanently delete your account and all associated workspaces. This action cannot be undone.</p>
+                
+                <form action="/settings/account" method="post" hx-post="/settings/account" hx-target="#settings-content" hx-swap="innerHTML" class="space-y-4">
+                    <div>
+                        <label for="delete_password" class="block text-sm font-medium text-slate-300 mb-1">Password</label>
+                        <input type="password" id="delete_password" name="password" data-delete-password required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50">
+                    </div>
 
-                        <div class="flex gap-4 pt-2">
-                            <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors">
-                                Delete Account
-                            </button>
-                            <button type="button" @click="showDeleteModal = false" class="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-colors">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="flex gap-4 pt-2">
+                        <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-lg transition-colors">
+                            Delete Account
+                        </button>
+                        <button type="button" data-delete-modal-close class="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
             </div>
-        </template>
+        </div>
     </section>
+
+    <script>
+        (function () {
+    const root = document.getElementById("delete-account-root");
+    if (!root || root.dataset.deleteModalBound === "true") return;
+    root.dataset.deleteModalBound = "true";
+
+    const modal = root.querySelector("[data-delete-modal]");
+    const openButton = root.querySelector("[data-delete-modal-open]");
+    const passwordInput = root.querySelector("[data-delete-password]");
+
+    const openModal = () => {
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+        setTimeout(() => passwordInput?.focus(), 50); // Kleiner Timeout für Browser-Rendering
+    };
+
+    const closeModal = () => {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+        if (passwordInput) passwordInput.value = "";
+    };
+
+    // Event Delegation für Schließen (Backdrop + Close-Buttons)
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal || e.target.closest("[data-delete-modal-close]")) {
+            closeModal();
+        }
+    });
+
+    openButton?.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+    });
+
+    // ESC-Key Support
+    const escHandler = (e) => {
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+            closeModal();
+        }
+    };
+    document.addEventListener("keydown", escHandler);
+    
+    // Optional: Aufräumen, falls das Element entfernt wird (HTMX spezifisch)
+    root.addEventListener("htmx:beforeCleanupElement", () => {
+        document.removeEventListener("keydown", escHandler);
+    });
+})();
+    </script>
 </div>
