@@ -68,7 +68,12 @@ def test_import_package_imports_all_resources(tmp_path: Path) -> None:
     )
     _write_csv(
         pkg_dir / "experiments.csv",
-        {"id": [30], "project_id": [1], "name": ["Experiment"]},
+        {
+            "id": [30],
+            "project_id": [1],
+            "name": ["Experiment"],
+            "start_time": ["2026-01-01T00:00:00"],
+        },
     )
     _write_csv(
         pkg_dir / "experimental_units.csv",

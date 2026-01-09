@@ -12,3 +12,8 @@ The frontend must follow a **Mobile-First** approach using Tailwind CSS breakpoi
 * **SaaS Database (OLTP):** Stores Users, Credentials (Hashed), and Project-Permissions.
 * **Separation:** This database is strictly separated from the Domain Data (DuckDB).
 * **Migration Path:** MVP uses SQLite (`saas.db`). Architecture must use an ORM (SQLModel/SQLAlchemy) to allow seamless switch to PostgreSQL later without code changes.
+
+### Plugin Navigation (Workspace)
+* **Sidebar:** The left navigation MUST list enabled plugins for the active workspace.
+* **Routing:** Each plugin entry MUST link to `/plugins/{plugin_id}`.
+* **Placeholders:** Plugin pages MAY render placeholder content until plugin-specific UI is implemented.

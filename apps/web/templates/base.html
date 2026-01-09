@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de" class="h-full bg-slate-900">
+<html lang="de" class="h-full bg-slate-900" data-utc-offset-minutes="{{ user.utc_offset_minutes if user is defined and user and user.utc_offset_minutes is not none else '' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,7 +69,9 @@
         <!-- Sidebar Content -->
         <!-- Ensure lg:translate-x-0 !important kind of logic via order or just explicit structure -->
         <aside :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed lg:static inset-y-0 left-0 z-40 w-64 lg:w-16 lg:hover:w-max bg-slate-900 border-r border-slate-800 transition-all duration-300 ease-in-out transform lg:translate-x-0 lg:transform-none flex flex-col group shrink-0">
-             {% include 'components/_sidebar_left.html' %}
+             <div id="sidebar-left">
+                 {% include 'components/_sidebar_left.html' %}
+             </div>
         </aside>
 
         <!-- C. Main Stage -->
@@ -150,8 +152,166 @@
             });
         }
 
+        function detectBrowserUtcOffsetMinutes(date) {
+            const target = date || new Date();
+            return -target.getTimezoneOffset();
+        }
+
+        function getExplicitUtcOffsetMinutes() {
+            const raw = document.documentElement.dataset.utcOffsetMinutes;
+            if (!raw) {
+                return null;
+            }
+            const parsed = Number.parseInt(raw, 10);
+            return Number.isNaN(parsed) ? null : parsed;
+        }
+
+        function formatUtcOffset(offsetMinutes) {
+            const sign = offsetMinutes >= 0 ? '+' : '-';
+            const absMinutes = Math.abs(offsetMinutes);
+            const hours = Math.floor(absMinutes / 60);
+            const minutes = absMinutes % 60;
+            return `UTC${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        function formatLocalDateTime(date) {
+            const pad = (value) => String(value).padStart(2, '0');
+            const year = date.getFullYear();
+            const month = pad(date.getMonth() + 1);
+            const day = pad(date.getDate());
+            const hours = pad(date.getHours());
+            const minutes = pad(date.getMinutes());
+            const seconds = pad(date.getSeconds());
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatUtcDateTime(date) {
+            const pad = (value) => String(value).padStart(2, '0');
+            const year = date.getUTCFullYear();
+            const month = pad(date.getUTCMonth() + 1);
+            const day = pad(date.getUTCDate());
+            const hours = pad(date.getUTCHours());
+            const minutes = pad(date.getUTCMinutes());
+            const seconds = pad(date.getUTCSeconds());
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function formatDateTimeWithOffset(date, offsetMinutes) {
+            const shifted = new Date(date.getTime() + offsetMinutes * 60000);
+            return formatUtcDateTime(shifted);
+        }
+
+        function renderLocalDatetimes(root) {
+            const scope = root || document;
+            const nodes = scope.querySelectorAll('[data-utc]');
+            if (!nodes.length) {
+                return;
+            }
+            const explicitOffset = getExplicitUtcOffsetMinutes();
+            nodes.forEach((node) => {
+                const raw = node.getAttribute('data-utc');
+                if (!raw) {
+                    return;
+                }
+                const normalized = /[zZ]|[+-]\d{2}:?\d{2}$/.test(raw) ? raw : `${raw}Z`;
+                const date = new Date(normalized);
+                if (Number.isNaN(date.getTime())) {
+                    return;
+                }
+                if (explicitOffset === null) {
+                    node.textContent = formatLocalDateTime(date);
+                } else {
+                    node.textContent = formatDateTimeWithOffset(date, explicitOffset);
+                }
+            });
+        }
+
+        function readUtcOffsetOverride(signSelect, hoursInput, minutesInput) {
+            const hoursRaw = hoursInput ? hoursInput.value.trim() : '';
+            const minutesRaw = minutesInput ? minutesInput.value.trim() : '';
+
+            if (!hoursRaw && !minutesRaw) {
+                return null;
+            }
+
+            const hoursValue = Number.parseInt(hoursRaw || '0', 10);
+            const minutesValue = Number.parseInt(minutesRaw || '0', 10);
+
+            if (Number.isNaN(hoursValue) || Number.isNaN(minutesValue)) {
+                return null;
+            }
+
+            const signValue = signSelect && signSelect.value === '-' ? -1 : 1;
+            return signValue * (hoursValue * 60 + minutesValue);
+        }
+
+        function syncUtcOffsetOverride(signSelect, hoursInput, minutesInput) {
+            const override = readUtcOffsetOverride(signSelect, hoursInput, minutesInput);
+            const nextValue = override === null ? '' : String(override);
+            if (document.documentElement.dataset.utcOffsetMinutes !== nextValue) {
+                document.documentElement.dataset.utcOffsetMinutes = nextValue;
+                return true;
+            }
+            return false;
+        }
+
+        function setupUtcOffsetField(root) {
+            const scope = root || document;
+            const signSelect = scope.querySelector('[data-utc-offset-sign]');
+            const hoursInput = scope.querySelector('[data-utc-offset-hours]');
+            const minutesInput = scope.querySelector('[data-utc-offset-minutes]');
+            const detectedLabel = scope.querySelector('[data-utc-offset-detected]');
+
+            if (!signSelect && !hoursInput && !minutesInput && !detectedLabel) {
+                return false;
+            }
+
+            const detectedOffset = detectBrowserUtcOffsetMinutes();
+            if (detectedLabel) {
+                detectedLabel.textContent = `Detected: ${formatUtcOffset(detectedOffset)}`;
+            }
+
+            const detectedAbs = Math.abs(detectedOffset);
+            const detectedHours = Math.floor(detectedAbs / 60);
+            const detectedMinutes = detectedAbs % 60;
+
+            if (hoursInput && !hoursInput.value) {
+                hoursInput.placeholder = String(detectedHours).padStart(2, '0');
+            }
+            if (minutesInput && !minutesInput.value) {
+                minutesInput.placeholder = String(detectedMinutes).padStart(2, '0');
+            }
+            if (signSelect && hoursInput && minutesInput && !hoursInput.value && !minutesInput.value) {
+                signSelect.value = detectedOffset < 0 ? '-' : '+';
+            }
+
+            const handler = () => {
+                syncUtcOffsetOverride(signSelect, hoursInput, minutesInput);
+                renderLocalDatetimes();
+            };
+
+            [signSelect, hoursInput, minutesInput].forEach((element) => {
+                if (!element || element.dataset.utcOffsetListener) {
+                    return;
+                }
+                element.dataset.utcOffsetListener = 'true';
+                element.addEventListener('input', handler);
+                element.addEventListener('change', handler);
+            });
+
+            return syncUtcOffsetOverride(signSelect, hoursInput, minutesInput);
+        }
+
+        function refreshSidebarLeft() {
+            if (window.htmx) {
+                htmx.ajax('GET', '/components/sidebar-left', '#sidebar-left');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             setActiveSidebarNav();
+            setupUtcOffsetField();
+            renderLocalDatetimes();
         });
         
         // HTMX Hooks
@@ -170,15 +330,35 @@
                     setActiveSidebarNav();
                 }
             }
+            if (evt.detail.target && evt.detail.target.id === 'sidebar-left') {
+                setActiveSidebarNav();
+            }
+            if (evt.detail.target) {
+                const utcOffsetUpdated = setupUtcOffsetField(evt.detail.target);
+                if (utcOffsetUpdated) {
+                    renderLocalDatetimes();
+                } else {
+                    renderLocalDatetimes(evt.detail.target);
+                }
+            }
+            if (evt.detail.target && window.Alpine) {
+                // Re-initialize Alpine bindings for swapped content.
+                window.Alpine.initTree(evt.detail.target);
+            }
         });
 
         document.body.addEventListener('workspace-activated', function() {
             if (window.htmx) {
                 htmx.ajax('GET', '/workspaces/switcher', '#workspace-switcher');
                 htmx.ajax('GET', '/', '#main-stage');
+                refreshSidebarLeft();
             } else {
                 window.location.reload();
             }
+        });
+
+        document.body.addEventListener('lab-config-updated', function() {
+            refreshSidebarLeft();
         });
     </script>
 </body>

@@ -1,3 +1,11 @@
+{% if not entity %}
+<div class="h-full flex flex-col bg-slate-900 border-l border-slate-800">
+    <div class="flex-1 flex flex-col justify-center items-center text-slate-500 p-8 text-center">
+        <svg class="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <p class="text-sm">Entity not found.</p>
+    </div>
+</div>
+{% else %}
 <div class="h-full flex flex-col bg-slate-900 border-l border-slate-800">
     <!-- Header -->
     <div class="p-6 border-b border-slate-800 flex justify-between items-start">
@@ -18,7 +26,7 @@
             <button class="p-1.5 text-slate-400 hover:text-red-400 rounded hover:bg-slate-800 transition-colors"
                     hx-delete="/api/entities/{{ entity_type }}/{{ entity.id }}"
                     hx-swap="none"
-                    hx-on::after-request="if(event.detail.successful){const listContainer=document.getElementById('entity-list-container');if(listContainer){htmx.ajax('GET','/explorer-ui/list/{{ entity_type }}','#entity-list-container');}const inspector=document.getElementById('inspector-panel');if(inspector){inspector.innerHTML = '<div class=\'p-12 text-center text-slate-500\'><p>Select an item to view details</p></div>';}}"
+                    hx-on::after-request="if(event.detail.successful){const listContainer=document.getElementById('entity-list-container');if(listContainer){htmx.ajax('GET','/explorer-ui/list/{{ entity_type }}','#entity-list-container');}const inspector=document.getElementById('explorer-inspector-panel');if(inspector){inspector.innerHTML = '<div class=\'p-12 text-center text-slate-500\'><p>Select an item to view details</p></div>';}}"
                     title="Delete">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </button>
@@ -34,10 +42,68 @@
         </div>
         {% endif %}
 
+        {% if relations and (relations.parents or relations.children) %}
+        <div>
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Hierarchy</h4>
+            {% if relations.parents %}
+            <div class="space-y-2">
+                <p class="text-xs text-slate-500 uppercase tracking-wider">Belongs to</p>
+                {% for parent in relations.parents %}
+                <button class="w-full text-left rounded-md border border-slate-800 bg-slate-900/60 hover:bg-slate-800/60 px-3 py-2 transition-colors"
+                        hx-get="/explorer-ui/inspector/{{ parent.entity_type }}/{{ parent.id }}"
+                        hx-target="#explorer-inspector-panel"
+                        hx-swap="innerHTML">
+                    <div class="flex items-center justify-between text-xs text-slate-500">
+                        <span class="uppercase tracking-wider">{{ parent.label }}</span>
+                        <span class="font-mono">#{{ parent.id }}</span>
+                    </div>
+                    <div class="text-sm text-slate-200 mt-1">{{ parent.display }}</div>
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if relations.children %}
+            <div class="mt-4 space-y-3">
+                <p class="text-xs text-slate-500 uppercase tracking-wider">Contains</p>
+                {% for group in relations.children %}
+                <div class="rounded-md border border-slate-800 bg-slate-900/40 px-3 py-2">
+                    <div class="flex items-center justify-between text-xs text-slate-500">
+                        <span class="uppercase tracking-wider">{{ group.label }}</span>
+                        <span class="font-mono">{{ group.count }}</span>
+                    </div>
+                    {% if group.items %}
+                    <div class="mt-2 space-y-1">
+                        {% for child in group.items %}
+                        <button class="w-full text-left rounded px-2 py-1 text-sm text-slate-200 hover:text-emerald-400 hover:bg-slate-800/60 transition-colors"
+                                hx-get="/explorer-ui/inspector/{{ group.entity_type }}/{{ child.id }}"
+                                hx-target="#explorer-inspector-panel"
+                                hx-swap="innerHTML">
+                            <div class="flex items-center justify-between">
+                                <span>{{ child.display }}</span>
+                                <span class="text-xs font-mono text-slate-500">#{{ child.id }}</span>
+                            </div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="mt-2 text-xs text-slate-500">None</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Generic Field Dump (Excluding common fields) -->
         <div class="space-y-4">
+            {% set excluded_keys = ['id', 'name', 'label', 'description', '_sa_instance_state', 'created_at', 'updated_at'] %}
+            {% if relation_exclude_keys %}
+                {% set excluded_keys = excluded_keys + relation_exclude_keys %}
+            {% endif %}
             {% for key, value in entity.__dict__.items() %}
-                {% if key not in ['id', 'name', 'label', 'description', '_sa_instance_state', 'created_at', 'updated_at'] and value is not none %}
+                {% if key not in excluded_keys and value is not none %}
                 <div>
                     <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{{ key|replace('_', ' ') }}</h4>
                     <p class="text-sm text-slate-200 font-mono break-all">{{ value }}</p>
@@ -55,8 +121,15 @@
             </div>
              <div class="flex justify-between items-center text-xs text-slate-500 mt-1">
                 <span>Updated</span>
-                <span class="font-mono">{{ entity.updated_at.strftime('%Y-%m-%d') if entity.updated_at else 'Unknown' }}</span>
+                {% if entity.updated_at %}
+                    <time class="font-mono js-local-datetime" data-utc="{{ entity.updated_at.isoformat(timespec='seconds') }}">
+                        {{ entity.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                    </time>
+                {% else %}
+                    <span class="font-mono">Unknown</span>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endif %}

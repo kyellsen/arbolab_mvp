@@ -135,7 +135,8 @@ async def new_workspace_page(
     return templates.TemplateResponse("workspaces/new.html", {
         "request": request,
         "user": user,
-        "is_first_lab": is_first_lab
+        "is_first_lab": is_first_lab,
+        "plugin_nav": [],
     })
 
 @router.post("/")

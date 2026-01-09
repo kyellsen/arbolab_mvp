@@ -112,3 +112,9 @@ class PropertiesMixin:
 
     properties: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+
+
+class DomainIdsMixin:
+    """Mapping of external domain identifiers by namespace."""
+
+    domain_ids: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)

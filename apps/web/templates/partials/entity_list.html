@@ -14,7 +14,7 @@
                 :class="selectedId === {{ entity.id }} ? 'bg-emerald-900/20 text-emerald-400' : 'hover:bg-slate-800/50 text-slate-300 hover:text-white'"
                 @click="selectedId = {{ entity.id }}"
                 hx-get="/explorer-ui/inspector/{{ entity_type }}/{{ entity.id }}"
-                hx-target="#inspector-panel"
+                hx-target="#explorer-inspector-panel"
                 hx-swap="innerHTML">
                 
                 <td class="px-6 py-3 font-mono text-xs opacity-70 group-hover:opacity-100">
@@ -26,7 +26,13 @@
                 </td>
                 
                 <td class="px-6 py-3 text-right text-xs text-slate-500">
-                    {{ entity.updated_at.strftime('%Y-%m-%d') if entity.updated_at else '-' }}
+                    {% if entity.updated_at %}
+                        <time class="js-local-datetime" data-utc="{{ entity.updated_at.isoformat(timespec='seconds') }}">
+                            {{ entity.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </time>
+                    {% else %}
+                        -
+                    {% endif %}
                 </td>
 
                 <td class="px-6 py-3 text-right">
@@ -43,7 +49,7 @@
                                 class="p-1.5 text-slate-400 hover:text-red-400 rounded hover:bg-slate-800 transition-colors"
                                 hx-delete="/api/entities/{{ entity_type }}/{{ entity.id }}"
                                 hx-swap="none"
-                                hx-on::after-request="if(event.detail.successful){const listContainer=document.getElementById('entity-list-container');if(listContainer){htmx.ajax('GET','/explorer-ui/list/{{ entity_type }}','#entity-list-container');}const inspector=document.getElementById('inspector-panel');if(inspector){inspector.innerHTML = '<div class=\'p-12 text-center text-slate-500\'><p>Select an item to view details</p></div>';}}"
+                                hx-on::after-request="if(event.detail.successful){const listContainer=document.getElementById('entity-list-container');if(listContainer){htmx.ajax('GET','/explorer-ui/list/{{ entity_type }}','#entity-list-container');}const inspector=document.getElementById('explorer-inspector-panel');if(inspector){inspector.innerHTML = '<div class=\'p-12 text-center text-slate-500\'><p>Select an item to view details</p></div>';}}"
                                 @click.stop
                                 title="Delete">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>

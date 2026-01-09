@@ -41,7 +41,8 @@ def test_import_metadata_full_flow(temp_lab):
         "id": [10],
         "project_id": [1],
         "name": ["Exp 1"],
-        "description": ["First experiment"]
+        "description": ["First experiment"],
+        "start_time": ["2026-01-01T00:00:00"],
     }).write_csv(experiments_csv)
     
     # Create datapackage.json

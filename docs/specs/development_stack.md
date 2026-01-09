@@ -7,6 +7,7 @@
 - **Linter/Formatter**: `ruff`.
 - **Type Checker**: `mypy`.
 - **Test Runner**: `pytest`.
+- **Browser Tests**: `playwright` (via `pytest-playwright`).
 
 ## 2. Language Standards
 - **Python**: `>= 3.12`.
@@ -26,3 +27,7 @@ Must pass before commit:
 
 ## 5. Setup
 `setup.sh` is the canonical bootstrap script. It MUST create `.venv` and sync dependencies via `uv`.
+
+## 6. Browser Tests
+Install Playwright browsers after dependency sync:
+`uv run playwright install`

@@ -10,6 +10,24 @@
     </div>
     {% endif %}
 
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-900/40 border border-red-800 rounded-lg text-red-300 text-sm">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    {% set offset_minutes = user.utc_offset_minutes if user and user.utc_offset_minutes is not none else none %}
+    {% if offset_minutes is not none %}
+        {% set offset_sign = '-' if offset_minutes < 0 else '+' %}
+        {% set offset_abs = offset_minutes|abs %}
+        {% set offset_hours = offset_abs // 60 %}
+        {% set offset_mins = offset_abs % 60 %}
+    {% else %}
+        {% set offset_sign = '+' %}
+        {% set offset_hours = '' %}
+        {% set offset_mins = '' %}
+    {% endif %}
+
     <form hx-put="/settings/profile" hx-target="#settings-content" hx-swap="innerHTML" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -25,6 +43,43 @@
             <div class="md:col-span-2">
                 <label for="email" class="block text-sm font-medium text-slate-300 mb-1">Email (Read-only)</label>
                 <input type="email" id="email" value="{{ user.email }}" disabled class="w-full px-3 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-slate-500 cursor-not-allowed">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-300 mb-1">UTC Offset</label>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select name="utc_offset_sign"
+                            class="px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            data-utc-offset-sign>
+                        <option value="+" {% if offset_sign == '+' %}selected{% endif %}>+</option>
+                        <option value="-" {% if offset_sign == '-' %}selected{% endif %}>-</option>
+                    </select>
+                    <input type="number"
+                           id="utc_offset_hours"
+                           name="utc_offset_hours"
+                           min="0"
+                           max="14"
+                           inputmode="numeric"
+                           value="{{ offset_hours }}"
+                           placeholder="HH"
+                           class="w-20 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                           data-utc-offset-hours>
+                    <span class="text-slate-500">:</span>
+                    <input type="number"
+                           id="utc_offset_minutes"
+                           name="utc_offset_minutes"
+                           min="0"
+                           max="59"
+                           inputmode="numeric"
+                           value="{{ offset_mins }}"
+                           placeholder="MM"
+                           class="w-20 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                           data-utc-offset-minutes>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                    <span data-utc-offset-detected>Detected: --</span>
+                    <span class="ml-2">Leave blank to use browser offset.</span>
+                </p>
             </div>
 
             <div class="md:col-span-2">

@@ -11,10 +11,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, event, update
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from arbolab.models.base import Base, DescribedMixin, IdMixin, PropertiesMixin, TimestampMixin
+from arbolab.models.base import Base, DescribedMixin, DomainIdsMixin, IdMixin, PropertiesMixin, TimestampMixin
 
 
 class Project(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
@@ -37,6 +37,8 @@ class Experiment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin)
     __tablename__ = "experiments"
 
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=False), nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     project: Mapped[Project] = relationship(back_populates="experiments")
     runs: Mapped[list[Run]] = relationship(back_populates="experiment", cascade="all, delete-orphan")
@@ -48,7 +50,7 @@ class Experiment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin)
     )
 
 
-class ExperimentalUnit(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class ExperimentalUnit(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A conceptual unit of analysis, optionally referencing a Thing."""
 
     __tablename__ = "experimental_units"
@@ -63,7 +65,7 @@ class ExperimentalUnit(Base, IdMixin, TimestampMixin, DescribedMixin, Properties
     )
 
 
-class Treatment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class Treatment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """An abstract, project-scoped experimental condition definition."""
 
     __tablename__ = "treatments"
@@ -76,7 +78,7 @@ class Treatment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
     )
 
 
-class TreatmentApplication(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class TreatmentApplication(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A concrete, time-bounded application of a Treatment to a Thing."""
 
     __tablename__ = "treatment_applications"
@@ -92,7 +94,7 @@ class TreatmentApplication(Base, IdMixin, TimestampMixin, DescribedMixin, Proper
     thing: Mapped[Thing] = relationship(back_populates="treatment_applications")
 
 
-class Run(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class Run(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A concrete execution interval within an Experiment."""
 
     __tablename__ = "runs"
@@ -102,14 +104,16 @@ class Run(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     experiment: Mapped[Experiment] = relationship(back_populates="runs")
+    sensor_deployments: Mapped[list[SensorDeployment]] = relationship(back_populates="run")
 
 
-class SensorDeployment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class SensorDeployment(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A time-bounded record describing how a Sensor is installed on a Thing."""
 
     __tablename__ = "sensor_deployments"
 
     experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), nullable=False, index=True)
+    run_id: Mapped[int | None] = mapped_column(ForeignKey("runs.id"), nullable=True, index=True)
     experimental_unit_id: Mapped[int] = mapped_column(
         ForeignKey("experimental_units.id"), nullable=False, index=True
     )
@@ -118,9 +122,12 @@ class SensorDeployment(Base, IdMixin, TimestampMixin, DescribedMixin, Properties
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     experiment: Mapped[Experiment] = relationship(back_populates="sensor_deployments")
+    run: Mapped[Run | None] = relationship(back_populates="sensor_deployments")
     experimental_unit: Mapped[ExperimentalUnit] = relationship(back_populates="sensor_deployments")
     sensor: Mapped[Sensor] = relationship(back_populates="sensor_deployments")
-    datastreams: Mapped[list[Datastream]] = relationship(back_populates="sensor_deployment")
+    datastreams: Mapped[list[Datastream]] = relationship(
+        back_populates="sensor_deployment", cascade="all, delete-orphan"
+    )
 
 
 class Location(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
@@ -141,9 +148,13 @@ class Thing(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
     kind: Mapped[str] = mapped_column(String, nullable=False, index=True)
 
     project: Mapped[Project] = relationship(back_populates="things")
-    location: Mapped[Location | None] = relationship(back_populates="things")
+    location: Mapped[Location | None] = relationship(
+        back_populates="things", cascade="all, delete-orphan", single_parent=True
+    )
     experimental_units: Mapped[list[ExperimentalUnit]] = relationship(back_populates="thing")
-    treatment_applications: Mapped[list[TreatmentApplication]] = relationship(back_populates="thing")
+    treatment_applications: Mapped[list[TreatmentApplication]] = relationship(
+        back_populates="thing", cascade="all, delete-orphan"
+    )
     tree: Mapped[Tree | None] = relationship(back_populates="thing", uselist=False, cascade="all, delete-orphan")
     cable: Mapped[Cable | None] = relationship(back_populates="thing", uselist=False, cascade="all, delete-orphan")
 
@@ -166,7 +177,10 @@ class Tree(Base, TimestampMixin, PropertiesMixin):
 
     thing: Mapped[Thing] = relationship(back_populates="tree")
     species: Mapped[TreeSpecies | None] = relationship(back_populates="trees")
-
+    
+    height: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    circumference: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    fork_height: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 class Cable(Base, TimestampMixin, PropertiesMixin):
     """Thing subtype representing a cable system or cable component."""
@@ -186,7 +200,7 @@ class SensorModel(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin
     sensors: Mapped[list[Sensor]] = relationship(back_populates="sensor_model")
 
 
-class Sensor(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class Sensor(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A concrete physical sensor device."""
 
     __tablename__ = "sensors"
@@ -196,7 +210,9 @@ class Sensor(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
 
     project: Mapped[Project] = relationship(back_populates="sensors")
     sensor_model: Mapped[SensorModel] = relationship(back_populates="sensors")
-    sensor_deployments: Mapped[list[SensorDeployment]] = relationship(back_populates="sensor")
+    sensor_deployments: Mapped[list[SensorDeployment]] = relationship(
+        back_populates="sensor", cascade="all, delete-orphan"
+    )
 
 
 class ObservedProperty(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
@@ -218,7 +234,7 @@ class UnitOfMeasurement(Base, IdMixin, TimestampMixin, DescribedMixin, Propertie
     channels: Mapped[list[DatastreamChannel]] = relationship(back_populates="unit_of_measurement")
 
 
-class Datastream(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):
+class Datastream(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin, DomainIdsMixin):
     """A logical container for time-ordered observations produced by one deployment."""
 
     __tablename__ = "datastreams"
@@ -278,3 +294,12 @@ class DataVariant(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin
     last_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
 
     datastream: Mapped[Datastream] = relationship(back_populates="variants")
+
+
+@event.listens_for(Run, "before_delete")
+def _detach_sensor_deployments_from_run(_mapper, connection, target) -> None:
+    connection.execute(
+        update(SensorDeployment)
+        .where(SensorDeployment.run_id == target.id)
+        .values(run_id=None)
+    )

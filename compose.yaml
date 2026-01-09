@@ -23,11 +23,13 @@ services:
       - "8000:8000"
     environment:
       - ARBO_DATA_ROOT=/data
+      - ARBO_RUN_MIGRATIONS=1
+      - ARBO_RUN_SEED=1
     volumes:
       - ./data:/data:Z
       - ./apps/web:/app/apps/web:Z
       - ./packages:/app/packages:Z
-    command: ["uvicorn", "apps.web.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/apps/web", "--reload-dir", "/app/packages"]
+    command: ["uvicorn", "apps.web.main:app", "--host", "0.0.0.0", "--port", "8000"]
     depends_on:
       db:
         condition: service_healthy
@@ -39,4 +41,3 @@ services:
 
 volumes:
   postgres_data_clean:
-

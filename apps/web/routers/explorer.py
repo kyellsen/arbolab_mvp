@@ -6,7 +6,7 @@ from typing import Optional
 import os
 from pathlib import Path
 
-from apps.web.core.domain import list_entities, get_entity, ENTITY_MAP
+from apps.web.core.domain import list_entities, get_entity, get_entity_relations, ENTITY_MAP
 from apps.web.routers.api import get_db_session
 
 router = APIRouter(prefix="/explorer-ui", tags=["explorer-ui"])
@@ -25,10 +25,29 @@ async def explorer_list(entity_type: str, request: Request, search: str = None, 
 @router.get("/inspector/{entity_type}/{entity_id}", response_class=HTMLResponse)
 async def explorer_inspector(entity_type: str, entity_id: int, request: Request, session: Session = Depends(get_db_session)):
     entity = await get_entity(session, entity_type, entity_id)
+    if not entity:
+        return templates.TemplateResponse(
+            "partials/inspector.html",
+            {
+                "request": request,
+                "entity_type": entity_type,
+                "entity": None,
+                "relations": {"parents": [], "children": []},
+                "relation_exclude_keys": [],
+                "schema": ENTITY_MAP[entity_type]["schema"],
+            },
+            status_code=404,
+        )
+    try:
+        relations, relation_exclude_keys = get_entity_relations(entity_type, entity)
+    except Exception:
+        relations, relation_exclude_keys = {"parents": [], "children": []}, []
     return templates.TemplateResponse("partials/inspector.html", {
         "request": request,
         "entity_type": entity_type,
         "entity": entity,
+        "relations": relations,
+        "relation_exclude_keys": relation_exclude_keys,
         # Pass schema if needed for labels, or use entity keys
         "schema": ENTITY_MAP[entity_type]["schema"]
     })

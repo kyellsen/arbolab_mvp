@@ -17,8 +17,9 @@ from apps.web.models.user import User
 from apps.web.core.lab_cache import get_cached_lab
 from pathlib import Path
 from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router
+from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router, plugins as plugins_router
 from apps.web.core.domain import get_entity_counts, ENTITY_MAP
+from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
 from arbolab.core.recipes.executor import RecipeExecutor
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -50,6 +51,13 @@ app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY_CHANGE_ME")
 app.middleware("http")(access_log_middleware)
 
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def resolve_workspace_context(request: Request, session: Session) -> tuple[Workspace | None, list[Workspace]]:
@@ -106,20 +114,31 @@ def resolve_workspace_context(request: Request, session: Session) -> tuple[Works
 
     return current_workspace, all_workspaces
 
+
+def resolve_plugin_nav(current_workspace: Workspace | None) -> list[dict[str, str]]:
+    workspace_id = current_workspace.id if current_workspace else None
+    return build_plugin_nav_items(get_enabled_plugins(workspace_id))
+
 @app.on_event("startup")
 def on_startup() -> None:
     """Initialize the database and seed default data on startup."""
     import time
     from sqlalchemy.exc import OperationalError
-    
+
+    run_migrations_enabled = env_flag("ARBO_RUN_MIGRATIONS")
+    run_seed_enabled = env_flag("ARBO_RUN_SEED")
+
     # 1. Create Tables
     max_retries = 10
     retry_delay = 2
     for i in range(max_retries):
         try:
             create_db_and_tables()
-            run_migrations()
-            print("Database connected, tables verified, and migrations applied.")
+            if run_migrations_enabled:
+                run_migrations()
+                print("Database connected, tables verified, and migrations applied.")
+            else:
+                print("Database connected, tables verified. Migrations skipped.")
             break
         except OperationalError as e:
             if i < max_retries - 1:
@@ -130,15 +149,33 @@ def on_startup() -> None:
                 raise e
 
     # 2. Run Seeder
-    from apps.web.core import seeder
-    try:
-        seeder.run_seed()
-    except Exception as e:
-        print(f"Error during seeding: {e}")
+    if run_seed_enabled:
+        from apps.web.core import seeder
+        try:
+            seeder.run_seed()
+        except Exception as e:
+            print(f"Error during seeding: {e}")
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/components/sidebar-left", response_class=HTMLResponse)
+async def sidebar_left(
+    request: Request,
+    saas_session: Session = Depends(get_session),
+):
+    user = request.session.get("user")
+    if not user:
+        return HTMLResponse(content="", status_code=401)
+
+    current_workspace, _ = resolve_workspace_context(request, saas_session)
+    context = {
+        "request": request,
+        "plugin_nav": resolve_plugin_nav(current_workspace),
+    }
+    return templates.TemplateResponse("components/_sidebar_left.html", context)
 
 # Register Routers
 app.include_router(api.router)
@@ -146,6 +183,7 @@ app.include_router(workspaces_router.router)
 app.include_router(explorer_router.router)
 app.include_router(settings_router.router)
 app.include_router(logs_router.router)
+app.include_router(plugins_router.router)
 
 # ----------------- ROUTEN -----------------
 
@@ -214,7 +252,8 @@ async def home(
                 "role": None,
                 "is_viewer": False,
                 "is_admin": False,
-                "show_onboarding": True
+                "show_onboarding": True,
+                "plugin_nav": resolve_plugin_nav(None),
             }
              return templates.TemplateResponse("dashboard.html", context)
 
@@ -281,7 +320,8 @@ async def home(
                 "is_viewer": role == LabRole.VIEWER,
                 "is_admin": role == LabRole.ADMIN,
                 "show_onboarding": False,
-                "recent_activity": recent_activity
+                "recent_activity": recent_activity,
+                "plugin_nav": resolve_plugin_nav(current_workspace),
             }
             
             # Check HTMX request to swap only content (but not boosted full-page nav)
@@ -332,6 +372,7 @@ async def explorer(
         "open_form_entity": open_form_entity,
         "current_workspace": current_workspace,
         "all_workspaces": all_workspaces,
+        "plugin_nav": resolve_plugin_nav(current_workspace),
     }
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -354,6 +395,7 @@ async def analysis(
         "user": user,
         "current_workspace": current_workspace,
         "all_workspaces": all_workspaces,
+        "plugin_nav": resolve_plugin_nav(current_workspace),
     }
     
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -409,6 +451,7 @@ async def tree(
                 "counts": counts,
                 "current_workspace": current_workspace,
                 "all_workspaces": all_workspaces,
+                "plugin_nav": resolve_plugin_nav(current_workspace),
             }
 
             if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -425,6 +468,7 @@ async def tree(
             "counts": {},
             "current_workspace": current_workspace,
             "all_workspaces": all_workspaces,
+            "plugin_nav": resolve_plugin_nav(current_workspace),
         }
         if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
              return templates.TemplateResponse("partials/tree_content.html", context)
@@ -510,7 +554,11 @@ async def login_submit(
         })
     
     # Session setzen (Cookie)
-    request.session["user"] = {"id": str(user.id), "email": user.email}
+    request.session["user"] = {
+        "id": str(user.id),
+        "email": user.email,
+        "utc_offset_minutes": user.utc_offset_minutes,
+    }
     return RedirectResponse(url="/", status_code=303)
 
 @app.get("/auth/register", response_class=HTMLResponse)

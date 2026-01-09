@@ -39,7 +39,7 @@ def test_core_schema_creates_and_roundtrips() -> None:
         session.add(project)
         session.flush()
 
-        experiment = Experiment(project_id=project.id, name="E1")
+        experiment = Experiment(project_id=project.id, name="E1", start_time=datetime(2026, 1, 1))
         session.add(experiment)
 
         sensor_model = SensorModel(name="SM1")

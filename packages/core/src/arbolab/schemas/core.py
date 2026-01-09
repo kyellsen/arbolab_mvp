@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from arbolab.schemas.base import EntitySchema
 
@@ -17,6 +17,8 @@ class ExperimentSchema(EntitySchema):
     """Schema for an Experiment record."""
 
     project_id: int
+    start_time: datetime
+    end_time: datetime | None = None
 
 
 class ExperimentalUnitSchema(EntitySchema):
@@ -24,12 +26,14 @@ class ExperimentalUnitSchema(EntitySchema):
 
     project_id: int
     thing_id: int | None = None
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class TreatmentSchema(EntitySchema):
     """Schema for a Treatment record."""
 
     project_id: int
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class TreatmentApplicationSchema(EntitySchema):
@@ -40,6 +44,7 @@ class TreatmentApplicationSchema(EntitySchema):
     thing_id: int
     start_time: datetime
     end_time: datetime | None = None
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class RunSchema(EntitySchema):
@@ -48,16 +53,19 @@ class RunSchema(EntitySchema):
     experiment_id: int
     start_time: datetime
     end_time: datetime | None = None
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class SensorDeploymentSchema(EntitySchema):
     """Schema for a SensorDeployment record."""
 
     experiment_id: int
+    run_id: int | None = None
     experimental_unit_id: int
     sensor_id: int
     start_time: datetime
     end_time: datetime | None = None
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class LocationSchema(EntitySchema):
@@ -98,6 +106,7 @@ class SensorSchema(EntitySchema):
 
     project_id: int
     sensor_model_id: int
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class ObservedPropertySchema(EntitySchema):
@@ -115,6 +124,7 @@ class DatastreamSchema(EntitySchema):
     """Schema for a Datastream record."""
 
     sensor_deployment_id: int
+    domain_ids: dict[str, str] = Field(default_factory=dict)
 
 
 class DatastreamChannelSchema(EntitySchema):

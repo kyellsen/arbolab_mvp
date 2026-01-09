@@ -40,6 +40,184 @@ ENTITY_MAP = {
     "data_variant": {"model": DataVariant, "schema": DataVariantSchema},
 }
 
+RELATION_MAP = {
+    "project": {
+        "parents": [],
+        "children": [
+            {"attribute": "experiments", "entity_type": "experiment", "label": "Experiments"},
+            {"attribute": "experimental_units", "entity_type": "experimental_unit", "label": "Experimental Units"},
+            {"attribute": "treatments", "entity_type": "treatment", "label": "Treatments"},
+            {"attribute": "things", "entity_type": "thing", "label": "Things"},
+            {"attribute": "sensors", "entity_type": "sensor", "label": "Sensors"},
+        ],
+    },
+    "experiment": {
+        "parents": [{"attribute": "project", "entity_type": "project", "label": "Project"}],
+        "children": [
+            {"attribute": "runs", "entity_type": "run", "label": "Runs"},
+            {"attribute": "sensor_deployments", "entity_type": "sensor_deployment", "label": "Sensor Deployments"},
+            {"attribute": "treatment_applications", "entity_type": "treatment_application", "label": "Treatment Applications"},
+        ],
+    },
+    "experimental_unit": {
+        "parents": [
+            {"attribute": "project", "entity_type": "project", "label": "Project"},
+            {"attribute": "thing", "entity_type": "thing", "label": "Thing"},
+        ],
+        "children": [
+            {"attribute": "sensor_deployments", "entity_type": "sensor_deployment", "label": "Sensor Deployments"},
+        ],
+    },
+    "treatment": {
+        "parents": [{"attribute": "project", "entity_type": "project", "label": "Project"}],
+        "children": [
+            {"attribute": "applications", "entity_type": "treatment_application", "label": "Treatment Applications"},
+        ],
+    },
+    "treatment_application": {
+        "parents": [
+            {"attribute": "experiment", "entity_type": "experiment", "label": "Experiment"},
+            {"attribute": "treatment", "entity_type": "treatment", "label": "Treatment"},
+            {"attribute": "thing", "entity_type": "thing", "label": "Thing"},
+        ],
+        "children": [],
+    },
+    "run": {
+        "parents": [{"attribute": "experiment", "entity_type": "experiment", "label": "Experiment"}],
+        "children": [],
+    },
+    "sensor_deployment": {
+        "parents": [
+            {"attribute": "experiment", "entity_type": "experiment", "label": "Experiment"},
+            {"attribute": "experimental_unit", "entity_type": "experimental_unit", "label": "Experimental Unit"},
+            {"attribute": "sensor", "entity_type": "sensor", "label": "Sensor"},
+        ],
+        "children": [
+            {"attribute": "datastreams", "entity_type": "datastream", "label": "Datastreams"},
+        ],
+    },
+    "location": {
+        "parents": [],
+        "children": [{"attribute": "things", "entity_type": "thing", "label": "Things"}],
+    },
+    "thing": {
+        "parents": [
+            {"attribute": "project", "entity_type": "project", "label": "Project"},
+            {"attribute": "location", "entity_type": "location", "label": "Location"},
+        ],
+        "children": [
+            {"attribute": "experimental_units", "entity_type": "experimental_unit", "label": "Experimental Units"},
+            {"attribute": "treatment_applications", "entity_type": "treatment_application", "label": "Treatment Applications"},
+            {"attribute": "tree", "entity_type": "tree", "label": "Tree"},
+            {"attribute": "cable", "entity_type": "cable", "label": "Cable"},
+        ],
+    },
+    "tree_species": {
+        "parents": [],
+        "children": [{"attribute": "trees", "entity_type": "tree", "label": "Trees"}],
+    },
+    "tree": {
+        "parents": [
+            {"attribute": "thing", "entity_type": "thing", "label": "Thing"},
+            {"attribute": "species", "entity_type": "tree_species", "label": "Tree Species"},
+        ],
+        "children": [],
+    },
+    "cable": {
+        "parents": [{"attribute": "thing", "entity_type": "thing", "label": "Thing"}],
+        "children": [],
+    },
+    "sensor_model": {
+        "parents": [],
+        "children": [{"attribute": "sensors", "entity_type": "sensor", "label": "Sensors"}],
+    },
+    "sensor": {
+        "parents": [
+            {"attribute": "project", "entity_type": "project", "label": "Project"},
+            {"attribute": "sensor_model", "entity_type": "sensor_model", "label": "Sensor Model"},
+        ],
+        "children": [
+            {"attribute": "sensor_deployments", "entity_type": "sensor_deployment", "label": "Sensor Deployments"},
+        ],
+    },
+    "observed_property": {
+        "parents": [],
+        "children": [{"attribute": "channels", "entity_type": "datastream_channel", "label": "Datastream Channels"}],
+    },
+    "unit_of_measurement": {
+        "parents": [],
+        "children": [{"attribute": "channels", "entity_type": "datastream_channel", "label": "Datastream Channels"}],
+    },
+    "datastream": {
+        "parents": [{"attribute": "sensor_deployment", "entity_type": "sensor_deployment", "label": "Sensor Deployment"}],
+        "children": [
+            {"attribute": "channels", "entity_type": "datastream_channel", "label": "Datastream Channels"},
+            {"attribute": "variants", "entity_type": "data_variant", "label": "Data Variants"},
+        ],
+    },
+    "datastream_channel": {
+        "parents": [
+            {"attribute": "datastream", "entity_type": "datastream", "label": "Datastream"},
+            {"attribute": "observed_property", "entity_type": "observed_property", "label": "Observed Property"},
+            {"attribute": "unit_of_measurement", "entity_type": "unit_of_measurement", "label": "Unit of Measurement"},
+        ],
+        "children": [],
+    },
+    "data_variant": {
+        "parents": [{"attribute": "datastream", "entity_type": "datastream", "label": "Datastream"}],
+        "children": [],
+    },
+}
+
+def _entity_display_name(entity: Any) -> str:
+    for attr in ("name", "label", "kind"):
+        value = getattr(entity, attr, None)
+        if value:
+            return str(value)
+    if hasattr(entity, "id"):
+        return f"{entity.__class__.__name__} #{entity.id}"
+    return str(entity)
+
+def get_entity_relations(entity_type: str, entity: Any) -> tuple[dict[str, Any], list[str]]:
+    relation_def = RELATION_MAP.get(entity_type, {"parents": [], "children": []})
+    parents = []
+    children = []
+
+    for relation in relation_def["parents"]:
+        related = getattr(entity, relation["attribute"], None)
+        if related is None:
+            continue
+        parents.append({
+            "label": relation["label"],
+            "entity_type": relation["entity_type"],
+            "id": related.id,
+            "display": _entity_display_name(related),
+        })
+
+    for relation in relation_def["children"]:
+        related = getattr(entity, relation["attribute"], None)
+        if related is None:
+            items = []
+        elif isinstance(related, (list, tuple, set)):
+            items = list(related)
+        else:
+            items = [related]
+        children.append({
+            "label": relation["label"],
+            "entity_type": relation["entity_type"],
+            "items": [
+                {"id": child.id, "display": _entity_display_name(child)}
+                for child in items
+            ],
+            "count": len(items),
+        })
+
+    relation_keys = {
+        relation["attribute"]
+        for relation in relation_def["parents"] + relation_def["children"]
+    }
+    return {"parents": parents, "children": children}, sorted(relation_keys)
+
 def get_entity_info(entity_type: str):
     if entity_type not in ENTITY_MAP:
         raise ValueError(f"Unknown entity type: {entity_type}")

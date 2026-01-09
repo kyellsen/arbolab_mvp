@@ -97,3 +97,11 @@ The Web App is an optional SaaS layer that orchestrates the `Lab` through HTTP.
 ### 6.5 Web App Data Handling
 - Upload handlers MAY write to `input_root` before calling `Lab.open(...)`; the `Lab` itself treats `input_root` as read-only.
 - The API layer MUST convert Arrow/Parquet outputs into small JSON/HTML payloads for the frontend; sending full datasets is FORBIDDEN.
+
+### 6.6 Account Deletion
+- `DELETE /settings/account` MUST require the user's current password.
+- If the password does not match, the request MUST return an error response and MUST NOT delete any data.
+- When deleting a user, the Web App MUST remove the user's Workspace associations.
+- For each Workspace where no other users remain associated, the Web App MUST delete:
+  - the Workspace record in the SaaS metadata store, and
+  - the Workspace storage directory under the Web App data root (e.g., `data_root/workspaces/{workspace_id}`).

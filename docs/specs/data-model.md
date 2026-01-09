@@ -19,13 +19,14 @@ erDiagram
   core_experiments ||--o{ core_runs : groups
   core_experiments ||--o{ core_sensor_deployments : context_for
   core_experiments ||--o{ core_treatment_applications : context_for
+  core_runs o|--o{ core_sensor_deployments : groups
 
   %% ANALYTICAL CONTEXT
   core_experimental_units ||--o{ core_sensor_deployments : hosts
   core_things ||--o{ core_experimental_units : participates_in
 
   %% THINGS & LOCATIONS
-  core_locations ||--o{ core_things : locates
+  core_locations o|--|| core_things : locates
   core_things ||--|| core_trees : is_a
   core_things ||--|| core_cables : is_a
   core_tree_species ||--o{ core_trees : classifies
@@ -56,11 +57,11 @@ Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 ### 2.1 Physical Perspective (Assets)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
-| `core_locations` | `id` | INTEGER | PK | Spatial reference. |
+| `core_locations` | `id` | INTEGER | PK | Spatial reference owned by a single Thing. |
 | | `name` | VARCHAR | | |
 | `core_things` | `id` | INTEGER | PK | Stable object identity. |
 | | `project_id` | INTEGER | FK | |
-| | `location_id` | INTEGER | FK | |
+| | `location_id` | INTEGER | FK | Optional one-to-one link; Location is not shared. |
 | | `kind` | VARCHAR | | Discriminator ('tree', 'cable', ...). |
 | `core_trees` | `id` | INTEGER | PK, FK | **SubType** of Thing. |
 | | `species_id` | INTEGER | FK | |
@@ -72,6 +73,7 @@ Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 | `core_sensors` | `id` | INTEGER | PK | |
 | | `project_id` | INTEGER | FK | |
 | | `sensor_model_id` | INTEGER | FK | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 
 ### 2.2 Experimental Perspective (Campaigns)
 | Table | Column | Type | Constraints | Description |
@@ -80,19 +82,25 @@ Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 | | `name` | VARCHAR | | |
 | `core_experiments` | `id` | INTEGER | PK | |
 | | `project_id` | INTEGER | FK | |
+| | `start_time` | TIMESTAMP | | |
+| | `end_time` | TIMESTAMP | | |
 | `core_runs` | `id` | INTEGER | PK | |
 | | `experiment_id` | INTEGER | FK | |
 | | `start_time` | TIMESTAMP | | |
 | | `end_time` | TIMESTAMP | | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 | `core_experimental_units` | `id` | INTEGER | PK | Statistical subject. |
 | | `project_id` | INTEGER | FK | |
 | | `thing_id` | INTEGER | FK | Optional link to Thing. |
+| | `domain_ids` | JSON | | External domain identifier map. |
 | `core_sensor_deployments` | `id` | INTEGER | PK | **Central Context Entity.** |
 | | `experiment_id` | INTEGER | FK | |
+| | `run_id` | INTEGER | FK | Optional grouping for analysis. |
 | | `experimental_unit_id` | INTEGER | FK | |
 | | `sensor_id` | INTEGER | FK | |
 | | `start_time` | TIMESTAMP | | |
 | | `end_time` | TIMESTAMP | | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 | | `mounting` | JSON | | |
 
 ### 2.3 Analytical Perspective (Logic)
@@ -100,18 +108,21 @@ Location: `workspace_root/db/arbolab.duckdb` (Main DB)
 |:---|:---|:---|:---|:---|
 | `core_treatments` | `id` | INTEGER | PK | Abstract condition. |
 | | `project_id` | INTEGER | FK | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 | `core_treatment_applications` | `id` | INTEGER | PK | Concrete application. |
 | | `experiment_id` | INTEGER | FK | |
 | | `treatment_id` | INTEGER | FK | |
 | | `thing_id` | INTEGER | FK | |
 | | `start_time` | TIMESTAMP | | |
 | | `end_time` | TIMESTAMP | | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 
 ### 2.4 Data Perspective (Storage)
 | Table | Column | Type | Constraints | Description |
 |:---|:---|:---|:---|:---|
 | `core_datastreams` | `id` | INTEGER | PK | Logical container. |
 | | `sensor_deployment_id` | INTEGER | FK | |
+| | `domain_ids` | JSON | | External domain identifier map. |
 | `core_observed_properties` | `id` | INTEGER | PK | e.g. "temperature". |
 | `core_units_of_measurement` | `id` | INTEGER | PK | e.g. "degree Celsius". |
 | `core_datastream_channels` | `id` | INTEGER | PK | Channel definition. |
@@ -173,3 +184,14 @@ Each entry in the `column_specs` map must adhere to:
 
 ### 4.2 Querying Strategy
 DuckDB `read_parquet()` + Join `core_data_variants` -> `core_datastreams` -> `core_sensor_deployments`.
+
+## 5. Deletion Semantics (ORM)
+
+All deletes are executed via ORM sessions. Cascades are defined at the ORM level and must be respected by callers.
+
+- Deleting a Project cascades to Experiments, Treatments, Experimental Units, Things (including Tree/Cable subtypes), and Sensors.
+- Deleting an Experiment cascades to Runs, Sensor Deployments, and Treatment Applications.
+- Deleting a Sensor Deployment cascades to Datastreams.
+- Deleting a Datastream cascades to Datastream Channels and Data Variants.
+- Deleting a Thing cascades to its Location (Locations are owned by a single Thing and must not be shared).
+- Deleting a Run detaches Sensor Deployments (run_id set to NULL); no other cascades.

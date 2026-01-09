@@ -32,6 +32,7 @@ class User(SQLModel, table=True):
     city: str | None = Field(default=None)
     zip_code: str | None = Field(default=None)
     country: str | None = Field(default=None)
+    utc_offset_minutes: int | None = Field(default=None)
 
     workspace_associations: list["UserWorkspaceAssociation"] = Relationship(back_populates="user")
     workspaces: list["Workspace"] = Relationship(

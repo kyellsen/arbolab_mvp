@@ -44,7 +44,7 @@ This glossary separates scientific domain entities from system/technology concep
 - **Category:** Domain Entity
 - **Perspective:** Experimental / Campaign
 - **Definition:** A concrete execution interval within an Experiment (e.g., a specific pull-test).
-- **Notes:** Does **not** imply perfect temporal synchrony. Clocks may drift. For long-term monitoring, segment data into manageable Runs (e.g., monthly).
+- **Notes:** Does **not** imply perfect temporal synchrony. Clocks may drift. Runs optionally group `SensorDeployment` records for analysis, and `SensorDeployment` records may exist without a Run.
 
 ### Thing (Tree, Cable)
 - **Category:** Domain Entity
@@ -72,7 +72,7 @@ This glossary separates scientific domain entities from system/technology concep
 - **Category:** Domain Entity
 - **Perspective:** Experimental / Campaign
 - **Definition:** A time-bounded record of a `Sensor` installed on a `Thing` for an `ExperimentalUnit`.
-- **Notes:** Captures mounting height, orientation, and calibration. **Moving a sensor = new Deployment.**
+- **Notes:** Captures mounting height, orientation, and calibration. **Moving a sensor = new Deployment.** May optionally belong to a `Run`.
 
 ### Datastream
 - **Category:** Domain Entity

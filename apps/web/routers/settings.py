@@ -1,4 +1,6 @@
 import os
+import logging
+import shutil
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Request, HTTPException
@@ -14,15 +16,97 @@ from apps.web.core.security import get_password_hash, verify_password
 from apps.web.routers.api import get_current_user_id, get_current_workspace
 from apps.web.core.lab_cache import invalidate_cached_lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
 from arbolab.config import load_config, update_config
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+logger = logging.getLogger(__name__)
 
 def _is_hx_target(request: Request, target: str) -> bool:
     return request.headers.get("HX-Request") and request.headers.get("HX-Target") == target
+
+def _get_user_workspace_ids(session: Session, user_id: UUID) -> list[UUID]:
+    """Return workspace IDs associated with a user.
+
+    Args:
+        session: Active database session.
+        user_id: User identifier.
+
+    Returns:
+        Workspace IDs linked to the user.
+    """
+    stmt = select(UserWorkspaceAssociation.workspace_id).where(
+        UserWorkspaceAssociation.user_id == user_id
+    )
+    return list(session.exec(stmt).all())
+
+def _get_orphaned_workspace_ids(session: Session, user_id: UUID, workspace_ids: list[UUID]) -> list[UUID]:
+    """Return workspace IDs that are only associated with the given user.
+
+    Args:
+        session: Active database session.
+        user_id: User identifier to check for exclusivity.
+        workspace_ids: Workspace IDs linked to the user.
+
+    Returns:
+        Workspace IDs that have no other associated users.
+    """
+    orphaned_ids: list[UUID] = []
+    for workspace_id in workspace_ids:
+        assoc_stmt = select(UserWorkspaceAssociation.user_id).where(
+            UserWorkspaceAssociation.workspace_id == workspace_id
+        )
+        assoc_user_ids = session.exec(assoc_stmt).all()
+        if assoc_user_ids and all(assoc_user_id == user_id for assoc_user_id in assoc_user_ids):
+            orphaned_ids.append(workspace_id)
+    return orphaned_ids
+
+def _delete_workspace_storage(workspace_id: UUID) -> None:
+    """Delete workspace storage directories for a workspace ID.
+
+    Args:
+        workspace_id: Workspace identifier.
+    """
+    paths = resolve_workspace_paths(workspace_id)
+    base_dir = paths.workspace_root.parent
+    if not base_dir.exists():
+        return
+    shutil.rmtree(base_dir)
+
+def _delete_user_and_orphaned_workspaces(session: Session, user_id: UUID) -> list[UUID]:
+    """Delete user, their associations, and orphaned workspaces.
+
+    Args:
+        session: Active database session.
+        user_id: User identifier to delete.
+
+    Returns:
+        Workspace IDs that should have storage deleted.
+    """
+    workspace_ids = _get_user_workspace_ids(session, user_id)
+    orphaned_workspace_ids = _get_orphaned_workspace_ids(session, user_id, workspace_ids)
+
+    assoc_rows = session.exec(
+        select(UserWorkspaceAssociation).where(UserWorkspaceAssociation.user_id == user_id)
+    ).all()
+    for assoc in assoc_rows:
+        session.delete(assoc)
+
+    if orphaned_workspace_ids:
+        workspaces = session.exec(
+            select(Workspace).where(Workspace.id.in_(orphaned_workspace_ids))
+        ).all()
+        for workspace in workspaces:
+            session.delete(workspace)
+
+    user = session.get(User, user_id)
+    if user:
+        session.delete(user)
+
+    return orphaned_workspace_ids
 
 def _get_user_workspace_context(request: Request, user_id: UUID, session: Session):
     user = session.get(User, user_id)
@@ -74,6 +158,12 @@ def _load_workspace_config(current_workspace: Workspace):
     ensure_workspace_paths(paths)
     return load_config(paths.workspace_root)
 
+
+def _build_plugin_nav(current_workspace: Workspace | None) -> list[dict[str, str]]:
+    if not current_workspace:
+        return []
+    return build_plugin_nav_items(get_enabled_plugins(current_workspace.id))
+
 @router.get("/", response_class=HTMLResponse)
 async def settings_index(
     request: Request,
@@ -89,7 +179,8 @@ async def settings_index(
         "user": user,
         "current_workspace": current_workspace,
         "all_workspaces": all_workspaces,
-        "active_tab": "profile"
+        "active_tab": "profile",
+        "plugin_nav": _build_plugin_nav(current_workspace),
     }
 
     if _is_hx_target(request, "settings-content"):
@@ -110,6 +201,9 @@ async def update_profile(
     city: Annotated[str | None, Form()] = None,
     zip_code: Annotated[str | None, Form()] = None,
     country: Annotated[str | None, Form()] = None,
+    utc_offset_sign: Annotated[str | None, Form()] = None,
+    utc_offset_hours: Annotated[str | None, Form()] = None,
+    utc_offset_minutes: Annotated[str | None, Form()] = None,
     user_id: UUID = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
@@ -124,6 +218,34 @@ async def update_profile(
         normalized = value.strip()
         return True, normalized if normalized else None
 
+    def parse_utc_offset(
+        sign: str | None,
+        hours: str | None,
+        minutes: str | None,
+    ) -> int | None:
+        """Parse manual UTC offset into minutes."""
+        raw_hours = (hours or "").strip()
+        raw_minutes = (minutes or "").strip()
+
+        if not raw_hours and not raw_minutes:
+            return None
+
+        try:
+            hours_value = int(raw_hours) if raw_hours else 0
+            minutes_value = int(raw_minutes) if raw_minutes else 0
+        except ValueError as exc:
+            raise ValueError("UTC offset must use numeric hours and minutes.") from exc
+
+        if hours_value < 0 or minutes_value < 0:
+            raise ValueError("UTC offset hours and minutes must be positive.")
+        if hours_value > 14 or minutes_value > 59:
+            raise ValueError("UTC offset must be within +/-14:00.")
+        if hours_value == 14 and minutes_value > 0:
+            raise ValueError("UTC offset must be within +/-14:00.")
+
+        sign_value = -1 if sign == "-" else 1
+        return sign_value * (hours_value * 60 + minutes_value)
+
     updates = {
         "full_name": full_name,
         "organization": organization,
@@ -137,10 +259,30 @@ async def update_profile(
         provided, cleaned = normalize_text(raw_value)
         if provided:
             setattr(user, field_name, cleaned)
+
+    try:
+        user.utc_offset_minutes = parse_utc_offset(
+            utc_offset_sign,
+            utc_offset_hours,
+            utc_offset_minutes,
+        )
+    except ValueError as exc:
+        return templates.TemplateResponse(
+            "settings/partials/profile_form.html",
+            {
+                "request": request,
+                "user": user,
+                "error": str(exc),
+            },
+            status_code=400,
+        )
     
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    if request.session.get("user"):
+        request.session["user"]["utc_offset_minutes"] = user.utc_offset_minutes
     
     response = templates.TemplateResponse("settings/partials/profile_form.html", {
         "request": request,
@@ -161,7 +303,8 @@ async def security_tab(request: Request, user_id: UUID = Depends(get_current_use
         "user": user,
         "current_workspace": current_workspace,
         "all_workspaces": all_workspaces,
-        "active_tab": "security"
+        "active_tab": "security",
+        "plugin_nav": _build_plugin_nav(current_workspace),
     }
 
     if _is_hx_target(request, "settings-content"):
@@ -212,26 +355,35 @@ async def update_password(
 @router.delete("/account", response_class=HTMLResponse)
 async def delete_account(
     request: Request,
-    confirmation: Annotated[str, Form()],
+    password: Annotated[str, Form()],
     user_id: UUID = Depends(get_current_user_id),
     session: Session = Depends(get_session)
 ):
-    if confirmation != "DELETE":
-        user = session.get(User, user_id)
+    user = session.get(User, user_id)
+    if not user:
+        return RedirectResponse(url="/auth/login")
+
+    if not verify_password(password, user.hashed_password):
         return templates.TemplateResponse("settings/partials/security_form.html", {
             "request": request,
             "user": user,
-            "error": "Please type DELETE to confirm"
-        })
-    
-    user = session.get(User, user_id)
-    # The requirement says "Deletes the user and their owned workspaces (Cascade)"
-    # SQLModel/SQLAlchemy relationships should handle cascade if configured, 
-    # but we should ensure it.
-    
-    session.delete(user)
+            "error": "Current password incorrect"
+        }, status_code=400)
+
+    orphaned_workspace_ids = _delete_user_and_orphaned_workspaces(session, user_id)
     session.commit()
-    
+
+    for workspace_id in orphaned_workspace_ids:
+        invalidate_cached_lab(workspace_id)
+        try:
+            _delete_workspace_storage(workspace_id)
+        except OSError as exc:
+            logger.warning(
+                "Failed to delete workspace storage for %s: %s",
+                workspace_id,
+                exc,
+            )
+
     request.session.clear()
     return HTMLResponse(content="", headers={"HX-Redirect": "/auth/login"})
 
@@ -262,7 +414,8 @@ async def lab_settings_page(
         "current_workspace": current_workspace,
         "all_workspaces": all_workspaces,
         "config": config,
-        "workspace": current_workspace
+        "workspace": current_workspace,
+        "plugin_nav": _build_plugin_nav(current_workspace),
     }
 
     if request.headers.get("HX-Request") and not request.headers.get("HX-Boosted"):
@@ -316,5 +469,5 @@ async def update_lab_config(
         "workspace": current_workspace,
         "success": "Lab configuration saved"
     })
-    response.headers["HX-Trigger"] = '{"show-toast": "Lab config saved"}'
+    response.headers["HX-Trigger"] = '{"show-toast": "Lab config saved", "lab-config-updated": true}'
     return response

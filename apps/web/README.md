@@ -19,7 +19,7 @@ source .venv/bin/activate
 Um den Entwicklungs-Server zu starten, führe folgenden Befehl aus dem **Projekt-Root** aus:
 
 ```bash
-uv run uvicorn apps.web.main:app --reload
+uv run uvicorn apps.web.main:app --reload --reload-exclude "apps/web/tests/*" --reload-exclude "packages/*"
 ```
 
 ## Aufrufen
@@ -39,7 +39,7 @@ Falls du die Fehlermeldung `[Errno 98] Address already in use` erhältst, ist Po
 **Lösung 1: Anderen Port verwenden**
 Du kannst das Frontend einfach auf einem anderen Port starten (z.B. 8001):
 ```bash
-uv run uvicorn apps.web.main:app --reload --port 8001
+uv run uvicorn apps.web.main:app --reload --reload-exclude "apps/web/tests/*" --reload-exclude "packages/*" --port 8001
 ```
 
 **Lösung 2: Prozess auf Port 8000 finden und beenden**

@@ -25,6 +25,8 @@ else
     uv venv --python 3.12 .venv
 fi
 
+uv run playwright install
+
 # 3) Sync workspace packages plus dev tools
 echo "Syncing workspace dependencies and dev tools ..."
 uv sync --all-packages --all-extras --group dev
