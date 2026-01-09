@@ -6,7 +6,7 @@ from uuid import uuid4
 
 # Setup paths
 sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "packages/core/src"))
+sys.path.append(os.path.join(os.getcwd(), "packages/arbolab/src"))
 
 from sqlmodel import Session, select, create_engine
 from apps.web.models.auth import User, Workspace

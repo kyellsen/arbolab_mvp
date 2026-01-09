@@ -153,7 +153,7 @@ def ensure_admin(lab: Lab):
     if lab.role != LabRole.ADMIN:
         raise HTTPException(status_code=403, detail="Read-only access: Only ADMINs can modify data.")
 
-@router.get("/recipes/export")
+@router.get("/recipes/export/json")
 async def api_export_recipe(lab: Lab = Depends(get_lab)):
     """Downloads the current recipe JSON file."""
     recipe_path = lab.layout.recipe_path("current.json")
@@ -163,6 +163,24 @@ async def api_export_recipe(lab: Lab = Depends(get_lab)):
         path=recipe_path,
         media_type="application/json",
         filename="current.json",
+    )
+
+@router.get("/recipes/export/python")
+async def api_export_recipe_python(lab: Lab = Depends(get_lab)):
+    """Downloads the current recipe as a Python script."""
+    from arbolab.core.recipes.transpiler import RecipeTranspiler
+    from fastapi.responses import Response
+    from arbolab.core.recipes.executor import RecipeExecutor
+    
+    recipe_obj = RecipeExecutor.load_recipe(lab)
+    python_code = RecipeTranspiler.to_python(recipe_obj)
+    
+    return Response(
+        content=python_code,
+        media_type="text/x-python",
+        headers={
+            "Content-Disposition": "attachment; filename=recipe.py"
+        }
     )
 
 @router.get("/{entity_type}")

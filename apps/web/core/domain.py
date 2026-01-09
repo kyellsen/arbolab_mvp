@@ -253,6 +253,25 @@ async def get_entity(session: Session, entity_type: str, entity_id: int):
     result = session.get(model, entity_id)
     return result
 
+def list_mappable_entities():
+    """Returns a list of (id, label) for all supported entities."""
+    return [
+        ("project", "Projects"),
+        ("experiment", "Experiments"),
+        ("experimental_unit", "Experimental Units"),
+        ("thing", "Things"),
+        ("tree_species", "Tree Species"),
+        ("tree", "Trees"),
+        ("cable", "Cables"),
+        ("sensor_model", "Sensor Models"),
+        ("sensor", "Sensors"),
+        ("observed_property", "Observed Properties"),
+        ("unit_of_measurement", "Units of Measurement"),
+        ("datastream", "Datastreams"),
+        ("run", "Runs"),
+        ("location", "Locations")
+    ]
+
 async def create_entity(session: Session, entity_type: str, data: dict[str, Any], lab: Lab = None):
     if not lab:
         raise ValueError("Lab instance required for create operation")

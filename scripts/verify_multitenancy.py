@@ -5,7 +5,7 @@ from uuid import uuid4
 
 # Add project root to path
 sys.path.append(os.getcwd())
-sys.path.append(os.path.join(os.getcwd(), "packages/core/src"))
+sys.path.append(os.path.join(os.getcwd(), "packages/arbolab/src"))
 
 print("Starting verification... (DEBUG)", file=sys.stderr)
 

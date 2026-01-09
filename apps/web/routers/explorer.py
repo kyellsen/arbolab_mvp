@@ -69,3 +69,6 @@ async def explorer_form(entity_type: str, request: Request, entity_id: Optional[
         "fields": fields,
         "redirect_url": redirect_url
     })
+@router.get("/placeholder", response_class=HTMLResponse)
+async def explorer_placeholder(request: Request):
+    return templates.TemplateResponse("partials/inspector_placeholder.html", {"request": request})

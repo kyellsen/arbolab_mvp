@@ -241,6 +241,25 @@ class Lab:
     def remove_sensor(self, id: int) -> Any:
         return self.execute_step("remove_sensor", {"id": id})
 
+    def modify_config(self, **updates) -> Any:
+        """
+        Updates the Lab configuration and records it in the recipe.
+        """
+        # We don't use self.execute_step directly because we want to refresh our own state
+        from arbolab.core.recipes.executor import RecipeExecutor
+        result = RecipeExecutor.apply(self, "modify_config", updates)
+        
+        # Refresh config
+        from .config import load_config
+        self.config = load_config(self.layout.root)
+        
+        # Re-initialize plugins if enabled_plugins changed
+        if "enabled_plugins" in updates:
+             self.plugin_registry.discover(self.config.enabled_plugins)
+             self.plugin_runtime.initialize_plugins(self)
+             
+        return result
+
     # Generic accessors for all models to avoid bloating this file
     def __getattr__(self, name: str) -> Any:
         # Avoid recursion and side-effects for internal attrs

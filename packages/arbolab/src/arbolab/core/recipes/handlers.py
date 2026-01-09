@@ -108,5 +108,11 @@ def import_metadata_handler(lab: Lab, params: dict[str, Any], author_id: str | N
     package_path = Path(params["package_path"])
     return lab.import_metadata(package_path)
 
+@register_step("modify_config")
+def modify_config_handler(lab: Lab, params: dict[str, Any], author_id: str | None = None):
+    from arbolab.config import update_config
+    update_config(lab.layout.root, params)
+    return True
+
 # Initialize all registration
 register_crud_handlers()

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # Add core package to path if not installed
-sys.path.append(str(Path(__file__).parent.parent / "packages/core/src"))
+sys.path.append(str(Path(__file__).parent.parent / "packages/arbolab/src"))
 
 from arbolab.plugins import PluginRegistry
 

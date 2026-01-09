@@ -1,6 +1,6 @@
 from pathlib import Path
 from uuid import UUID
-from arbolab.config import load_config
+from apps.web.core.config import load_web_config
 
 class LabPaths:
     def __init__(self, workspace_root: Path, input_root: Path, results_root: Path):
@@ -13,7 +13,7 @@ def resolve_workspace_paths(workspace_id: UUID) -> LabPaths:
     Generates isolated paths for a specific Workspace.
     Structure: {DATA_ROOT}/workspaces/{workspace_id}/...
     """
-    config = load_config()
+    config = load_web_config()
     
     # Ensure data_root is absolute
     safe_root = config.data_root.resolve()

@@ -20,7 +20,8 @@ class LabConfig(BaseSettings):
         env_prefix="ARBO_",
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
+        frozen=True
     )
 
     config_version: str = Field(default="1.0.0", description="Schema version")
@@ -29,13 +30,6 @@ class LabConfig(BaseSettings):
     # Default data root is ./data relative to CWD, but can be overridden by ARBO_DATA_ROOT
     data_root: Path = Field(default=Path("./data"), description="Root directory for all data")
     
-    # Database (SaaS)
-    # Default to arbolab for local dev with docker compose
-    database_url: str | None = Field(
-        default="postgresql://arbolab:arbolab@db:5432/arbolab",
-        description="Connection string for the SaaS database"
-    )
-
     # Explicit Overrides (Legacy/Flexible)
     input_path: str | None = Field(default=None, description="Explicit path to input root")
     results_path: str | None = Field(default=None, description="Explicit path to results root")
@@ -108,7 +102,7 @@ def load_config(workspace_root: Path | None = None) -> LabConfig:
         if updates:
             config = config.model_copy(update=updates)
 
-    logger.debug(f"Loaded config: DATA_ROOT={config.data_root}, DB_URL={'Set' if config.database_url else 'Unset'}")
+    logger.debug(f"Loaded config: DATA_ROOT={config.data_root}")
     return config
 
 

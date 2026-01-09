@@ -3,13 +3,13 @@ import sys
 from pathlib import Path
 
 # Add package source to path
-sys.path.append("/mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/src")
+sys.path.append("/mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/arbolab/src")
 
 from arbolab.lab import Lab
 from arbolab.models.core import UnitOfMeasurement, ObservedProperty, SensorModel, TreeSpecies
 from arbolab.models.sys import SysMetadata
 
-TARGET_DIR = Path("/mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/core/test_catalog_workspace")
+TARGET_DIR = Path("/mnt/data/kyellsen/410_Packages/arbolab_mvp/packages/arbolab/test_catalog_workspace")
 
 def cleanup():
     if TARGET_DIR.exists():

@@ -457,12 +457,11 @@ async def update_lab_config(
         if key in form_data:
             updates[key] = form_data[key]
     
-    paths = resolve_workspace_paths(current_workspace.id)
-    ensure_workspace_paths(paths)
-
-    update_config(paths.workspace_root, updates)
-    config = load_config(paths.workspace_root)
-    invalidate_cached_lab(current_workspace.id)
+    from apps.web.routers.api import get_lab
+    lab = get_lab(current_workspace=current_workspace, request=request, session=session)
+    lab.modify_config(**updates)
+    
+    config = lab.config
     
     response = templates.TemplateResponse("settings/partials/lab_config.html", {
         "request": request,

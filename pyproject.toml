@@ -37,7 +37,7 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-  "packages/core",
+  "packages/arbolab",
   "packages/arbolab-logger",
   "apps/web",
   "packages/arbolab-linescale3",

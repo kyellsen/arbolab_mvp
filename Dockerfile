@@ -10,7 +10,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Copy packages
-COPY packages/core ./packages/core
+COPY packages/arbolab ./packages/arbolab
 COPY packages/arbolab-logger ./packages/arbolab-logger
 COPY packages/arbolab-linescale3 ./packages/arbolab-linescale3
 COPY packages/arbolab-treeqinetic ./packages/arbolab-treeqinetic
@@ -41,7 +41,7 @@ COPY --from=builder /app/.venv /app/.venv
 # but uv sync defaults to editable for workspace members, so we must copy source too)
 # Actually, for production, better to build wheels. 
 # But for this MVP/Monorepo setup, copying source + venv is easiest.
-COPY packages/core/src /app/packages/core/src
+COPY packages/arbolab/src /app/packages/arbolab/src
 COPY packages/arbolab-logger/src /app/packages/arbolab-logger/src
 COPY packages/arbolab-linescale3/src /app/packages/arbolab-linescale3/src
 COPY packages/arbolab-treeqinetic/src /app/packages/arbolab-treeqinetic/src
@@ -50,7 +50,7 @@ COPY apps/web /app/apps/web
 # Set path to use venv
 ENV PATH="/app/.venv/bin:$PATH"
 # Add src dirs to PYTHONPATH so editable installs work without full bind mounting
-ENV PYTHONPATH="/app/packages/core/src:/app/packages/arbolab-logger/src:/app/packages/arbolab-linescale3/src:/app/packages/arbolab-treeqinetic/src:$PYTHONPATH"
+ENV PYTHONPATH="/app/packages/arbolab/src:/app/packages/arbolab-logger/src:/app/packages/arbolab-linescale3/src:/app/packages/arbolab-treeqinetic/src:$PYTHONPATH"
 
 # Defaults
 ENV ARBO_DATA_ROOT="/data"

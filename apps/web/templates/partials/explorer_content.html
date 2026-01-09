@@ -5,35 +5,20 @@
         activeEntity: '{{ default_entity }}',
         {# Hilfsfunktion zum Zurücksetzen des Inspectors #}
         resetInspector() {
-            this.$refs.inspector.innerHTML = `
-                <div class='flex-1 flex flex-col justify-center items-center text-slate-500 p-8 text-center'>
-                    <svg class='w-12 h-12 mb-3 opacity-20' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'></path></svg>
-                    <p class='text-sm'>Select an item to view details</p>
-                </div>`;
+            htmx.ajax('GET', '/explorer-ui/placeholder', '#explorer-inspector-panel');
         }
      }">
+
+    <template id="inspector-placeholder">
+        {% include "partials/inspector_placeholder.html" %}
+    </template>
 
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col">
         <div class="p-4 border-b border-slate-800">
             <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Explorer</h2>
         </div>
         <nav class="flex-1 overflow-y-auto p-2 space-y-0.5">
-            {% set entities = [
-                ('project', 'Projects'),
-                ('experiment', 'Experiments'),
-                ('experimental_unit', 'Experimental Units'),
-                ('thing', 'Things'),
-                ('tree_species', 'Tree Species'),
-                ('tree', 'Trees'),
-                ('cable', 'Cables'),
-                ('sensor_model', 'Sensor Models'),
-                ('sensor', 'Sensors'),
-                ('observed_property', 'Observed Properties'),
-                ('unit_of_measurement', 'Units of Measurement'),
-                ('datastream', 'Datastreams'),
-                ('run', 'Runs'),
-                ('location', 'Locations')
-            ] %}
+            {% set entities = entity_list|default([], true) %}
             {% for type_id, label in entities %}
             <button hx-get="/explorer-ui/list/{{ type_id }}"
                     hx-target="#entity-list-container"
@@ -93,6 +78,7 @@
     </div>
 
     <aside class="w-96 bg-slate-900 border-l border-slate-800 flex-shrink-0 flex flex-col" 
+           id="explorer-inspector-panel"
            x-ref="inspector">
         <div class="flex-1 flex flex-col justify-center items-center text-slate-500 p-8 text-center">
             <svg class="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>

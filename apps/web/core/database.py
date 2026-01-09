@@ -1,10 +1,10 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlmodel import Session, create_engine
-from arbolab.config import load_config
+from apps.web.core.config import load_web_config
 
 # 1. Datenbank Setup
-config = load_config()
+config = load_web_config()
 config.ensure_directories()
 
 # Use configured DB URL or fallback to local sqlite (though Postgres is desired)
