@@ -34,19 +34,24 @@
             <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Enabled Plugins</h4>
             <div class="space-y-3">
                 {% for plugin in ["ls3", "ptq", "mock_plugin"] %}
-                <div class="flex items-center">
-                    <input 
-                        type="checkbox" 
-                        id="plugin_{{ plugin }}" 
-                        name="enabled_plugins" 
-                        value="{{ plugin }}" 
-                        {% if plugin in config.enabled_plugins %}checked{% endif %}
-                        class="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-800 rounded focus:ring-emerald-500 focus:ring-offset-slate-900"
-                    >
-                    <label for="plugin_{{ plugin }}" class="ml-3 text-sm font-medium text-slate-300">
+                <div class="flex items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
+                    <div id="plugin_label_{{ plugin }}" class="text-sm font-medium text-slate-300">
                         {{ plugin|upper }}
                         {% if plugin == 'ls3' %}<span class="ml-2 text-xs text-slate-500">(LineScale v3)</span>{% endif %}
                         {% if plugin == 'ptq' %}<span class="ml-2 text-xs text-slate-500">(TreeQinetic)</span>{% endif %}
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input 
+                            type="checkbox"
+                            id="plugin_{{ plugin }}"
+                            name="enabled_plugins"
+                            value="{{ plugin }}"
+                            {% if plugin in config.enabled_plugins %}checked{% endif %}
+                            class="sr-only peer"
+                            aria-labelledby="plugin_label_{{ plugin }}"
+                        >
+                        <span class="w-11 h-6 bg-slate-800 rounded-full transition-colors peer-focus:ring-2 peer-focus:ring-emerald-500/40 peer-checked:bg-emerald-600"></span>
+                        <span class="absolute left-1 top-1 h-4 w-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
                     </label>
                 </div>
                 {% endfor %}

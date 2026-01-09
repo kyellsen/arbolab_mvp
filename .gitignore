@@ -71,9 +71,6 @@ tcc/
 pypi_token.txt
 PyPI-Recovery-Codes-*
 
-# Legacy or migration artifacts
-treemotion_lab_migration/
-
 # Swap files
 *.log
 ***.swp

@@ -23,7 +23,7 @@ COPY apps/web ./apps/web
 # Because we are in a container, we can install into system or a specific venv.
 # Using /app/.venv is fine.
 ENV UV_COMPILE_BYTECODE=1
-RUN uv sync --no-dev
+RUN uv sync --all-packages --no-dev
 
 
 # Runtime Stage

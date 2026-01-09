@@ -296,12 +296,12 @@ async def update_lab_config(
     SAFE_KEYS = ["input_path", "results_path", "enabled_plugins"]
     
     for key in SAFE_KEYS:
+        if key == "enabled_plugins":
+            # Always persist, even when empty, to allow disabling all plugins.
+            updates[key] = form_data.getlist(key) if "enabled_plugins" in form_data else []
+            continue
         if key in form_data:
-            if key == "enabled_plugins":
-                # Handle list if multiple
-                updates[key] = form_data.getlist(key)
-            else:
-                updates[key] = form_data[key]
+            updates[key] = form_data[key]
     
     paths = resolve_workspace_paths(current_workspace.id)
     ensure_workspace_paths(paths)

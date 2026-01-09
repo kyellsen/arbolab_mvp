@@ -28,8 +28,20 @@ BASE_DIR = Path(__file__).resolve().parent
 from apps.web.core.database import engine, get_session, SessionDep
 
 # DB-Erstellung erfolgt, nachdem Modelle importiert wurden
-def create_db_and_tables():
+def create_db_and_tables() -> None:
+    """Create the SaaS tables if they do not exist yet."""
     SQLModel.metadata.create_all(engine)
+
+
+def run_migrations() -> None:
+    """Apply Alembic migrations for the SaaS database."""
+    from alembic import command
+    from alembic.config import Config
+
+    alembic_ini = BASE_DIR / "alembic.ini"
+    alembic_config = Config(str(alembic_ini))
+    alembic_config.set_main_option("script_location", str(BASE_DIR / "migrations"))
+    command.upgrade(alembic_config, "head")
 
 # 2. App Setup
 app = FastAPI()
@@ -95,7 +107,8 @@ def resolve_workspace_context(request: Request, session: Session) -> tuple[Works
     return current_workspace, all_workspaces
 
 @app.on_event("startup")
-def on_startup():
+def on_startup() -> None:
+    """Initialize the database and seed default data on startup."""
     import time
     from sqlalchemy.exc import OperationalError
     
@@ -105,7 +118,8 @@ def on_startup():
     for i in range(max_retries):
         try:
             create_db_and_tables()
-            print("Database connected and tables verified.")
+            run_migrations()
+            print("Database connected, tables verified, and migrations applied.")
             break
         except OperationalError as e:
             if i < max_retries - 1:
