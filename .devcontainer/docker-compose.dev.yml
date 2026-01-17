@@ -1,8 +1,15 @@
 services:
   app:
     build:
-      context: ..
+      # "." ist hier der Root deines Projekts (arbolab_mvp)
+      context: .
+      # Pfad zum speziellen Dev-Dockerfile relativ zum Root
       dockerfile: .devcontainer/Dockerfile
-    
-    # Der Container soll einfach nur laufen
+
+    volumes:
+      # Mountet den Projekt-Root direkt nach /app
+      # Das löst dein Explorer-Problem und das Git-Problem!
+      - .:/app:Z
+
     command: sleep infinity
+    network_mode: service:db

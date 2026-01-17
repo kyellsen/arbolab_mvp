@@ -30,6 +30,7 @@ venv/
 .ruff_cache/
 pip-log.txt
 pip-delete-this-directory.txt
+.docker-compose.dev.yml.kate-swp
 
 # Coverage & temporary outputs
 .coverage*

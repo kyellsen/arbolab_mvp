@@ -1,8 +1,12 @@
 {
-  "name": "ArboLab Dev (Podman)",
-  "dockerComposeFile": ["../compose.yaml", "docker-compose.dev.yml"],
+  "name": "ArboLab Dev",
+  "dockerComposeFile": [
+    "../compose.yaml",           // Die Haupt-Compose im Root
+    "docker-compose.dev.yml"     // Die Dev-Override im .devcontainer Ordner
+  ],
   "service": "app",
-  "workspaceFolder": "/app",
+  "workspaceFolder": "/app",     // WICHTIG: Das definiert den Root im VS Code Explorer
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -13,23 +17,20 @@
         "ms-azuretools.vscode-docker"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/app/arbolab_mvp/.venv/bin/python",
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
         "python.analysis.extraPaths": [
           "/app/packages/arbolab/src",
           "/app/packages/arbolab-logger/src",
           "/app/packages/arbolab-linescale3/src",
           "/app/packages/arbolab-treeqinetic/src"
-        ],
-        "terminal.integrated.defaultProfile.linux": "bash"
+        ]
       }
     }
   },
-  "postCreateCommand": "git config --global --add safe.directory /app/arbolab_mvp && cd arbolab_mvp && uv sync --all-packages --group dev && uv run playwright install chromium --with-deps",
-  "remoteUser": "root",
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "username": "root"
-    }
-  }
+
+  // postCreate läuft nur einmal beim Erstellen.
+  // Das 'uv sync' stellt sicher, dass das venv im Container existiert.
+  "postCreateCommand": "uv sync --all-packages --group dev && uv run playwright install chromium --with-deps",
+
+  "remoteUser": "root"
 }
