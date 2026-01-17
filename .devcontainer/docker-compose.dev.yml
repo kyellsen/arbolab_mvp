@@ -1,0 +1,14 @@
+services:
+  app:
+    # Use the Dev-Dockerfile instead of Prod-Dockerfile
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+
+    # IMPORTANT: Keep container alive for VS Code
+    command: sleep infinity
+
+    # Podman/SELinux: The :Z is important (already in main file, but good to reinforce if overriding volumes)
+    # We ensure cached venv doesn't overwrite everything blindly, but here simply mapping ..:/app works best for dev.
+    volumes:
+      - ..:/app:Z

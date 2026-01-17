@@ -1,33 +1,35 @@
 {
-  "name": "Arbolab Dev",
-  "dockerComposeFile": ["../compose.yaml"],
+  "name": "ArboLab Dev (Podman)",
+  "dockerComposeFile": ["../compose.yaml", "docker-compose.dev.yml"],
   "service": "app",
   "workspaceFolder": "/app",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
+        "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-        "ms-python.mypy-type-checker",
         "tamasfe.even-better-toml",
         "ms-azuretools.vscode-docker"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/app/.venv/bin/python",
-        "python.terminal.activateEnvironment": true,
-        "editor.formatOnSave": true,
-        "[python]": {
-          "editor.defaultFormatter": "charliermarsh.ruff",
-          "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit",
-            "source.organizeImports": "explicit"
-          }
-        }
+        "python.analysis.extraPaths": [
+          "/app/packages/arbolab/src",
+          "/app/packages/arbolab-logger/src",
+          "/app/packages/arbolab-linescale3/src",
+          "/app/packages/arbolab-treeqinetic/src"
+        ],
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
   },
-  "remoteEnv": {
-    "PYTHONPATH": "/app/packages/arbolab/src:/app/packages/arbolab-logger/src:/app/packages/arbolab-linescale3/src:/app/packages/arbolab-treeqinetic/src"
-  },
-  "postCreateCommand": "uv sync --all-packages --all-extras --group dev && uv run playwright install chromium"
+  "postCreateCommand": "git config --global --add safe.directory /app && uv sync --all-packages --group dev && uv run playwright install chromium --with-deps",
+  "remoteUser": "root",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "username": "root"
+    }
+  }
 }
