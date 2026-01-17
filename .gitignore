@@ -41,7 +41,6 @@ coverage.xml
 
 # Editors / IDEs
 .idea/
-.vscode/
 *.iml
 .python-version
 
