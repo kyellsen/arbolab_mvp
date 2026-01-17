@@ -1,24 +1,96 @@
-<div class="flex items-center gap-2 overflow-hidden whitespace-nowrap mask-linear-fade">
-    <span class="text-slate-600">Home</span>
-    <span class="text-slate-700">/</span>
-    <span class="text-slate-400 font-medium">Dashboard</span>
+<div class="flex items-center gap-2 overflow-hidden whitespace-nowrap mask-linear-fade"
+     x-data="{ 
+         crumbs: ['Home', 'Dashboard'],
+         handleNav(detail) {
+             this.crumbs = ['Home', detail.label || 'Dashboard'];
+         },
+         handleExplorerCategory(detail) {
+             if (this.crumbs[1] !== 'Explorer') return; 
+             this.crumbs = ['Home', 'Explorer', detail.category];
+         },
+         handleExplorerEntity(detail) {
+             if (this.crumbs[1] !== 'Explorer') return;
+             const base = this.crumbs.slice(0, 3);
+             if (base.length < 3) return; 
+             this.crumbs = [...base, '#' + detail.id];
+         }
+     }"
+     @nav-changed.window="handleNav($event.detail)"
+     @explorer-category-changed.window="handleExplorerCategory($event.detail)"
+     @explorer-entity-changed.window="handleExplorerEntity($event.detail)">
+    
+    <template x-for="(crumb, index) in crumbs" :key="index">
+        <div class="flex items-center gap-2">
+            <span x-show="index > 0" class="text-slate-700">/</span>
+            <span :class="index === crumbs.length - 1 ? 'text-slate-400 font-medium' : 'text-slate-600'" x-text="crumb"></span>
+        </div>
+    </template>
 </div>
 
-<div class="flex items-center gap-4">
+<div class="flex items-center gap-4 text-[10px] uppercase tracking-wider font-semibold"
+     x-data="{
+        status: {
+            versions: { web: '...', core: '...' },
+            postgres: false,
+            lab: false,
+            role: '...'
+        },
+        async fetchStatus() {
+            try {
+                const res = await fetch('/api/system/status');
+                if (res.ok) {
+                    this.status = await res.json();
+                }
+            } catch (e) {
+                console.error('Status fetch failed', e);
+            }
+        },
+        init() {
+            this.fetchStatus();
+            setInterval(() => this.fetchStatus(), 30000);
+        }
+     }">
+
+    <!-- Versions -->
+    <div class="hidden xl:flex items-center gap-3 text-slate-600 border-r border-slate-800 pr-4 mr-1">
+        <span title="Frontend Version">FE <span class="text-slate-500" x-text="status.versions.web"></span></span>
+        <span title="Core Version">CORE <span class="text-slate-500" x-text="status.versions.core"></span></span>
+    </div>
+
+    <!-- Role -->
+    <div class="hidden lg:flex items-center gap-1 text-slate-500 border-r border-slate-800 pr-4 mr-1">
+        <span class="text-slate-600">ROLE:</span>
+        <span class="text-emerald-500" x-text="status.role"></span>
+    </div>
+
     <!-- System Status -->
-    <div class="flex items-center gap-2">
-         <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span>Ready</span>
+    <div class="flex items-center gap-4">
+        <!-- Postgres -->
+        <div class="flex items-center gap-1.5" title="PostgreSQL Connection">
+             <span class="relative flex h-2 w-2">
+               <span x-show="status.postgres" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+               <span class="relative inline-flex rounded-full h-2 w-2 transition-colors duration-500"
+                     :class="status.postgres ? 'bg-emerald-500' : 'bg-red-500'"></span>
+             </span>
+            <span :class="status.postgres ? 'text-slate-500' : 'text-red-500'">SYS</span>
+        </div>
+
+        <!-- Lab DB -->
+         <div class="flex items-center gap-1.5" title="Lab Database (DuckDB)">
+             <span class="relative flex h-2 w-2">
+               <span x-show="status.lab" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+               <span class="relative inline-flex rounded-full h-2 w-2 transition-colors duration-500"
+                     :class="status.lab ? 'bg-emerald-500' : 'bg-slate-700'"></span>
+             </span>
+            <span :class="status.lab ? 'text-slate-500' : 'text-slate-600'">LAB</span>
+        </div>
     </div>
 
     <!-- Logger Toggle -->
     <button @click="logDrawerOpen = !logDrawerOpen" 
-            :class="logDrawerOpen ? 'text-emerald-400 bg-slate-700' : ''"
-            class="flex items-center gap-1 hover:text-slate-300 transition-colors px-2 py-1 -mr-2 rounded hover:bg-slate-800">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-        <span x-text="logDrawerOpen ? 'Hide Logs' : 'Logs'"></span>
+            :class="logDrawerOpen ? 'text-emerald-400 bg-slate-800' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'"
+            class="flex items-center gap-1 transition-colors px-2 py-1 -mr-2 rounded ml-2">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <span x-text="logDrawerOpen ? 'Hide' : 'Logs'"></span>
     </button>
 </div>

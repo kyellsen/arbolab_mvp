@@ -51,11 +51,12 @@ class LabConfig(BaseSettings):
     def workspace_root(self) -> Path:
         return self.data_root / self.workspace_dir_name
 
-    def ensure_directories(self):
+    def ensure_directories(self, include_subdirs: bool = True):
         """Ensure all data directories exist."""
         self.data_root.mkdir(parents=True, exist_ok=True)
-        self.input_root.mkdir(parents=True, exist_ok=True)
-        self.workspace_root.mkdir(parents=True, exist_ok=True)
+        if include_subdirs:
+            self.input_root.mkdir(parents=True, exist_ok=True)
+            self.workspace_root.mkdir(parents=True, exist_ok=True)
 
 
 def load_config(workspace_root: Path | None = None) -> LabConfig:

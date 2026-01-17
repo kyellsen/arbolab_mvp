@@ -13,7 +13,7 @@ from apps.web.core.database import get_session
 from apps.web.models.user import User
 from apps.web.models.auth import Workspace, UserWorkspaceAssociation
 from apps.web.core.security import get_password_hash, verify_password
-from apps.web.routers.api import get_current_user_id, get_current_workspace
+from apps.web.routers.api import get_current_user_id, get_current_workspace, get_lab
 from apps.web.core.lab_cache import invalidate_cached_lab
 from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
 from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
@@ -441,7 +441,8 @@ async def lab_config_tab(
 async def update_lab_config(
     request: Request,
     current_workspace: Workspace = Depends(get_current_workspace),
-    # We'll handle generic form fields from the partial
+    user_id: UUID = Depends(get_current_user_id),
+    session: Session = Depends(get_session)
 ):
     form_data = await request.form()
     updates = {}
@@ -457,8 +458,7 @@ async def update_lab_config(
         if key in form_data:
             updates[key] = form_data[key]
     
-    from apps.web.routers.api import get_lab
-    lab = get_lab(current_workspace=current_workspace, request=request, session=session)
+    lab = get_lab(user_id=user_id, workspace=current_workspace, session=session)
     lab.modify_config(**updates)
     
     config = lab.config

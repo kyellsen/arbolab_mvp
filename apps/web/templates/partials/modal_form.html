@@ -1,4 +1,5 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" 
+     @keydown.escape.window="document.getElementById('modal-container').innerHTML = ''">
     <!-- Backdrop -->
     <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" 
          @click="document.getElementById('modal-container').innerHTML = ''"></div>
@@ -20,7 +21,22 @@
                   hx-ext="json-enc"
                   hx-target="#modal-container"
                   hx-swap="none"
-                  hx-on::after-request="if(event.detail.successful) { {% if redirect_url %} window.location.href = '{{ redirect_url }}'; {% else %} document.getElementById('modal-container').innerHTML = ''; const listContainer = document.getElementById('entity-list-container'); if(listContainer){ htmx.ajax('GET', '/explorer-ui/list/{{ entity_type }}', '#entity-list-container'); } const inspector = document.getElementById('explorer-inspector-panel'); {% if entity %} if(inspector){ htmx.ajax('GET', '/explorer-ui/inspector/{{ entity_type }}/{{ entity.id }}', '#explorer-inspector-panel'); } {% endif %} {% endif %} }"
+                  hx-on::after-request="if(event.detail.successful) { 
+                      {% if redirect_url %} 
+                          window.location.href = '{{ redirect_url }}'; 
+                      {% else %} 
+                          document.getElementById('modal-container').innerHTML = ''; 
+                          const listContainer = document.getElementById('entity-list-container'); 
+                          if(listContainer){ htmx.ajax('GET', '/explorer-ui/list/{{ entity_type }}', '#entity-list-container'); } 
+                          const inspector = document.getElementById('explorer-inspector-panel'); 
+                          {% if entity %} 
+                              /* Edit Mode: Refresh Inspector */
+                              if(inspector){ htmx.ajax('GET', '/explorer-ui/inspector/{{ entity_type }}/{{ entity.id }}', '#explorer-inspector-panel'); } 
+                          {% else %}
+                              /* Create Mode: Do not force inspector refresh, list update is enough */
+                          {% endif %} 
+                      {% endif %} 
+                  }"
                   class="space-y-4">
                 
                 {% for field_name, field in fields.items() %}

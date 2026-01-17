@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block right_sidebar %}
+    {% include 'partials/recipe_history.html' %}
+{% endblock %}
+
 {% block content %}
     {% if show_onboarding %}
     <!-- Onboarding Modal / Overlay -->

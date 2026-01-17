@@ -3,3 +3,9 @@
 {% block content %}
     {% include "partials/explorer_content.html" %}
 {% endblock %}
+
+{% block right_sidebar %}
+    <div id="explorer-inspector-panel" class="h-full flex flex-col">
+        {% include "partials/inspector_placeholder.html" %}
+    </div>
+{% endblock %}

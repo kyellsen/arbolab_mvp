@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
     <style>
         /* Custom scrollbar for webkit */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -29,15 +30,15 @@
 <body class="h-full text-slate-200 overflow-hidden flex flex-col" x-data="{ 
     mobileMenuOpen: false, 
     leftSidebarPinned: true,
-    rightSidebarOpen: false, 
-    rightSidebarPinned: false,
+    rightSidebarOpen: true, 
+    rightSidebarPinned: true,
     activeEntity: 'project', 
     logDrawerOpen: false 
 }">
 
     {% if user %}
     <!-- A. Header (Top Bar) -->
-    <header class="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 z-20 shrink-0">
+    <header class="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 z-20 lg:z-50 shrink-0">
         <div class="flex items-center gap-4">
              <!-- Mobile Menu Button -->
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-slate-400 hover:text-white">
@@ -119,7 +120,9 @@
             }" 
             class="fixed lg:static inset-y-0 right-0 z-40 w-80 bg-slate-900 border-l border-slate-800 transition-all duration-300 ease-in-out transform flex flex-col shrink-0 overflow-hidden">
              <div id="inspector-panel" class="h-full flex flex-col w-80">
+                 {% block right_sidebar %}
                  {% include 'components/_sidebar_right.html' %}
+                 {% endblock %}
              </div>
         </aside>
 
@@ -166,24 +169,46 @@
                 return;
             }
             const currentPath = pathname || window.location.pathname;
+            let activeLabel = 'Dashboard'; // Default
+            
             navItems.forEach((item) => {
                 const targetPath = item.dataset.navPath;
                 const matchMode = item.dataset.navMatch || 'exact';
                 let isActive = false;
                 if (matchMode === 'prefix') {
-                    isActive = currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+                    isActive = currentPath === targetPath || (currentPath.startsWith(`${targetPath}/`) && targetPath !== '/');
                 } else {
-                    isActive = currentPath === targetPath;
+                    isActive = currentPath === targetPath || (targetPath !== '/' && currentPath.startsWith(targetPath + '/'));
                 }
+                
+                // Special handling for home/dashboard
+                if (targetPath === '/' && currentPath !== '/') {
+                     isActive = false;
+                }
+
                 item.classList.toggle('bg-slate-800', isActive);
                 item.classList.toggle('text-emerald-400', isActive);
                 item.classList.toggle('text-slate-400', !isActive);
+                
                 if (isActive) {
                     item.setAttribute('aria-current', 'page');
+                    // Find the label span
+                    const labelSpan = item.querySelector('.sidebar-label');
+                    if (labelSpan) {
+                        activeLabel = labelSpan.textContent.trim();
+                    }
                 } else {
                     item.removeAttribute('aria-current');
                 }
             });
+
+            // Dispatch global event for footer
+            window.dispatchEvent(new CustomEvent('nav-changed', { 
+                detail: { 
+                    path: currentPath, 
+                    label: activeLabel 
+                } 
+            }));
         }
 
         function detectBrowserUtcOffsetMinutes(date) {
@@ -395,5 +420,7 @@
             refreshSidebarLeft();
         });
     </script>
+    <!-- Modal Portal -->
+    <div id="modal-container" class="relative z-50"></div>
 </body>
 </html>

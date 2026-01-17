@@ -28,6 +28,14 @@ class WebConfig(LabConfig):
         description="Secret key for session signing"
     )
 
+    def ensure_directories(self, include_subdirs: bool = False):
+        """
+        SaaS-specific directory ensuring.
+        Avoids legacy top-level workspace/input.
+        """
+        self.data_root.mkdir(parents=True, exist_ok=True)
+        (self.data_root / "workspaces").mkdir(parents=True, exist_ok=True)
+
 def load_web_config() -> WebConfig:
     """Load the SaaS configuration."""
     return WebConfig()

@@ -29,6 +29,9 @@ fi
 echo "Syncing workspace dependencies and dev tools ..."
 uv sync --all-packages --all-extras --group dev
 
+echo "Installing Playwright browsers..."
+uv run playwright install chromium
+
 # 4) Done
 echo "=== Setup/Sync complete ==="
 echo

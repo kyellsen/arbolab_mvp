@@ -17,7 +17,7 @@ from apps.web.models.user import User
 from apps.web.core.lab_cache import get_cached_lab
 from pathlib import Path
 from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router, plugins as plugins_router
+from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router, plugins as plugins_router, system
 from apps.web.core.domain import get_entity_counts, ENTITY_MAP
 from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
 from arbolab.core.recipes.executor import RecipeExecutor
@@ -184,6 +184,7 @@ app.include_router(explorer_router.router)
 app.include_router(settings_router.router)
 app.include_router(logs_router.router)
 app.include_router(plugins_router.router)
+app.include_router(system.router)
 
 # ----------------- ROUTEN -----------------
 

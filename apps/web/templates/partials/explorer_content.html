@@ -4,9 +4,27 @@
      x-data="{ 
         activeEntity: '{{ default_entity }}',
         explorerMenuOpen: false,
-        {# Hilfsfunktion zum Zurücksetzen des Inspectors #}
         resetInspector() {
             htmx.ajax('GET', '/explorer-ui/placeholder', '#explorer-inspector-panel');
+        },
+        formatName(str) {
+            if (!str) return '';
+            return str.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + 's';
+        },
+        dispatchCategory() {
+            window.dispatchEvent(new CustomEvent('explorer-category-changed', {
+                detail: { category: this.formatName(this.activeEntity) }
+            }));
+        },
+        init() {
+            this.$watch('activeEntity', () => {
+                this.dispatchCategory();
+                // Ensure Htmx processes the search input when activeEntity changes
+                // logic moved from inline x-init to here for cleaner code if desired, 
+                // but keeping inline x-init for search input is fine too.
+            });
+            // Dispatch initial
+            this.dispatchCategory();
         }
      }">
 
@@ -50,7 +68,7 @@
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                 </button>
                 <h1 class="text-base md:text-lg font-bold text-white tracking-tight truncate" 
-                    x-text="activeEntity.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + 's'">
+                    x-text="formatName(activeEntity)">
                     Projects
                 </h1>
             </div>
@@ -70,9 +88,7 @@
 
                 <div class="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
 
-                <button :hx-get="'/explorer-ui/form/' + activeEntity"
-                        x-init="$watch('activeEntity', () => htmx.process($el))"
-                        hx-target="#modal-container"
+                <button @click="htmx.ajax('GET', '/explorer-ui/form/' + activeEntity, '#modal-container')"
                         class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 shadow-sm shadow-emerald-900/20">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span class="hidden md:inline">New</span>
@@ -93,14 +109,13 @@
     <!-- We still need a placeholder or specific layout for the explorer inspector if it differs -->
 </div>
 
-<div id="modal-container"></div>
-
 {% if open_form_entity %}
 <div hx-get="/explorer-ui/form/{{ open_form_entity }}" hx-target="#modal-container" hx-trigger="load" class="hidden"></div>
 {% endif %}
 
-<div id="modal-container"></div>
-
-{% if open_form_entity %}
-<div hx-get="/explorer-ui/form/{{ open_form_entity }}" hx-target="#modal-container" hx-trigger="load" class="hidden"></div>
-{% endif %}
+<!-- OOB Swap: Ensure Right Sidebar shows Inspector Placeholder when entering Explorer -->
+<div id="inspector-update" hx-swap-oob="innerHTML:#inspector-panel">
+    <div id="explorer-inspector-panel" class="h-full flex flex-col">
+        {% include "partials/inspector_placeholder.html" %}
+    </div>
+</div>
