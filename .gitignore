@@ -19,8 +19,8 @@ pip-wheel-metadata/
 # Virtual environments & env files
 .venv/
 venv/
-.env
-.env.*
+#.env
+#.env.*
 !.env.example
 
 # Tool caches & logs
