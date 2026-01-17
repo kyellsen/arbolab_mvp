@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run CI (All Checks)",
+      "type": "shell",
+      "command": "uv sync --all-extras --all-packages --group dev && uv run ruff check --fix packages/ && uv run mypy packages/ && uv run pytest --cov",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Dev Server",
+      "type": "shell",
+      "command": "uvicorn apps.web.main:app --host 0.0.0.0 --port 8000 --reload",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
