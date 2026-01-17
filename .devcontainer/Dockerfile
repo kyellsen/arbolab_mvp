@@ -3,6 +3,7 @@ FROM python:3.12-slim
 # 1. System-Tools & Playwright Dependencies pre-install
 RUN apt-get update && apt-get install -y \
     curl \
+    wget \
     git \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
