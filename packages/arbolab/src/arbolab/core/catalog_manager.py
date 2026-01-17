@@ -4,12 +4,10 @@ Catalog Manager for seeding and updating default metadata entities.
 import json
 from pathlib import Path
 
-from arbolab_logger import get_logger
-from sqlalchemy.dialects.sqlite import insert as sqlite_upsert
-from sqlalchemy.orm import Session
-
 from arbolab.models.core import ObservedProperty, SensorModel, TreeSpecies, UnitOfMeasurement
 from arbolab.models.sys import SysMetadata
+from arbolab_logger import get_logger
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 

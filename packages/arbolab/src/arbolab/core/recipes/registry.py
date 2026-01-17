@@ -1,11 +1,12 @@
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+
 from arbolab_logger import get_logger
 
 logger = get_logger(__name__)
 
 # Registry mapping step_type to a handler function
 # Handler signature: (lab, params, author_id) -> result
-_STEP_HANDLERS: Dict[str, Callable] = {}
+_STEP_HANDLERS: dict[str, Callable] = {}
 
 def register_step(step_type: str):
     """Decorator to register a recipe step handler."""

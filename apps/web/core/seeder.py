@@ -1,14 +1,13 @@
 import json
 import logging
 from pathlib import Path
-from typing import List
-from uuid import UUID
 
-from sqlmodel import Session, select
-from apps.web.core.database import engine
-from apps.web.models.user import User, Workspace, UserWorkspaceAssociation
-from apps.web.core.security import get_password_hash
 from arbolab.core.security import LabRole
+from sqlmodel import Session, select
+
+from apps.web.core.database import engine
+from apps.web.core.security import get_password_hash
+from apps.web.models.user import User, UserWorkspaceAssociation, Workspace
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ def run_seed():
         return
 
     try:
-        with open(seed_file, "r") as f:
+        with open(seed_file) as f:
             seed_data = json.load(f)
     except Exception as e:
         logger.error(f"Failed to read seed file: {e}")

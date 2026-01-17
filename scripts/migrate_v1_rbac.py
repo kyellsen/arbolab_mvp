@@ -1,8 +1,7 @@
 
 import os
-import sys
 import shutil
-from pathlib import Path
+import sys
 from uuid import UUID
 
 from sqlalchemy import text
@@ -12,8 +11,10 @@ from sqlmodel import Session, select
 sys.path.append(os.getcwd())
 
 from arbolab.config import load_config
+
 from apps.web.core.database import engine
-from apps.web.models.auth import UserWorkspaceAssociation, LabRole, Workspace
+from apps.web.models.auth import LabRole, UserWorkspaceAssociation
+
 
 def migrate():
     print("Starting Migration: V1 (Nested) -> V2 (Flat RBAC)...")
@@ -61,12 +62,11 @@ def migrate():
                             print(f"Removed empty user dir: {old_user_dir}")
                     except Exception as e:
                         print(f"Could not remove user dir: {e}")
+            # Check if it's already in the new location (partial migration?)
+            elif new_path.exists():
+                print(f"Workspace {ws_id} already in new location.")
             else:
-                # Check if it's already in the new location (partial migration?)
-                if new_path.exists():
-                    print(f"Workspace {ws_id} already in new location.")
-                else:
-                    print(f"WARN: Source path {old_path} not found for workspace {ws_id}. Data might be missing.")
+                print(f"WARN: Source path {old_path} not found for workspace {ws_id}. Data might be missing.")
 
             # --- B. Schema Migration (Association) ---
             # Check if association already exists

@@ -1,18 +1,19 @@
+import os
 import shutil
 import sys
-import os
 from pathlib import Path
-from uuid import uuid4
 
 # Setup paths
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(), "packages/arbolab/src"))
 
-from sqlmodel import Session, select, create_engine
-from apps.web.models.auth import User, Workspace
-from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
-from apps.web.core.database import engine
 from arbolab.config import load_config
+from sqlmodel import Session, select
+
+from apps.web.core.database import engine
+from apps.web.core.paths import resolve_workspace_paths
+from apps.web.models.auth import User, Workspace
+
 
 def migrate_flat_to_multitenant(email: str, password: str):
     """

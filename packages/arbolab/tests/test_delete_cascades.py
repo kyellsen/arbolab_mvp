@@ -5,16 +5,13 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
-
 from arbolab.models import (
     Base,
-    DataVariant,
     Datastream,
     DatastreamChannel,
-    ExperimentalUnit,
+    DataVariant,
     Experiment,
+    ExperimentalUnit,
     Location,
     ObservedProperty,
     Project,
@@ -27,6 +24,8 @@ from arbolab.models import (
     TreatmentApplication,
     UnitOfMeasurement,
 )
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 
 @pytest.fixture

@@ -1,12 +1,11 @@
 import json
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-from arbolab.lab import Lab
-from arbolab.core.recipes.schemas import Recipe, RecipeStep
 from arbolab.core.recipes.registry import get_handler
+from arbolab.core.recipes.schemas import Recipe, RecipeStep
+from arbolab.lab import Lab
 from arbolab_logger import get_logger
 
 logger = get_logger(__name__)
@@ -17,7 +16,7 @@ class RecipeExecutor:
     @staticmethod
     def apply(lab: Lab, step_type: str, params: dict[str, Any], author_id: str | None = None) -> Any:
         # Trigger handler registration
-        from arbolab.core import recipes # noqa: F401
+        from arbolab.core import recipes  # noqa: F401
         
         # 1. Create Step object
         step = RecipeStep(
@@ -46,7 +45,7 @@ class RecipeExecutor:
         recipe_data = {"steps": []}
         if recipe_path.exists():
             try:
-                with open(recipe_path, "r", encoding="utf-8") as f:
+                with open(recipe_path, encoding="utf-8") as f:
                     content = f.read().strip()
                     if content:
                         recipe_data = json.loads(content)
@@ -83,5 +82,5 @@ class RecipeExecutor:
         recipe_path = lab.layout.recipe_path("current.json")
         if not recipe_path.exists():
             return Recipe()
-        with open(recipe_path, "r", encoding="utf-8") as f:
+        with open(recipe_path, encoding="utf-8") as f:
             return Recipe.model_validate_json(f.read())

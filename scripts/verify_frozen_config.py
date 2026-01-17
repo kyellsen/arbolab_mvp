@@ -1,4 +1,5 @@
 from arbolab.config import LabConfig
+
 try:
     config = LabConfig()
     config.data_root = "new_path"

@@ -1,16 +1,15 @@
 import tomllib
 from pathlib import Path
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Request
 from sqlmodel import Session, select, text
-from arbolab.lab import Lab
-from apps.web.routers.api import get_lab, get_saas_session
-from apps.web.core.domain import get_entity
-from arbolab.core.security import LabRole
-from apps.web.models.auth import UserWorkspaceAssociation
+
 from apps.web.core.lab_cache import get_cached_lab
-from apps.web.routers.api import get_current_user_id, get_current_workspace
-from apps.web.models.auth import Workspace
-from uuid import UUID
+from apps.web.models.auth import UserWorkspaceAssociation
+from apps.web.routers.api import (
+    get_saas_session,
+)
 
 router = APIRouter(prefix="/api/system", tags=["system"])
 

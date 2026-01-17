@@ -8,8 +8,8 @@ import subprocess
 import sys
 import time
 import urllib.request
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -49,7 +49,7 @@ def _wait_for_server(
             with urllib.request.urlopen(f"{base_url}/health", timeout=1) as response:
                 if response.status == 200:
                     return
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             last_error = exc
             time.sleep(0.2)
     raise RuntimeError(f"Server did not become ready: {last_error}")

@@ -37,12 +37,12 @@ __all__ = [
     "Sensor",
     "SensorDeployment",
     "SensorModel",
+    "SysMetadata",
     "Thing",
     "Treatment",
     "TreatmentApplication",
     "Tree",
     "TreeSpecies",
     "UnitOfMeasurement",
-    "SysMetadata",
 ]
 

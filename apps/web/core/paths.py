@@ -1,6 +1,8 @@
 from pathlib import Path
 from uuid import UUID
+
 from apps.web.core.config import load_web_config
+
 
 class LabPaths:
     def __init__(self, workspace_root: Path, input_root: Path, results_root: Path):

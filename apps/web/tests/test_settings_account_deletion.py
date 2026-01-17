@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
+from arbolab.core.security import LabRole
 from sqlmodel import Session, SQLModel, create_engine, select
 from starlette.requests import Request
 
@@ -14,7 +15,6 @@ from apps.web.core.paths import ensure_workspace_paths, resolve_workspace_paths
 from apps.web.core.security import get_password_hash
 from apps.web.models.user import User, UserWorkspaceAssociation, Workspace
 from apps.web.routers.settings import delete_account
-from arbolab.core.security import LabRole
 
 
 def create_session() -> Session:

@@ -1,6 +1,8 @@
 from typing import Annotated
+
 from fastapi import Depends
 from sqlmodel import Session, create_engine
+
 from apps.web.core.config import load_web_config
 
 # 1. Datenbank Setup

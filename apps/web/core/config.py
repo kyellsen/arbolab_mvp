@@ -1,7 +1,7 @@
-from pathlib import Path
+from arbolab.config import LabConfig
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
-from arbolab.config import LabConfig
+
 
 class WebConfig(LabConfig):
     """

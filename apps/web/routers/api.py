@@ -1,17 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
-from sqlmodel import select, Session as SaasSession
 from typing import Any
 from uuid import UUID
 
-from apps.web.core.domain import list_entities, get_entity, create_entity, update_entity, delete_entity
-from apps.web.models.auth import Workspace, UserWorkspaceAssociation
-from apps.web.models.user import User
-from apps.web.core.lab_cache import get_cached_lab
-from apps.web.core.database import get_session as get_saas_session
-from arbolab.lab import Lab
 from arbolab.core.security import LabRole
+from arbolab.lab import Lab
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
+from sqlmodel import Session as SaasSession
+from sqlmodel import select
+
+from apps.web.core.database import get_session as get_saas_session
+from apps.web.core.domain import (
+    create_entity,
+    delete_entity,
+    get_entity,
+    list_entities,
+    update_entity,
+)
+from apps.web.core.lab_cache import get_cached_lab
+from apps.web.models.auth import UserWorkspaceAssociation, Workspace
+from apps.web.models.user import User
 
 router = APIRouter(prefix="/api/entities", tags=["entities"])
 
@@ -168,9 +175,9 @@ async def api_export_recipe(lab: Lab = Depends(get_lab)):
 @router.get("/recipes/export/python")
 async def api_export_recipe_python(lab: Lab = Depends(get_lab)):
     """Downloads the current recipe as a Python script."""
+    from arbolab.core.recipes.executor import RecipeExecutor
     from arbolab.core.recipes.transpiler import RecipeTranspiler
     from fastapi.responses import Response
-    from arbolab.core.recipes.executor import RecipeExecutor
     
     recipe_obj = RecipeExecutor.load_recipe(lab)
     python_code = RecipeTranspiler.to_python(recipe_obj)

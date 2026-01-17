@@ -1,9 +1,10 @@
+
 import pytest
-from pathlib import Path
-from arbolab.lab import Lab
 from arbolab.core.recipes.executor import RecipeExecutor
 from arbolab.core.recipes.transpiler import RecipeTranspiler
+from arbolab.lab import Lab
 from arbolab.models.core import Project
+
 
 @pytest.fixture
 def lab(tmp_path):

@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent / "packages/arbolab/src"))
 
 from arbolab.plugins import PluginRegistry
 
+
 def verify_plugins():
     print("Verifying plugins...")
     

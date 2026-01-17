@@ -3,12 +3,13 @@ from typing import Any
 
 from arbolab_logger import get_logger
 
+from arbolab.core.security import LabRole
+
 from .config import LabConfig, create_default_config, load_config
 from .database import WorkspaceDatabase
 from .layout import ResultsLayout, WorkspaceLayout
 from .plugins import PluginRegistry, PluginRuntime
 from .store import VariantStore
-from arbolab.core.security import LabRole
 
 logger = get_logger(__name__)
 

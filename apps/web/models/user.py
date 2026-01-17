@@ -1,7 +1,9 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from sqlmodel import Field, Relationship, SQLModel
+
 from arbolab.core.security import LabRole
+from sqlmodel import Field, Relationship, SQLModel
+
 
 # 1. Association Table
 class UserWorkspaceAssociation(SQLModel, table=True):

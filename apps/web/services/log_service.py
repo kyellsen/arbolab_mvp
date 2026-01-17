@@ -60,10 +60,10 @@ class LogService:
             )]
         
         try:
-            with open(recipe_path, "r", encoding="utf-8") as f:
+            with open(recipe_path, encoding="utf-8") as f:
                 data = json.load(f)
                 print(f"[LogService] Loaded recipe with {len(data.get('steps', []))} steps")
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             print(f"[LogService] Error loading recipe: {e}")
             return []
         
@@ -107,9 +107,9 @@ class LogService:
         
         entries = []
         try:
-            with open(log_path, "r", encoding="utf-8") as f:
+            with open(log_path, encoding="utf-8") as f:
                 lines = f.readlines()
-        except IOError:
+        except OSError:
             return []
         
         # Parse log lines (expected format from arbolab-logger file handler)

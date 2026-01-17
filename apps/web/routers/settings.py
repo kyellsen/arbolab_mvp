@@ -1,23 +1,24 @@
-import os
 import logging
+import os
 import shutil
-from uuid import UUID
+from pathlib import Path
 from typing import Annotated
-from fastapi import APIRouter, Depends, Form, Request, HTTPException
+from uuid import UUID
+
+from arbolab.config import load_config
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
-from pathlib import Path
 
 from apps.web.core.database import get_session
-from apps.web.models.user import User
-from apps.web.models.auth import Workspace, UserWorkspaceAssociation
-from apps.web.core.security import get_password_hash, verify_password
-from apps.web.routers.api import get_current_user_id, get_current_workspace, get_lab
 from apps.web.core.lab_cache import invalidate_cached_lab
-from apps.web.core.paths import resolve_workspace_paths, ensure_workspace_paths
+from apps.web.core.paths import ensure_workspace_paths, resolve_workspace_paths
 from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
-from arbolab.config import load_config, update_config
+from apps.web.core.security import get_password_hash, verify_password
+from apps.web.models.auth import UserWorkspaceAssociation, Workspace
+from apps.web.models.user import User
+from apps.web.routers.api import get_current_user_id, get_current_workspace, get_lab
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 

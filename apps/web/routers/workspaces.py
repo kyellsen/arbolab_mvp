@@ -1,22 +1,22 @@
 import json
-from typing import Annotated
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlmodel import Session, select
-
-from apps.web.core.database import get_session
-from apps.web.routers.api import get_current_user_id, get_current_user, get_current_workspace
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
-from pathlib import Path
-from fastapi import Form
-from apps.web.models.auth import Workspace, UserWorkspaceAssociation
-from apps.web.models.user import User
-from arbolab.core.security import LabRole
 # Use BASE_DIR from main (circular import avoidance or re-calculate)
 # Better: simpler import or just use relative path if known structure
 import os
+from pathlib import Path
+from typing import Annotated
+from uuid import UUID
+
+from arbolab.core.security import LabRole
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.templating import Jinja2Templates
+from sqlmodel import Session, select
+
+from apps.web.core.database import get_session
+from apps.web.models.auth import UserWorkspaceAssociation, Workspace
+from apps.web.models.user import User
+from apps.web.routers.api import get_current_user, get_current_user_id, get_current_workspace
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

@@ -11,10 +11,27 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, event, update
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    event,
+    update,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from arbolab.models.base import Base, DescribedMixin, DomainIdsMixin, IdMixin, PropertiesMixin, TimestampMixin
+from arbolab.models.base import (
+    Base,
+    DescribedMixin,
+    DomainIdsMixin,
+    IdMixin,
+    PropertiesMixin,
+    TimestampMixin,
+)
 
 
 class Project(Base, IdMixin, TimestampMixin, DescribedMixin, PropertiesMixin):

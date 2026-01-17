@@ -1,7 +1,6 @@
+from arbolab.models.base import IdMixin, TimestampMixin
 from sqlalchemy import Float, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-from arbolab.models.base import IdMixin, TimestampMixin
 
 
 class Ls3Base(DeclarativeBase):

@@ -1,5 +1,6 @@
 from arbolab.core.recipes.schemas import Recipe
 
+
 class RecipeTranspiler:
     """Converts a Recipe into a standalone Python script."""
 

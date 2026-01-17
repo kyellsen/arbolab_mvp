@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
+from arbolab.lab import Lab
 from fastapi.templating import Jinja2Templates
 
 from apps.web.core.domain import ENTITY_MAP, delete_entity, get_entity, list_entities
-from arbolab.lab import Lab
 
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 TEMPLATES = Jinja2Templates(directory=str(TEMPLATES_DIR))

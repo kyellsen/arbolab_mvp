@@ -1,32 +1,37 @@
 import os
-from typing import Annotated, Optional
-
-from fastapi import Depends, FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from sqlmodel import Session, SQLModel, create_engine, select
-from starlette.middleware.sessions import SessionMiddleware
-
-from apps.web.core.security import get_password_hash, verify_password
-from apps.web.core.access_log import access_log_middleware
+from pathlib import Path
 
 # Importiere Modelle und Security
 from uuid import UUID
-from apps.web.models.auth import Workspace, UserWorkspaceAssociation
-from apps.web.models.user import User
-from apps.web.core.lab_cache import get_cached_lab
-from pathlib import Path
-from arbolab.models.core import Project
-from apps.web.routers import api, explorer as explorer_router, workspaces as workspaces_router, settings as settings_router, logs as logs_router, plugins as plugins_router, system
-from apps.web.core.domain import get_entity_counts, ENTITY_MAP
-from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
+
 from arbolab.core.recipes.executor import RecipeExecutor
+from arbolab.models.core import Project
+from fastapi import Depends, FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlmodel import Session, SQLModel, select
+from starlette.middleware.sessions import SessionMiddleware
+
+from apps.web.core.access_log import access_log_middleware
+from apps.web.core.domain import ENTITY_MAP, get_entity_counts
+from apps.web.core.lab_cache import get_cached_lab
+from apps.web.core.plugin_nav import build_plugin_nav_items, get_enabled_plugins
+from apps.web.core.security import get_password_hash, verify_password
+from apps.web.models.auth import UserWorkspaceAssociation, Workspace
+from apps.web.models.user import User
+from apps.web.routers import api, system
+from apps.web.routers import explorer as explorer_router
+from apps.web.routers import logs as logs_router
+from apps.web.routers import plugins as plugins_router
+from apps.web.routers import settings as settings_router
+from apps.web.routers import workspaces as workspaces_router
 
 BASE_DIR = Path(__file__).resolve().parent
 
 
 # 1. Datenbank Setup
-from apps.web.core.database import engine, get_session, SessionDep
+from apps.web.core.database import SessionDep, engine, get_session
+
 
 # DB-Erstellung erfolgt, nachdem Modelle importiert wurden
 def create_db_and_tables() -> None:
@@ -123,6 +128,7 @@ def resolve_plugin_nav(current_workspace: Workspace | None) -> list[dict[str, st
 def on_startup() -> None:
     """Initialize the database and seed default data on startup."""
     import time
+
     from sqlalchemy.exc import OperationalError
 
     run_migrations_enabled = env_flag("ARBO_RUN_MIGRATIONS")
@@ -340,8 +346,8 @@ async def home(
 @app.get("/explorer", response_class=HTMLResponse)
 async def explorer(
     request: Request,
-    entity: Optional[str] = None,
-    open_form: Optional[str] = None,
+    entity: str | None = None,
+    open_form: str | None = None,
     saas_session: Session = Depends(get_session),
 ):
     user = request.session.get("user")

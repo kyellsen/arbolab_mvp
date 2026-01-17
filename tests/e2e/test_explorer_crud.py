@@ -1,6 +1,7 @@
 import pytest
 from playwright.sync_api import Page, expect
 
+
 @pytest.mark.e2e
 def test_explorer_crud_flow(page: Page):
     """

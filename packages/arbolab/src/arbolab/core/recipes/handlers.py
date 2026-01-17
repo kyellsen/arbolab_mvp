@@ -1,13 +1,29 @@
 from typing import Any
-from sqlalchemy import select
-from arbolab.lab import Lab
+
 from arbolab.core.recipes.registry import register_step
+from arbolab.lab import Lab
 from arbolab.models.core import (
-    Project, Experiment, ExperimentalUnit, Treatment, TreatmentApplication,
-    Run, SensorDeployment, Location, Thing, TreeSpecies, Tree, Cable,
-    SensorModel, Sensor, ObservedProperty, UnitOfMeasurement, Datastream,
-    DatastreamChannel, DataVariant
+    Cable,
+    Datastream,
+    DatastreamChannel,
+    DataVariant,
+    Experiment,
+    ExperimentalUnit,
+    Location,
+    ObservedProperty,
+    Project,
+    Run,
+    Sensor,
+    SensorDeployment,
+    SensorModel,
+    Thing,
+    Treatment,
+    TreatmentApplication,
+    Tree,
+    TreeSpecies,
+    UnitOfMeasurement,
 )
+from sqlalchemy import select
 
 MODEL_MAP = {
     "project": Project,

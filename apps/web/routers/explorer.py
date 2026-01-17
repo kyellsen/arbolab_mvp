@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, Request, Form
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
-from typing import Optional
 import os
 from pathlib import Path
 
-from apps.web.core.domain import list_entities, get_entity, get_entity_relations, ENTITY_MAP
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from apps.web.core.domain import ENTITY_MAP, get_entity, get_entity_relations, list_entities
 from apps.web.routers.api import get_db_session
 
 router = APIRouter(prefix="/explorer-ui", tags=["explorer-ui"])
@@ -53,7 +53,7 @@ async def explorer_inspector(entity_type: str, entity_id: int, request: Request,
     })
 
 @router.get("/form/{entity_type}", response_class=HTMLResponse)
-async def explorer_form(entity_type: str, request: Request, entity_id: Optional[int] = None, redirect_url: Optional[str] = None, session: Session = Depends(get_db_session)):
+async def explorer_form(entity_type: str, request: Request, entity_id: int | None = None, redirect_url: str | None = None, session: Session = Depends(get_db_session)):
     entity = None
     if entity_id:
         entity = await get_entity(session, entity_type, entity_id)
