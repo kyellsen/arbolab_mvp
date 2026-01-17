@@ -13,7 +13,7 @@
         "ms-azuretools.vscode-docker"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.defaultInterpreterPath": "/app/arbolab_mvp/.venv/bin/python",
         "python.analysis.extraPaths": [
           "/app/packages/arbolab/src",
           "/app/packages/arbolab-logger/src",
@@ -24,7 +24,7 @@
       }
     }
   },
-  "postCreateCommand": "git config --global --add safe.directory /app && uv sync --all-packages --group dev && uv run playwright install chromium --with-deps",
+  "postCreateCommand": "git config --global --add safe.directory /app/arbolab_mvp && cd arbolab_mvp && uv sync --all-packages --group dev && uv run playwright install chromium --with-deps",
   "remoteUser": "root",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
