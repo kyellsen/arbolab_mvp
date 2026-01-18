@@ -63,6 +63,9 @@ data/
 *.parquet
 *.feather
 
+# Workspaces produced by examples
+**/example_workspace/
+
 # Secrets / tokens
 pypi_token.txt
 PyPI-Recovery-Codes-*

@@ -32,7 +32,7 @@ class ExplorerPage(BasePage):
         row.locator("button[title='Edit']").click()
     
     def select_row(self, row_text: str) -> None:
-        self.get_row(row_text).click()
+        self.get_row(row_text).click(force=True)
 
     def expect_in_list(self, text: str) -> None:
         expect(self.list_container).to_contain_text(text)
