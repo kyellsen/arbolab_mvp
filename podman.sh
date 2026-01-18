@@ -33,9 +33,11 @@ echo "Cleaning Workspace Data (DB & Files)..."
 sudo rm -rf "$ARBO_WORKSPACE_DIR/data"/*
 sudo rm -rf "$ARBO_WORKSPACE_DIR/postgres"/*
 
-# Stelle sicher, dass Ordner existieren (falls rm zu aggressiv war)
-mkdir -p "$ARBO_WORKSPACE_DIR/data"
-mkdir -p "$ARBO_WORKSPACE_DIR/postgres"
+# Stelle sicher, dass Ordner existieren mit korrekten Berechtigungen für Container
+sudo mkdir -p "$ARBO_WORKSPACE_DIR/data"
+sudo mkdir -p "$ARBO_WORKSPACE_DIR/postgres"
+sudo chmod -R 777 "$ARBO_WORKSPACE_DIR/data"
+sudo chmod -R 777 "$ARBO_WORKSPACE_DIR/postgres"
 
 echo "Rebuilding & Starting (Dev Mode)..."
 $COMPOSE_CMD -f compose.yaml up --build -d
