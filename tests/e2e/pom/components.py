@@ -6,16 +6,16 @@ from .base_page import BasePage
 class ModalComponent(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
-        self.container = page.locator("#modal-container")
+        self.container = page.locator("#modal-container").last
         self.title = self.container.locator("h3") # Assuming title is h3 or similar, adjusting based on test content
         self.submit_button = self.container.locator("button[type='submit']")
         self.cancel_button = self.container.locator("button:has-text('Cancel')")
     
     def is_visible(self) -> bool:
-        return self.container.is_visible()
+        return self.container.locator("form").is_visible()
 
     def expect_visible(self) -> None:
-        expect(self.container).to_be_visible()
+        expect(self.container.locator("form")).to_be_visible()
 
     def expect_hidden(self) -> None:
         expect(self.container).not_to_be_visible()
@@ -38,7 +38,7 @@ class ModalComponent(BasePage):
 class InspectorPanel(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
-        self.panel = page.locator("#explorer-inspector-panel")
+        self.panel = page.locator("#inspector-panel #explorer-inspector-panel")
         self.edit_button = self.panel.locator("button[title='Edit']")
         self.delete_button = self.panel.locator("button[title='Delete']")
 

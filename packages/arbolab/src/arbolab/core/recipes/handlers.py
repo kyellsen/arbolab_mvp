@@ -59,7 +59,7 @@ def register_crud_handlers():
             with lab.database.session() as session:
                 session.expire_on_commit = False  # Keep attributes loaded after commit
                 # Idempotency: If name exists and matches, return existing
-                if "name" in params:
+                if "name" in params and hasattr(m, "name"):
                     stmt = select(m).where(m.name == params["name"])
                     existing = session.execute(stmt).scalars().first()
                     if existing:

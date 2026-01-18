@@ -8,13 +8,15 @@ class ExplorerPage(BasePage):
     def __init__(self, page: Page, base_url: str):
         super().__init__(page)
         self.base_url = base_url
-        self.new_button = page.locator("button:has-text('New')")
+        self.new_button = page.locator("#main-stage button", has_text="New").first
         self.list_container = page.locator("#entity-list-container")
         self.modal = ModalComponent(page)
         self.inspector = InspectorPanel(page)
 
     def navigate_to(self) -> None:
-        self.navigate(f"{self.base_url}/explorer")
+        self.navigate(self.base_url)
+        self.page.locator("a[data-nav-path='/explorer']").click()
+        expect(self.list_container).to_be_visible()
         
     def click_new(self) -> None:
         self.new_button.click()

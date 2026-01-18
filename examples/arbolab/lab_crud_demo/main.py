@@ -10,6 +10,7 @@ Usage:
 """
 import shutil
 from pathlib import Path
+from datetime import datetime
 
 from arbolab.lab import Lab
 from arbolab.models.core import Project
@@ -51,7 +52,7 @@ def main():
 
     # 4. Create Experiment
     logger.info("--- Creating Experiment ---")
-    experiment = lab.define_experiment(project_id=project.id, name="Experiment A")
+    experiment = lab.define_experiment(project_id=project.id, name="Experiment A", start_time=datetime.now())
     logger.info(f"Created: {experiment}")
 
     # 5. Add Trees (Things + Tree subtype)
@@ -62,10 +63,12 @@ def main():
 
     trees = []
     for i in range(3):
-        # In the Recipe-Pattern, we define the tree which handles the thing creation
-        tree = lab.define_tree(project_id=project.id, species_id=species.id, name=f"Tree {i+1}")
+        # In the Recipe-Pattern, we explicitly define Thing then Tree
+        thing = lab.define_thing(project_id=project.id, name=f"Tree {i+1}", kind="tree")
+        tree = lab.define_tree(id=thing.id, species_id=species.id)
         trees.append(tree)
-        logger.info(f"Created Tree: {tree.thing} (Species: {species})")
+        # tree.thing might not be loaded, use thing directly for logging
+        logger.info(f"Created Tree: {thing} (Species: {species})")
 
     # 6. Read Tree as Dictionary
     logger.info("--- Reading Tree as Dict ---")
@@ -81,7 +84,7 @@ def main():
 
     # 8. Create Second Experiment
     logger.info("--- Creating Second Experiment ---")
-    exp2 = lab.define_experiment(project_id=project.id, name="Experiment B (temp)")
+    exp2 = lab.define_experiment(project_id=project.id, name="Experiment B (temp)", start_time=datetime.now())
     logger.info(f"Created: {exp2}")
 
     # 9. Delete Second Experiment
