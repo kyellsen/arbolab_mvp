@@ -91,10 +91,10 @@ class LabCache:
         entry = self._entries.pop(key, None)
         if not entry:
             return
+        
         try:
-            engine = getattr(entry.lab.database, "_engine", None)
-            if engine is not None:
-                engine.dispose()
+            # Use safe close method which cleans up DB + Logs
+            entry.lab.close()
         except Exception:
             pass
 

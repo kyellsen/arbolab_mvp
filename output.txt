@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/mnt/data/dev/packages/arbolab_mvp/reproduce_logging_issue.py", line 2, in <module>
+    from arbolab.lab import Lab
+  File "/mnt/data/dev/packages/arbolab_mvp/packages/arbolab/src/arbolab/lab.py", line 5, in <module>
+    from arbolab_logger import get_logger, get_logger_config, configure_logger
+  File "/mnt/data/dev/packages/arbolab_mvp/packages/arbolab-logger/src/arbolab_logger/__init__.py", line 9, in <module>
+    from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+ModuleNotFoundError: No module named 'pydantic'

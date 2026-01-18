@@ -42,50 +42,50 @@ def main():
     input_root.mkdir(parents=True, exist_ok=True)
     
     # 2. Open Lab
-    lab = Lab.open(
+    with Lab.open(
         workspace_root=None,
         base_root=base_root,
         role=LabRole.ADMIN
-    )
+    ) as lab:
 
-    # 3. Create Project
-    project = lab.define_project(name="CRUD Demo Project", description="Demonstrating CRUD")
+        # 3. Create Project
+        project = lab.define_project(name="CRUD Demo Project", description="Demonstrating CRUD")
 
-    # 4. Create Experiment
-    experiment = lab.define_experiment(project_id=project.id, name="Experiment A", start_time=datetime.now())
+        # 4. Create Experiment
+        experiment = lab.define_experiment(project_id=project.id, name="Experiment A", start_time=datetime.now())
 
-    # 5. Add Trees (Things + Tree subtype)
-    
-    # Let's create a species first
-    species = lab.define_tree_species(name="Oak")
+        # 5. Add Trees (Things + Tree subtype)
+        
+        # Let's create a species first
+        species = lab.define_tree_species(name="Oak")
 
-    trees = []
-    for i in range(3):
-        # In the Recipe-Pattern, we explicitly define Thing then Tree
-        thing = lab.define_thing(project_id=project.id, name=f"Tree {i+1}", kind="tree")
-        tree = lab.define_tree(id=thing.id, species_id=species.id)
-        trees.append(tree)
+        trees = []
+        for i in range(3):
+            # In the Recipe-Pattern, we explicitly define Thing then Tree
+            thing = lab.define_thing(project_id=project.id, name=f"Tree {i+1}", kind="tree")
+            tree = lab.define_tree(id=thing.id, species_id=species.id)
+            trees.append(tree)
 
-    # 6. Read Tree as Dictionary
-    # Entity objects still have to_dict() for inspection
-    tree_dict = tree.to_dict()
+        # 6. Read Tree as Dictionary
+        # Entity objects still have to_dict() for inspection
+        tree_dict = tree.to_dict()
 
-    # 7. Delete a Tree
-    to_delete = trees.pop()
-    lab.remove_tree(id=to_delete.id)
+        # 7. Delete a Tree
+        to_delete = trees.pop()
+        lab.remove_tree(id=to_delete.id)
 
-    # 8. Create Second Experiment
-    exp2 = lab.define_experiment(project_id=project.id, name="Experiment B (temp)", start_time=datetime.now())
+        # 8. Create Second Experiment
+        exp2 = lab.define_experiment(project_id=project.id, name="Experiment B (temp)", start_time=datetime.now())
 
-    # 9. Delete Second Experiment
-    lab.remove_experiment(id=exp2.id)
+        # 9. Delete Second Experiment
+        lab.remove_experiment(id=exp2.id)
 
-    # 10. Update Project
-    lab.modify_project(id=project.id, name="Renamed Project")
-    
-    # Reload project to see changes
-    with lab.database.session() as session:
-        project = Project.get(session, project.id)
+        # 10. Update Project
+        lab.modify_project(id=project.id, name="Renamed Project")
+        
+        # Reload project to see changes
+        with lab.database.session() as session:
+            project = Project.get(session, project.id)
 
 if __name__ == "__main__":
     main()

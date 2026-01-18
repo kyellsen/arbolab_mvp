@@ -38,20 +38,19 @@ def main():
     input_root.mkdir(parents=True, exist_ok=True)
     
     # 2. Open Lab
-    lab = Lab.open(
+    with Lab.open(
         workspace_root=None, # Must be None if base_root is used
         base_root=base_root
-    )
+    ) as lab:
 
-    # 3. Domain Operation (Create Project)
-    # Using the Recipe-aware method instead of direct session.add()
-    project = lab.define_project(name="My First Project", description="Created via minimal example")
-        
+        # 3. Domain Operation (Create Project)
+        # Using the Recipe-Pattern, we explicitly define Thing then Tree
+        project = lab.define_project(name="My First Project", description="Created via minimal example")
+            
     # 4. Re-open Lab (Persistence Check)
-    lab_reopened = Lab.open(workspace_root=workspace_root)
-    
-    if str(lab_reopened.input_root) != str(input_root.resolve()):
-         raise RuntimeError(f"Failed to restore Input Root! Got: {lab_reopened.input_root}, Expected: {input_root.resolve()}")
+    with Lab.open(workspace_root=workspace_root) as lab_reopened:
+        if str(lab_reopened.input_root) != str(input_root.resolve()):
+             raise RuntimeError(f"Failed to restore Input Root! Got: {lab_reopened.input_root}, Expected: {input_root.resolve()}")
 
 if __name__ == "__main__":
     main()

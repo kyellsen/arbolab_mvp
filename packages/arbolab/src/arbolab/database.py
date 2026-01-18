@@ -127,3 +127,12 @@ class WorkspaceDatabase:
         # This is a bit of a hack in some SA versions, but usually getting a raw connection is possible
         # For simplicity in MVP, we might just open a read-only cursor or use the engine connection.
         return duckdb.connect(str(self._db_path))
+
+    def close(self):
+        """
+        Closes the database connection and disposes of the engine.
+        """
+        if self._engine:
+            self._engine.dispose()
+            self._engine = None
+            logger.debug("Database engine disposed.")

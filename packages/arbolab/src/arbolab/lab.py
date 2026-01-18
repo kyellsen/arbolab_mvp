@@ -53,8 +53,43 @@ class Lab:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # Could handle cleanup here
-        pass
+        self.close()
+
+    def close(self):
+        """
+        Closes the Lab instance, releasing resources.
+        """
+        # 1. Close Database
+        if self.database:
+             self.database.close()
+
+        # 2. Close Logging (Detach file handler)
+        # We need to find the handler attached to the root 'arbolab' logger that matches our log file.
+        # Ideally, we track the specific handler we added, but finding by path is robust enough.
+        # Or simpler: we just detach the handler we think defines this session.
+        import logging
+        root_logger = logging.getLogger("arbolab")
+        
+        # We can't easily identify *our* handler unless we stored it. 
+        # But for now, we can iterate and close all FileHandlers *if* we assume we own the process logging.
+        # However, for safer cleanup, let's just close all FileHandlers writing to *our* log directory.
+        # actually, standard logging practice: just close handlers that we added.
+        # LIMITATION: We didn't store the handler reference in __init__.
+        # Simplification for MVP:
+        # Loop over handlers, close those pointing to our workspace logs.
+        
+        # Actually, let's be more precise. We'll store the handler on instance if possible, 
+        # BUT _configure_workspace_logging is called inside _initialize.
+        # Let's rely on _configure_workspace_logging to return the handler or store it ?
+        # For now, let's effectively do what the old code did but cleaner:
+        for h in list(root_logger.handlers):
+             if isinstance(h, logging.FileHandler):
+                  # Check if it writes to our workspace
+                  if self.layout.logs_dir in Path(h.baseFilename).parents:
+                       h.close()
+                       root_logger.removeHandler(h)
+                       
+        logger.debug(f"Lab connected to {self.layout.root} closed.")
 
     def _initialize(self):
         """Ensures the workspace is ready for use."""
@@ -86,23 +121,9 @@ class Lab:
         """Attaches a file logger to the workspace logs directory."""
         current_config = get_logger_config()
         
-        # Check duplication on Root Logger (arbolab)
-        # Since we use propagation, checking root is sufficient.
-        import logging
-        root_logger = logging.getLogger("arbolab")
-        
-        if current_config.log_to_file and current_config.log_file_path:
-             current_path = Path(current_config.log_file_path)
-             # Rotation Logic: 
-             # If we are already logging to this workspace, CLOSE the old handler to start a new session.
-             if self.layout.logs_dir in current_path.parents:
-                  logger.debug(f"Rotating log session. Closing previous log: {current_path}")
-                  for h in list(root_logger.handlers):
-                       if isinstance(h, logging.FileHandler):
-                            # Verify if this handler is writing to the target (or just close all file handlers?)
-                            # Safest to close all ArboLab file handlers when re-opening Lab.
-                            h.close()
-                            root_logger.removeHandler(h)
+        # NOTE: We no longer do complex "rotation" or closing of other handlers here.
+        # We assume call to .close() has cleaned up previous sessions if reusing the process.
+        # This simplifies the logic to "Appends a new handler".
 
         # Generate unique log filename: lab_YYYYMMDD_HHMMSS_ffffff.log
         log_name = f"lab_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.log"
