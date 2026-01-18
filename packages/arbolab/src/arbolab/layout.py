@@ -32,6 +32,10 @@ class WorkspaceLayout:
     @property
     def variants_dir(self) -> Path:
         return self._root / "storage" / "variants"
+
+    @property
+    def logs_dir(self) -> Path:
+        return self._root / "logs"
         
     def recipe_path(self, name: str = "current.json") -> Path:
         return self.recipes_dir / name

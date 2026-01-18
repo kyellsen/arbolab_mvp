@@ -12,37 +12,40 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 
-from arbolab.lab import Lab
+from arbolab.lab import Lab, LabRole
 from arbolab.models.core import Project
 from arbolab_logger import LoggerConfig, configure_logger, get_logger
 
 # 1. Setup Logging
 configure_logger(LoggerConfig(
-    level="INFO", 
-    colorize=True, 
-    log_to_file=False
+    level="DEBUG", 
+    colorize=True,
+    # Arbolab automatically handles file logging to workspace/logs/
 ))
 
 logger = get_logger("crud_demo")
 
 def main():
     # Define roots
-    base_root = Path("examples/arbolab/lab_crud_demo/example_workspace")
+    base_root = Path("examples/arbolab/lab_crud_demo/example_workspace").resolve()
     input_root = base_root / "input"
     workspace_root = base_root / "workspace"
     results_root = base_root / "results"
 
-    # Cleanup for clean run
-    if base_root.exists():
-        shutil.rmtree(base_root)
+    # Cleanup for clean run (Persist Input!)
+    if workspace_root.exists():
+        shutil.rmtree(workspace_root)
+    if results_root.exists():
+        shutil.rmtree(results_root)
     
-    input_root.mkdir(parents=True)
+    # Ensure input exists (part of repo usually, but ensure here)
+    input_root.mkdir(parents=True, exist_ok=True)
     
     # 2. Open Lab
     lab = Lab.open(
-        workspace_root=workspace_root,
-        input_root=input_root,
-        results_root=results_root
+        workspace_root=None,
+        base_root=base_root,
+        role=LabRole.ADMIN
     )
 
     # 3. Create Project

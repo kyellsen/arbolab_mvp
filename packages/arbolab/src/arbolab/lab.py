@@ -60,11 +60,32 @@ class Lab:
         # Viewers should not trigger structure creation if it's missing?
         # But MVP assumes structure exists or is consistent.
         self.layout.ensure_structure()
+
+        # Automatic Logging Configuration
+        # We attach a file handler to the current workspace's log directory
+        from datetime import datetime
+        from arbolab_logger import get_logger_config, configure_logger
+        
+        current_config = get_logger_config()
+        # Only attach if not already logging to a file or if we want to force workspace logging?
+        # User wants "Arbolab handles it". So we override/set the file path.
+        # We generate a unique name per session
+        log_name = f"lab_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        log_path = self.layout.logs_dir / log_name
+        
+        # Update config to enable file logging
+        new_config = current_config.with_updates(
+            log_to_file=True,
+            log_file_path=str(log_path)
+        )
+        configure_logger(new_config)
+        logger.info(f"Logging configured to: {log_path}")
+
         self.database.connect(read_only=(self.role == LabRole.VIEWER))
         
         # Initialize plugins (after DB is connected)
         self.plugin_runtime.initialize_plugins(self)
-        
+
         # Smart-Eager Catalog Seeding (Only for Admins)
         if self.role == LabRole.ADMIN:
             from arbolab.core.catalog_manager import CatalogManager

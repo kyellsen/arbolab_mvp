@@ -65,6 +65,8 @@ data/
 
 # Workspaces produced by examples
 **/example_workspace/
+!**/example_workspace/input/
+!**/example_workspace/input/.gitkeep
 
 # Secrets / tokens
 pypi_token.txt
