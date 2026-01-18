@@ -1,0 +1,51 @@
+# Docker ignore
+# Exclude everything by default, then allow what we need?
+# Or just exclude the big stuff. Let's exclude the big stuff.
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.hypothesis
+
+# Workspace
+arbolab.code-workspace
+
+# Environment
+.env
+
+# Docker
+compose.yaml
+compose.prod.yaml
+Dockerfile
+.dockerignore
+podman.sh
+setup.sh
+ci.txt
+
+# Local data
+data/
+workspace/
+postgres/

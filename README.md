@@ -15,53 +15,59 @@ It acts as a bridge between raw physical observations (from sensors on trees, ca
 
 ## 🚀 Development Setup
 
-ArboLab supports two development workflows: **Full Dev Container** (Recommended) or **Hybrid / Local**.
+## 🚀 Development Setup
 
-### Option A: Full Dev Container (Recommended)
+ArboLab supports three main ways to run the application to suit different needs.
 
-This method ensures an identical environment for all developers (Python 3.12, uv, PostgreSQL, Playwright).
+### 1. Full Dev Container (Recommended)
 
-1.  **Open in VS Code**:
-    - Open the project folder.
-    - Click **"Reopen in Container"** when prompted (or use the Command Palette: `Dev Containers: Reopen in Container`).
-    - _Note for Antigravity/Google IDE users: The environment is automatically detected._
+**Best for**: Consistency, VS Code users, easy setup.
+This method runs _everything_ (Python, DB, Tools) inside containers managed by VS Code.
 
-2.  **Run the App**:
-    Inside the container's integrated terminal:
+1.  **Open in VS Code**: Open the folder and click **"Reopen in Container"**.
+2.  **Run**: Open the integrated terminal and run:
     ```bash
     uv run uvicorn apps.web.main:app --host 0.0.0.0 --port 8000 --reload
     ```
-    The app will be available at [http://localhost:8000](http://localhost:8000).
+    (The environment is automatically activated and dependencies synced).
 
-### Option B: Hybrid / Local
+### 2. Hybrid / Local (Python on Host)
 
-Run the infrastructure (Postgres) via Docker/Podman, but execute the Python code on your host machine.
+**Best for**: Debugging, Jupyter Notebooks, native performance.
+You run Python locally on your machine, but use Docker/Podman for the Database.
 
-1.  **Prerequisites**:
-    - Install **uv**: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-    - Install **Podman** (or Docker) and `podman-compose`.
-
-2.  **Setup Local Environment**:
-    Run the setup script to create the `.venv` and install dependencies:
+1.  **Setup Python**:
 
     ```bash
     ./setup.sh
     ```
 
-3.  **Start Infrastructure**:
-    Use the helper script to start the database (and optionally reset data):
+    _Creates `.venv` and installs dependencies via uv._
+
+2.  **Start Database**:
 
     ```bash
     ./podman.sh
     ```
 
-    _Alternatively, strictly for starting without reset: `podman-compose up -d`_
+    _Starts Postgres using `compose.yaml`. Deleting data? see script details._
 
-4.  **Run the App**:
+3.  **Run App**:
     ```bash
     source .venv/bin/activate
     uv run uvicorn apps.web.main:app --host 0.0.0.0 --port 8000 --reload
     ```
+
+### 3. Production Simulation
+
+**Best for**: verifying the final build, security checks.
+This uses the production Dockerfile (non-root user) and `compose.prod.yaml`.
+
+```bash
+docker compose -f compose.prod.yaml up --build -d
+```
+
+_Note: This does NOT hot-reload code changes. You must rebuild to see changes._
 
 ---
 
