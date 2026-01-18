@@ -80,6 +80,14 @@ class Lab:
         )
         configure_logger(new_config)
         logger.info(f"Logging configured to: {log_path}")
+        
+        # Log retrospective context so the file log is self-contained
+        logger.info("--- Lab Startup Context ---")
+        logger.info(f"Workspace Root: {self.layout.root}")
+        logger.info(f"Config Path:    {self.layout.config_path}")
+        logger.info(f"Database Path:  {self.layout.db_path}")
+        logger.info("Structure verification and directory creation completed prior to log start.")
+        logger.info("---------------------------")
 
         self.database.connect(read_only=(self.role == LabRole.VIEWER))
         
