@@ -49,17 +49,12 @@ def main():
     )
 
     # 3. Create Project
-    logger.info("--- Creating Project ---")
     project = lab.define_project(name="CRUD Demo Project", description="Demonstrating CRUD")
-    logger.info(f"Created: {project}")
 
     # 4. Create Experiment
-    logger.info("--- Creating Experiment ---")
     experiment = lab.define_experiment(project_id=project.id, name="Experiment A", start_time=datetime.now())
-    logger.info(f"Created: {experiment}")
 
     # 5. Add Trees (Things + Tree subtype)
-    logger.info("--- Adding Trees ---")
     
     # Let's create a species first
     species = lab.define_tree_species(name="Oak")
@@ -70,42 +65,27 @@ def main():
         thing = lab.define_thing(project_id=project.id, name=f"Tree {i+1}", kind="tree")
         tree = lab.define_tree(id=thing.id, species_id=species.id)
         trees.append(tree)
-        # tree.thing might not be loaded, use thing directly for logging
-        logger.info(f"Created Tree: {thing} (Species: {species})")
 
     # 6. Read Tree as Dictionary
-    logger.info("--- Reading Tree as Dict ---")
     # Entity objects still have to_dict() for inspection
     tree_dict = tree.to_dict()
-    logger.info(f"Tree Dict: {tree_dict}")
 
     # 7. Delete a Tree
-    logger.info("--- Deleting a Tree ---")
     to_delete = trees.pop()
     lab.remove_tree(id=to_delete.id)
-    logger.info(f"Deleted Tree {to_delete.id}.")
 
     # 8. Create Second Experiment
-    logger.info("--- Creating Second Experiment ---")
     exp2 = lab.define_experiment(project_id=project.id, name="Experiment B (temp)", start_time=datetime.now())
-    logger.info(f"Created: {exp2}")
 
     # 9. Delete Second Experiment
-    logger.info("--- Deleting Second Experiment ---")
     lab.remove_experiment(id=exp2.id)
-    logger.info(f"Deleted Experiment {exp2.id}.")
 
     # 10. Update Project
-    logger.info("--- Renaming Project ---")
-    logger.info(f"Old Name: {project.name}")
     lab.modify_project(id=project.id, name="Renamed Project")
     
     # Reload project to see changes
     with lab.database.session() as session:
         project = Project.get(session, project.id)
-        logger.info(f"New Name: {project.name}")
-
-    logger.info("CRUD Demo Complete.")
 
 if __name__ == "__main__":
     main()

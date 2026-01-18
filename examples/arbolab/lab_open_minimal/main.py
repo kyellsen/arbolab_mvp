@@ -21,9 +21,6 @@ configure_logger(LoggerConfig(
     # Arbolab automatically handles file logging to workspace/logs/
 ))
 
-# User might get a logger for their own scripts
-logger = get_logger("user_script") 
-
 def main():
     # Define roots
     base_root = Path("examples/arbolab/lab_open_minimal/example_workspace").resolve()
@@ -45,23 +42,16 @@ def main():
         workspace_root=None, # Must be None if base_root is used
         base_root=base_root
     )
-    
+
     # 3. Domain Operation (Create Project)
     # Using the Recipe-aware method instead of direct session.add()
     project = lab.define_project(name="My First Project", description="Created via minimal example")
         
-    logger.info("First run complete. Testing persistence...")
-
     # 4. Re-open Lab (Persistence Check)
-    logger.info("Re-opening Lab using ONLY workspace_root (expecting roots to be restored)...")
     lab_reopened = Lab.open(workspace_root=workspace_root)
     
-    if str(lab_reopened.input_root) == str(input_root.resolve()):
-        logger.info(f"Restored Input Root correctly: {lab_reopened.input_root}")
-    else:
-        logger.error(f"Failed to restore Input Root! Got: {lab_reopened.input_root}, Expected: {input_root.resolve()}")
-        
-    logger.info("Verification successful!")
+    if str(lab_reopened.input_root) != str(input_root.resolve()):
+         raise RuntimeError(f"Failed to restore Input Root! Got: {lab_reopened.input_root}, Expected: {input_root.resolve()}")
 
 if __name__ == "__main__":
     main()
