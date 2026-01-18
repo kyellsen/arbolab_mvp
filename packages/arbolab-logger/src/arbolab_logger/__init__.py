@@ -52,12 +52,14 @@ class LoggerConfig(BaseModel):
         description="Logging level as numeric value or standard text label.",
     )
     propagate: bool = Field(
-        default=False, description="Whether records propagate to ancestor loggers."
+        default=True, description="Whether records propagate to ancestor loggers."
     )
     colorize: bool = Field(
         default=True,
         description="Whether Rich should emit coloured output.",
     )
+# ... (skipping unchanged fields)
+
     markup: bool = Field(
         default=True,
         description="Whether log messages contain Rich markup that must be parsed.",
@@ -378,21 +380,27 @@ def configure_logger(config: LoggerConfig) -> logging.Logger:
 
 
 def get_logger(name: str | None = None) -> logging.Logger:
-    """Return a Rich-enabled logger that follows the active configuration.
-
-    Args:
-        name: Optional override for the logger name. When omitted, the currently
-            configured base name is used.
-
-    Returns:
-        The configured :class:`logging.Logger`.
+    """Return a logger. 
+    
+    If name is None or matches the configured root name, it returns the configured root logger (with handlers).
+    If name is a child, it returns a standard logger that propagates to the root.
     """
 
     current = _LOGGER_STATE["config"]
-    config = current if name is None else current.with_updates(name=name)
-    logger = logging.getLogger(config.name)
-    _ensure_handler(logger, config)
-    return logger
+    
+    # If no name -> use root name.
+    target_name = name if name else current.name
+
+    # If target matches the base configuration name (e.g. "arbolab"),
+    # we ensure handlers are attached (RichHandler).
+    if target_name == current.name:
+        logger = logging.getLogger(current.name)
+        _ensure_handler(logger, current)
+        return logger
+
+    # Otherwise (e.g. "arbolab.database"), standard propagation behavior.
+    # We do NOT manually attach handlers. It propagates to "arbolab".
+    return logging.getLogger(target_name)
 
 
 def get_logger_config() -> LoggerConfig:

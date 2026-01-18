@@ -86,12 +86,16 @@ class Lab:
         """Attaches a file logger to the workspace logs directory."""
         current_config = get_logger_config()
         
-        # Check if we are already logging to this workspace?
-        # If so, do not re-initialize (prevents duplicate empty files on re-open)
+        # Check duplication on Root Logger (arbolab)
+        # Since we use propagation, checking root is sufficient.
+        import logging
+        root_logger = logging.getLogger("arbolab")
+        
         if current_config.log_to_file and current_config.log_file_path:
              current_path = Path(current_config.log_file_path)
+             # If exact match or same logs directory? 
              if self.layout.logs_dir in current_path.parents:
-                  logger.debug(f"File logging already active at {current_path}. consistent with workspace.")
+                  logger.debug(f"File logging already active at {current_path}.")
                   return
 
         # Generate unique log filename: lab_YYYYMMDD_HHMMSS.log
@@ -99,20 +103,14 @@ class Lab:
         log_path = self.layout.logs_dir / log_name
         
         # Update config to enable file logging
+        # This re-configures the ROOT logger, attaching the FileHandler.
+        # Child loggers will propagate to this root.
         new_config = current_config.with_updates(
             log_to_file=True,
             log_file_path=str(log_path)
         )
         configure_logger(new_config)
         
-        # KEY FIX: Refresh all active arbolab loggers to pick up the new file handler!
-        # arbolab_logger attaches handlers per-instance, so we must re-sync them.
-        import logging
-        for name in logging.Logger.manager.loggerDict:
-            if name.startswith("arbolab"):
-                # get_logger triggers _ensure_handler -> _sync_rich_handlers -> updates handlers
-                get_logger(name)
-
         logger.info(f"Logging configured to: {log_path}")
         
         # Log retrospective context so the file log is self-contained
