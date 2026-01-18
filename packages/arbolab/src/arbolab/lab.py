@@ -93,13 +93,19 @@ class Lab:
         
         if current_config.log_to_file and current_config.log_file_path:
              current_path = Path(current_config.log_file_path)
-             # If exact match or same logs directory? 
+             # Rotation Logic: 
+             # If we are already logging to this workspace, CLOSE the old handler to start a new session.
              if self.layout.logs_dir in current_path.parents:
-                  logger.debug(f"File logging already active at {current_path}.")
-                  return
+                  logger.debug(f"Rotating log session. Closing previous log: {current_path}")
+                  for h in list(root_logger.handlers):
+                       if isinstance(h, logging.FileHandler):
+                            # Verify if this handler is writing to the target (or just close all file handlers?)
+                            # Safest to close all ArboLab file handlers when re-opening Lab.
+                            h.close()
+                            root_logger.removeHandler(h)
 
-        # Generate unique log filename: lab_YYYYMMDD_HHMMSS.log
-        log_name = f"lab_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        # Generate unique log filename: lab_YYYYMMDD_HHMMSS_ffffff.log
+        log_name = f"lab_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.log"
         log_path = self.layout.logs_dir / log_name
         
         # Update config to enable file logging
