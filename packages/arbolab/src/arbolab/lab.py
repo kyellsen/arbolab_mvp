@@ -1,7 +1,8 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from arbolab_logger import get_logger
+from arbolab_logger import get_logger, get_logger_config, configure_logger
 
 from arbolab.core.security import LabRole
 
@@ -57,19 +58,43 @@ class Lab:
 
     def _initialize(self):
         """Ensures the workspace is ready for use."""
+        
+        # 0. Pre-create logs directory so we can attach logger immediately
+        self.layout.logs_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Configure logging (Capture layout creation logs)
+        self._configure_workspace_logging()
+
+        # 2. Ensure remaining structure
         # Viewers should not trigger structure creation if it's missing?
         # But MVP assumes structure exists or is consistent.
         self.layout.ensure_structure()
 
-        # Automatic Logging Configuration
-        # We attach a file handler to the current workspace's log directory
-        from datetime import datetime
-        from arbolab_logger import get_logger_config, configure_logger
+        # Connect to Database
+        self.database.connect(read_only=(self.role == LabRole.VIEWER))
         
+        # Initialize plugins (after DB is connected)
+        self.plugin_runtime.initialize_plugins(self)
+
+        # Smart-Eager Catalog Seeding (Only for Admins)
+        if self.role == LabRole.ADMIN:
+            self._seed_catalog()
+        
+        logger.info(f"Lab initialized at {self.layout.root} (Role: {self.role})")
+
+    def _configure_workspace_logging(self):
+        """Attaches a file logger to the workspace logs directory."""
         current_config = get_logger_config()
-        # Only attach if not already logging to a file or if we want to force workspace logging?
-        # User wants "Arbolab handles it". So we override/set the file path.
-        # We generate a unique name per session
+        
+        # Check if we are already logging to this workspace?
+        # If so, do not re-initialize (prevents duplicate empty files on re-open)
+        if current_config.log_to_file and current_config.log_file_path:
+             current_path = Path(current_config.log_file_path)
+             if self.layout.logs_dir in current_path.parents:
+                  logger.debug(f"File logging already active at {current_path}. consistent with workspace.")
+                  return
+
+        # Generate unique log filename: lab_YYYYMMDD_HHMMSS.log
         log_name = f"lab_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
         log_path = self.layout.logs_dir / log_name
         
@@ -79,6 +104,15 @@ class Lab:
             log_file_path=str(log_path)
         )
         configure_logger(new_config)
+        
+        # KEY FIX: Refresh all active arbolab loggers to pick up the new file handler!
+        # arbolab_logger attaches handlers per-instance, so we must re-sync them.
+        import logging
+        for name in logging.Logger.manager.loggerDict:
+            if name.startswith("arbolab"):
+                # get_logger triggers _ensure_handler -> _sync_rich_handlers -> updates handlers
+                get_logger(name)
+
         logger.info(f"Logging configured to: {log_path}")
         
         # Log retrospective context so the file log is self-contained
@@ -89,24 +123,17 @@ class Lab:
         logger.info("Structure verification and directory creation completed prior to log start.")
         logger.info("---------------------------")
 
-        self.database.connect(read_only=(self.role == LabRole.VIEWER))
-        
-        # Initialize plugins (after DB is connected)
-        self.plugin_runtime.initialize_plugins(self)
-
-        # Smart-Eager Catalog Seeding (Only for Admins)
-        if self.role == LabRole.ADMIN:
-            from arbolab.core.catalog_manager import CatalogManager
-            cm = CatalogManager()
-            try:
-                pkg_version = cm.get_package_version()
-                with self.database.session() as db:
-                    if cm.should_sync(db, pkg_version):
-                        cm.sync_all(db)
-            except Exception as e:
-                logger.warning(f"Catalog sync failed: {e}")
-        
-        logger.info(f"Lab initialized at {self.layout.root} (Role: {self.role})")
+    def _seed_catalog(self):
+        """Synchronizes the internal catalog with the package version."""
+        from arbolab.core.catalog_manager import CatalogManager
+        cm = CatalogManager()
+        try:
+            pkg_version = cm.get_package_version()
+            with self.database.session() as db:
+                if cm.should_sync(db, pkg_version):
+                    cm.sync_all(db)
+        except Exception as e:
+            logger.warning(f"Catalog sync failed: {e}")
 
     @classmethod
     def open(cls, 
