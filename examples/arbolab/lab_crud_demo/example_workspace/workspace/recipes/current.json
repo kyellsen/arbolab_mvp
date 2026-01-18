@@ -1,0 +1,25 @@
+{
+  "steps": [
+    {
+      "step_id": "12b44635-0b2a-4533-b14f-588352997186",
+      "step_type": "open_lab",
+      "params": {
+        "workspace_root": "/mnt/data/dev/packages/arbolab_mvp/examples/arbolab/lab_crud_demo/example_workspace/workspace",
+        "role": "LabRole.ADMIN"
+      },
+      "author_id": null,
+      "timestamp": "2026-01-18T11:40:48.603066"
+    },
+    {
+      "step_id": "804ffb94-3760-4843-9434-8aaa079add7f",
+      "step_type": "define_project",
+      "params": {
+        "name": "CRUD Demo Project",
+        "description": "Demonstrating CRUD"
+      },
+      "author_id": null,
+      "timestamp": "2026-01-18T11:40:48.592723"
+    }
+  ],
+  "updated_at": "2026-01-18T11:40:48.603124"
+}

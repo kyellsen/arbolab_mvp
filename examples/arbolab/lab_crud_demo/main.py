@@ -6,7 +6,7 @@ Usage:
   You must run it within the configured environment using `uv run` or by ensuring PYTHONPATH is set.
 
   Command:
-    uv run python packages/arbolab/examples/lab_crud_demo/main.py
+    uv run python examples/arbolab/lab_crud_demo/main.py
 """
 import shutil
 from pathlib import Path
@@ -26,7 +26,7 @@ logger = get_logger("crud_demo")
 
 def main():
     # Define roots
-    base_root = Path("packages/arbolab/examples/lab_crud_demo/example_workspace")
+    base_root = Path("examples/arbolab/lab_crud_demo/example_workspace")
     input_root = base_root / "input"
     workspace_root = base_root / "workspace"
     results_root = base_root / "results"
