@@ -13,6 +13,7 @@ echo "=== ArboLab Reset ==="
 echo "Target Workspace: $ARBO_WORKSPACE_DIR"
 
 # Sicherheitsabfrage
+if [[ ! "$ARBO_WORKSPACE_DIR" == *"/dev_workspaces/"* ]]; then
     echo "SAFETY STOP: Workspace path seems wrong. Must contain '/dev_workspaces/'."
     exit 1
 fi
